@@ -1,0 +1,27 @@
+dist: xenial
+language: go
+os: linux
+
+go:
+  - "1.14.x"
+
+cache:
+  directories:
+    - .bin/
+
+jobs:
+  fast_finish: true
+  include:
+    - name: "Lint"
+      script: make lint
+    - name: "Test"
+      script: make test
+    - name: "Website"
+      script: echo "test and lint website"
+
+install:
+  - make tools
+
+branches:
+  only:
+    - master
