@@ -4,11 +4,14 @@ PROJECT_NAME := terraform-provider-cloudsigma
 # Build variables
 .DEFAULT_GOAL = test
 BUILD_DIR := build
+DEV_GOARCH := $(shell go env GOARCH)
+DEV_GOOS := $(shell go env GOOS)
 
 
-## tools: Install required tooling...
+## tools: Install required tooling.
 .PHONY: tools
 tools:
+	@echo "Installing required tooling..."
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b .bin/ v1.24.0
 
 
@@ -26,9 +29,42 @@ lint:
 	@.bin/golangci-lint run ./...
 
 
+## fmtcheck: internal task required by tf-deploy compile
+.PHONY: fmtcheck
+fmtcheck:
+	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
+
+
 ## test: Run all tests.
 .PHONY: test
-test:
+test: fmtcheck
 	@echo "==> Running tests..."
 	@mkdir -p $(BUILD_DIR)
-	@go test -v -cover -coverprofile=$(BUILD_DIR)/coverage.out ./...
+	@go test -v -cover -coverprofile=$(BUILD_DIR)/coverage.out -parallel=4 ./...
+
+
+## testacc: Run all acceptance tests.
+.PHONY: testacc
+testacc: fmtcheck
+	@echo "==> Running acceptance tests..."
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m ./...
+
+
+## build: Build binary for default local system's operating system and architecture.
+.PHONY: build
+build:
+	@echo "==> Building binary..."
+	@echo "    running go build for GOOS=$(DEV_GOOS) GOARCH=$(DEV_GOARCH)"
+# workaround for missing .exe extension on Windows
+ifeq ($(OS),Windows_NT)
+	@go build -o $(BUILD_DIR)/$(PROJECT_NAME)_$(DEV_GOOS)_$(DEV_GOARCH).exe main.go
+else
+	@go build -o $(BUILD_DIR)/$(PROJECT_NAME)_$(DEV_GOOS)_$(DEV_GOARCH) main.go
+endif
+
+
+help: GNUmakefile
+	@echo "Usage: make <command>"
+	@echo ""
+	@echo "Commands:"
+	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
