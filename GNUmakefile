@@ -57,9 +57,9 @@ build:
 	@echo "    running go build for GOOS=$(DEV_GOOS) GOARCH=$(DEV_GOARCH)"
 # workaround for missing .exe extension on Windows
 ifeq ($(OS),Windows_NT)
-	@go build -o $(BUILD_DIR)/$(PROJECT_NAME)_$(DEV_GOOS)_$(DEV_GOARCH).exe main.go
+	@go build -o $(BUILD_DIR)/$(PROJECT_NAME).exe main.go
 else
-	@go build -o $(BUILD_DIR)/$(PROJECT_NAME)_$(DEV_GOOS)_$(DEV_GOARCH) main.go
+	@go build -o $(BUILD_DIR)/$(PROJECT_NAME) main.go
 endif
 
 
