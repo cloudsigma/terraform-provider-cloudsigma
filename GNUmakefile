@@ -1,5 +1,7 @@
 # Project variables
 PROJECT_NAME := terraform-provider-cloudsigma
+PKG_NAME = cloudsigma
+WEBSITE_REPO = github.com/hashicorp/terraform-website
 
 # Build variables
 .DEFAULT_GOAL = test
@@ -35,10 +37,10 @@ fmtcheck:
 	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
 
-## test: Run all tests.
+## test: Run all unit tests.
 .PHONY: test
 test: fmtcheck
-	@echo "==> Running tests..."
+	@echo "==> Running unit tests..."
 	@mkdir -p $(BUILD_DIR)
 	@go test -v -cover -coverprofile=$(BUILD_DIR)/coverage.out -parallel=4 ./...
 
@@ -61,6 +63,27 @@ ifeq ($(OS),Windows_NT)
 else
 	@go build -o $(BUILD_DIR)/$(PROJECT_NAME) main.go
 endif
+
+
+## website: Build website for the provider.
+website:
+.PHONY: website
+ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
+	@echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
+	@git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
+endif
+	@echo "==> Building website for CloudSigma provider..."
+	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
+
+## website-test: Check website for the provider.
+.PHONY: website-test
+website-test:
+ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
+	@echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
+	@git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
+endif
+	@echo "==> Checking website for CloudSigma provider..."
+	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
 
 help: GNUmakefile
