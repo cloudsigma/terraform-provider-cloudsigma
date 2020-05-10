@@ -24,7 +24,7 @@ Use the navigation to the left to read about the available resources.
 variable "cloudsigma_username" {}
 variable "cloudsigma_password" {}
 
-provider "cloudscale" {
+provider "cloudsigma" {
   username = var.cloudsigma_username
   password = var.cloudsigma_password
 
