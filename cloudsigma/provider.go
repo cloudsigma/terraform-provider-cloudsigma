@@ -33,6 +33,7 @@ func Provider() terraform.ResourceProvider {
 		DataSourcesMap: map[string]*schema.Resource{},
 
 		ResourcesMap: map[string]*schema.Resource{
+			"cloudsigma_server":  resourceCloudSigmaServerKey(),
 			"cloudsigma_ssh_key": resourceCloudSigmaSSHKey(),
 		},
 
