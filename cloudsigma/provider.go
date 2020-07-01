@@ -36,9 +36,10 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"cloudsigma_server":  resourceCloudSigmaServer(),
-			"cloudsigma_ssh_key": resourceCloudSigmaSSHKey(),
-			"cloudsigma_tag":     resourceCloudSigmaTag(),
+			"cloudsigma_firewall_policy": resourceCloudSigmaFirewallPolicy(),
+			"cloudsigma_server":          resourceCloudSigmaServer(),
+			"cloudsigma_ssh_key":         resourceCloudSigmaSSHKey(),
+			"cloudsigma_tag":             resourceCloudSigmaTag(),
 		},
 
 		ConfigureFunc: providerConfigure,

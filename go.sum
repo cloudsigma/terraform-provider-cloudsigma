@@ -35,6 +35,8 @@ github.com/cheggaaa/pb v1.0.27/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXH
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudsigma/cloudsigma-sdk-go v0.2.1 h1:82bFgvhj9HWUtvmwMRUCjak8cfS4AU90db4swJGJOmA=
 github.com/cloudsigma/cloudsigma-sdk-go v0.2.1/go.mod h1:oV7Cz2HpRlaPldUkhDnvySkwSMpeRNvo0vBAptLFKmI=
+github.com/cloudsigma/cloudsigma-sdk-go v0.2.2-0.20200701125919-f2204ed58111 h1:zqXd2HJUsN3ThxC4US6CHVNxQVA16AP9FcberE3dLHU=
+github.com/cloudsigma/cloudsigma-sdk-go v0.2.2-0.20200701125919-f2204ed58111/go.mod h1:oV7Cz2HpRlaPldUkhDnvySkwSMpeRNvo0vBAptLFKmI=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
