@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func resourceCloudSigmaFirewallPolicy() *schema.Resource {
@@ -20,8 +21,8 @@ func resourceCloudSigmaFirewallPolicy() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type: schema.TypeString,
-				Required:    true,
+				Type:     schema.TypeString,
+				Required: true,
 			},
 
 			"owner": {
@@ -48,6 +49,62 @@ func resourceCloudSigmaFirewallPolicy() *schema.Resource {
 			"resource_uri": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+
+			"rule": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"action": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"accept",
+								"drop",
+							}, false),
+						},
+						"comment": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"direction": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"in",
+								"out",
+								"both",
+							}, false),
+						},
+						"destination_address": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"destination_port_range": {
+							Type:     schema.TypeInt,
+							Optional: true,
+							ValidateFunc: validation.NoZeroValues,
+						},
+						"protocol": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"tcp",
+								"udp",
+							}, false),
+						},
+						"source_address": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"source_port_range": {
+							Type:     schema.TypeInt,
+							Optional: true,
+							ValidateFunc: validation.NoZeroValues,
+						},
+					},
+				},
 			},
 		},
 	}
