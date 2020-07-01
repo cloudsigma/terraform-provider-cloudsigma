@@ -42,14 +42,14 @@ fmtcheck:
 test: fmtcheck
 	@echo "==> Running unit tests..."
 	@mkdir -p $(BUILD_DIR)
-	@go test -v -cover -coverprofile=$(BUILD_DIR)/coverage.out -parallel=4 ./...
+	@go test -count=1 -v -cover -coverprofile=$(BUILD_DIR)/coverage.out -parallel=4 ./...
 
 
 ## testacc: Run all acceptance tests.
 .PHONY: testacc
 testacc: fmtcheck
 	@echo "==> Running acceptance tests..."
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m ./...
+	TF_ACC=1 go test $(TEST) -count=1 -v $(TESTARGS) -timeout 120m ./...
 
 
 ## build: Build binary for default local system's operating system and architecture.
