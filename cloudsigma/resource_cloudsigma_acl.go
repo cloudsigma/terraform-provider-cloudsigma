@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func resourceCloudSigmaACL() *schema.Resource {
@@ -43,6 +44,23 @@ func resourceCloudSigmaACL() *schema.Resource {
 						},
 					},
 				},
+			},
+
+			"permissions": {
+				Type: schema.TypeSet,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringInSlice([]string{
+						"ATTACH",
+						"CLONE",
+						"EDIT",
+						"LIST",
+						"OPEN_VNC",
+						"START",
+						"STOP",
+					}, false),
+				},
+				Optional: true,
 			},
 
 			"resource_uri": {
