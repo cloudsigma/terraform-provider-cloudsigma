@@ -49,7 +49,7 @@ func dataSourceCloudSigmaLocationRead(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("error getting locations: %v", err)
 	}
 
-	locationList := []cloudsigma.Location{}
+	locationList := make([]cloudsigma.Location, 0)
 
 	f := buildCloudSigmaDataSourceFilter(filters.(*schema.Set))
 	for _, location := range locations {
