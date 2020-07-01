@@ -1,7 +1,7 @@
 ---
 layout: "cloudsigma"
-page_title: "CloudSigma: cloudsigma_tag_key"
-sidebar_current: "docs-cloudsigma-resource-tag-key"
+page_title: "CloudSigma: cloudsigma_tag"
+sidebar_current: "docs-cloudsigma-resource-tag"
 description: |-
   Provides a CloudSigma tag resource.
 ---
