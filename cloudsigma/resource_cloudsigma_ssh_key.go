@@ -50,10 +50,12 @@ func resourceCloudSigmaSSHKeyCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	log.Printf("[DEBUG] SSH key create configuration: %#v", keypairCreateRequest)
-	keypair, _, err := client.Keypairs.Create(context.Background(), keypairCreateRequest)
+	keypairs, _, err := client.Keypairs.Create(context.Background(), keypairCreateRequest)
 	if err != nil {
 		return fmt.Errorf("error creating SSH key: %s", err)
 	}
+
+	keypair := keypairs[0]
 
 	d.SetId(keypair.UUID)
 	log.Printf("[INFO] SSH key: %s", keypair.UUID)
@@ -97,7 +99,10 @@ func resourceCloudSigmaSSHKeyUpdate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[DEBUG] SSH key update: %#v", keypair)
 
-	_, _, err := client.Keypairs.Update(context.Background(), keypair)
+	updateRequest := &cloudsigma.KeypairUpdateRequest{
+		Keypair: keypair,
+	}
+	_, _, err := client.Keypairs.Update(context.Background(), keypair.UUID, updateRequest)
 	if err != nil {
 		return fmt.Errorf("failed to update SSH key: %s", err)
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func resourceCloudSigmaServerKey() *schema.Resource {
+func resourceCloudSigmaServer() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceCloudSigmaServerCreate,
 		Read:   resourceCloudSigmaServerRead,
@@ -51,11 +51,12 @@ func resourceCloudSigmaServerKey() *schema.Resource {
 func resourceCloudSigmaServerCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*cloudsigma.Client)
 
-	log.Printf("[DEBUG] Cloning library drive...")
-	drive, err := cloneDrive(d, client)
-	if err != nil {
-		return fmt.Errorf("error creating library drive: %s", err)
-	}
+	// log.Printf("[DEBUG] Cloning library drive...")
+	var drive *cloudsigma.Drive
+	// drive, err := cloneDrive(d, client)
+	// if err != nil {
+	// 	return fmt.Errorf("error creating library drive: %s", err)
+	// }
 
 	log.Printf("[DEBUG] Creating CloudSigma server...")
 	server, err := createServer(d, drive, client)
@@ -118,37 +119,37 @@ func resourceCloudSigmaServerDelete(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-func cloneDrive(d *schema.ResourceData, client *cloudsigma.Client) (*cloudsigma.Drive, error) {
-	uuid := d.Get("drive").(string)
-	driveCloneRequest := &cloudsigma.DriveCloneRequest{
-		Name:        d.Get("name").(string),
-		Size:        10 * 1024 * 1024 * 1024,
-		StorageType: "dssd",
-	}
-
-	log.Printf("[DEBUG] SSH key create configuration: %#v", driveCloneRequest)
-	clonedDrive, _, err := client.LibraryDrives.Clone(context.Background(), uuid, driveCloneRequest)
-	if err != nil {
-		return clonedDrive, err
-	}
-
-	log.Printf("[DEBUG] Waiting until cloning process are done...")
-	driveUUID := clonedDrive.UUID
-	for {
-		drive, _, err := client.Drives.Get(context.Background(), driveUUID)
-		if err != nil {
-			return clonedDrive, nil
-		}
-
-		if drive.Status == "unmounted" {
-			break
-		}
-
-		time.Sleep(1 * time.Second)
-	}
-
-	return clonedDrive, nil
-}
+// func cloneDrive(d *schema.ResourceData, client *cloudsigma.Client) (*cloudsigma.Drive, error) {
+// 	uuid := d.Get("drive").(string)
+// 	driveCloneRequest := &cloudsigma.DriveCloneRequest{
+// 		Name:        d.Get("name").(string),
+// 		Size:        10 * 1024 * 1024 * 1024,
+// 		StorageType: "dssd",
+// 	}
+//
+// 	log.Printf("[DEBUG] SSH key create configuration: %#v", driveCloneRequest)
+// 	clonedDrive, _, err := client.LibraryDrives.Clone(context.Background(), uuid, driveCloneRequest)
+// 	if err != nil {
+// 		return clonedDrive, err
+// 	}
+//
+// 	log.Printf("[DEBUG] Waiting until cloning process are done...")
+// 	driveUUID := clonedDrive.UUID
+// 	for {
+// 		drive, _, err := client.Drives.Get(context.Background(), driveUUID)
+// 		if err != nil {
+// 			return clonedDrive, nil
+// 		}
+//
+// 		if drive.Status == "unmounted" {
+// 			break
+// 		}
+//
+// 		time.Sleep(1 * time.Second)
+// 	}
+//
+// 	return clonedDrive, nil
+// }
 
 func createServer(d *schema.ResourceData, drive *cloudsigma.Drive, client *cloudsigma.Client) (*cloudsigma.Server, error) {
 	serverCreateRequest := &cloudsigma.ServerCreateRequest{
