@@ -30,7 +30,9 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 
-		DataSourcesMap: map[string]*schema.Resource{},
+		DataSourcesMap: map[string]*schema.Resource{
+			"cloudsigma_location": dataSourceCloudSigmaLocation(),
+		},
 
 		ResourcesMap: map[string]*schema.Resource{
 			"cloudsigma_server":  resourceCloudSigmaServer(),
