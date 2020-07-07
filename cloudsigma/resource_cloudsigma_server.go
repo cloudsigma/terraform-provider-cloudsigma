@@ -3,8 +3,6 @@ package cloudsigma
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -49,29 +47,29 @@ func resourceCloudSigmaServer() *schema.Resource {
 }
 
 func resourceCloudSigmaServerCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*cloudsigma.Client)
-
-	// log.Printf("[DEBUG] Cloning library drive...")
-	var drive *cloudsigma.Drive
-	// drive, err := cloneDrive(d, client)
+	// client := meta.(*cloudsigma.Client)
+	//
+	// // log.Printf("[DEBUG] Cloning library drive...")
+	// var drive *cloudsigma.Drive
+	// // drive, err := cloneDrive(d, client)
+	// // if err != nil {
+	// // 	return fmt.Errorf("error creating library drive: %s", err)
+	// // }
+	//
+	// log.Printf("[DEBUG] Creating CloudSigma server...")
+	// server, err := createServer(d, drive, client)
 	// if err != nil {
-	// 	return fmt.Errorf("error creating library drive: %s", err)
+	// 	return fmt.Errorf("error creating server: %s", err)
 	// }
-
-	log.Printf("[DEBUG] Creating CloudSigma server...")
-	server, err := createServer(d, drive, client)
-	if err != nil {
-		return fmt.Errorf("error creating server: %s", err)
-	}
-
-	log.Printf("[DEBUG] Starting CloudSigma server...")
-	err = startServer(server.UUID, client)
-	if err != nil {
-		return err
-	}
-
-	d.SetId(server.UUID)
-	log.Printf("[INFO] Server: %s", server.UUID)
+	//
+	// log.Printf("[DEBUG] Starting CloudSigma server...")
+	// err = startServer(server.UUID, client)
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// d.SetId(server.UUID)
+	// log.Printf("[INFO] Server: %s", server.UUID)
 	return resourceCloudSigmaServerRead(d, meta)
 }
 
@@ -102,20 +100,20 @@ func resourceCloudSigmaServerUpdate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceCloudSigmaServerDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*cloudsigma.Client)
-
-	log.Printf("[INFO] Deleting server: %s", d.Id())
-	err := stopServer(d.Id(), client)
-	if err != nil {
-		return fmt.Errorf("error stopping server: %s", err)
-	}
-	_, err = client.Servers.Delete(context.Background(), d.Id())
-	if err != nil {
-		return fmt.Errorf("error deleting server: %s", err)
-	}
-
-	d.SetId("")
-
+	// client := meta.(*cloudsigma.Client)
+	//
+	// log.Printf("[INFO] Deleting server: %s", d.Id())
+	// err := stopServer(d.Id(), client)
+	// if err != nil {
+	// 	return fmt.Errorf("error stopping server: %s", err)
+	// }
+	// _, err = client.Servers.Delete(context.Background(), d.Id())
+	// if err != nil {
+	// 	return fmt.Errorf("error deleting server: %s", err)
+	// }
+	//
+	// d.SetId("")
+	//
 	return nil
 }
 
@@ -151,103 +149,103 @@ func resourceCloudSigmaServerDelete(d *schema.ResourceData, meta interface{}) er
 // 	return clonedDrive, nil
 // }
 
-func createServer(d *schema.ResourceData, drive *cloudsigma.Drive, client *cloudsigma.Client) (*cloudsigma.Server, error) {
-	serverCreateRequest := &cloudsigma.ServerCreateRequest{
-		CPU:         d.Get("cpu").(int),
-		CPUType:     "amd",
-		Memory:      d.Get("memory").(int) * 1024 * 1024,
-		Name:        d.Get("name").(string),
-		VNCPassword: d.Get("vnc_password").(string),
-	}
-
-	log.Printf("[DEBUG] Server create configuration: %#v", serverCreateRequest)
-	server, _, err := client.Servers.Create(context.Background(), serverCreateRequest)
-	if err != nil {
-		return server, err
-	}
-
-	attachDriveRequest := &cloudsigma.AttachDriveRequest{
-		CPU:     server.CPU,
-		CPUType: server.CPUType,
-		Drives: []cloudsigma.ServerDrive{
-			{BootOrder: 1, DevChannel: "0:0", Device: "virtio", DriveUUID: drive.UUID},
-		},
-		Memory:      server.Memory,
-		Name:        server.Name,
-		VNCPassword: server.VNCPassword,
-	}
-
-	log.Printf("[DEBUG] Attaching existing drive to virtual server...")
-	server, _, err = client.Servers.AttachDrive(context.Background(), server.UUID, attachDriveRequest)
-	if err != nil {
-		return server, err
-	}
-
-	return server, nil
-}
-
-func startServer(serverUUID string, client *cloudsigma.Client) error {
-	log.Printf("[DEBUG] Checking server state...")
-	server, _, err := client.Servers.Get(context.Background(), serverUUID)
-	if err != nil {
-		return nil
-	}
-	if server.Status == "running" {
-		log.Printf("[DEBUG] Server is already running")
-		return nil
-	}
-
-	log.Printf("[INFO] Starting CloudSigma virtual server...")
-	_, _, err = client.Servers.Start(context.Background(), serverUUID)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[DEBUG] Waiting until server is running...")
-	for {
-		server, _, err = client.Servers.Get(context.Background(), serverUUID)
-		if err != nil {
-			return nil
-		}
-		if server.Status == "running" {
-			break
-		}
-		time.Sleep(1 * time.Second)
-	}
-
-	return nil
-}
-
-func stopServer(serverUUID string, client *cloudsigma.Client) error {
-	log.Printf("[DEBUG] Checking server state...")
-	server, _, err := client.Servers.Get(context.Background(), serverUUID)
-	if err != nil {
-		return nil
-	}
-	if server.Status == "stopped" {
-		log.Printf("[DEBUG] Server is already stopped")
-		return nil
-	}
-
-	log.Printf("[DEBUG] Stopping CloudSigma virtual server...")
-	_, _, err = client.Servers.Shutdown(context.Background(), serverUUID)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[DEBUG] Waiting until server is stopped...")
-	for {
-		server, _, err := client.Servers.Get(context.Background(), serverUUID)
-		if err != nil {
-			return err
-		}
-		if server.Status == "running" {
-			return fmt.Errorf("could not stop server %v", serverUUID)
-		}
-		if server.Status == "stopped" {
-			break
-		}
-		time.Sleep(1 * time.Second)
-	}
-	return nil
-}
+// func createServer(d *schema.ResourceData, drive *cloudsigma.Drive, client *cloudsigma.Client) (*cloudsigma.Server, error) {
+// 	serverCreateRequest := &cloudsigma.ServerCreateRequest{
+// 		CPU:         d.Get("cpu").(int),
+// 		CPUType:     "amd",
+// 		Memory:      d.Get("memory").(int) * 1024 * 1024,
+// 		Name:        d.Get("name").(string),
+// 		VNCPassword: d.Get("vnc_password").(string),
+// 	}
+//
+// 	log.Printf("[DEBUG] Server create configuration: %#v", serverCreateRequest)
+// 	server, _, err := client.Servers.Create(context.Background(), serverCreateRequest)
+// 	if err != nil {
+// 		return server, err
+// 	}
+//
+// 	attachDriveRequest := &cloudsigma.AttachDriveRequest{
+// 		CPU:     server.CPU,
+// 		CPUType: server.CPUType,
+// 		Drives: []cloudsigma.ServerDrive{
+// 			{BootOrder: 1, DevChannel: "0:0", Device: "virtio", DriveUUID: drive.UUID},
+// 		},
+// 		Memory:      server.Memory,
+// 		Name:        server.Name,
+// 		VNCPassword: server.VNCPassword,
+// 	}
+//
+// 	log.Printf("[DEBUG] Attaching existing drive to virtual server...")
+// 	server, _, err = client.Servers.AttachDrive(context.Background(), server.UUID, attachDriveRequest)
+// 	if err != nil {
+// 		return server, err
+// 	}
+//
+// 	return server, nil
+// }
+//
+// func startServer(serverUUID string, client *cloudsigma.Client) error {
+// 	log.Printf("[DEBUG] Checking server state...")
+// 	server, _, err := client.Servers.Get(context.Background(), serverUUID)
+// 	if err != nil {
+// 		return nil
+// 	}
+// 	if server.Status == "running" {
+// 		log.Printf("[DEBUG] Server is already running")
+// 		return nil
+// 	}
+//
+// 	log.Printf("[INFO] Starting CloudSigma virtual server...")
+// 	_, _, err = client.Servers.Start(context.Background(), serverUUID)
+// 	if err != nil {
+// 		return err
+// 	}
+//
+// 	log.Printf("[DEBUG] Waiting until server is running...")
+// 	for {
+// 		server, _, err = client.Servers.Get(context.Background(), serverUUID)
+// 		if err != nil {
+// 			return nil
+// 		}
+// 		if server.Status == "running" {
+// 			break
+// 		}
+// 		time.Sleep(1 * time.Second)
+// 	}
+//
+// 	return nil
+// }
+//
+// func stopServer(serverUUID string, client *cloudsigma.Client) error {
+// 	log.Printf("[DEBUG] Checking server state...")
+// 	server, _, err := client.Servers.Get(context.Background(), serverUUID)
+// 	if err != nil {
+// 		return nil
+// 	}
+// 	if server.Status == "stopped" {
+// 		log.Printf("[DEBUG] Server is already stopped")
+// 		return nil
+// 	}
+//
+// 	log.Printf("[DEBUG] Stopping CloudSigma virtual server...")
+// 	_, _, err = client.Servers.Shutdown(context.Background(), serverUUID)
+// 	if err != nil {
+// 		return err
+// 	}
+//
+// 	log.Printf("[DEBUG] Waiting until server is stopped...")
+// 	for {
+// 		server, _, err := client.Servers.Get(context.Background(), serverUUID)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		if server.Status == "running" {
+// 			return fmt.Errorf("could not stop server %v", serverUUID)
+// 		}
+// 		if server.Status == "stopped" {
+// 			break
+// 		}
+// 		time.Sleep(1 * time.Second)
+// 	}
+// 	return nil
+// }

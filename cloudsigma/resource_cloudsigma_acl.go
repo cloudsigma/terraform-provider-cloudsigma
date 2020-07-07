@@ -49,7 +49,7 @@ func resourceCloudSigmaACL() *schema.Resource {
 			"permissions": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
+					Type: schema.TypeString,
 					ValidateFunc: validation.StringInSlice([]string{
 						"ATTACH",
 						"CLONE",

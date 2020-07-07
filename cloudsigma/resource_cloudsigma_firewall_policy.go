@@ -82,8 +82,8 @@ func resourceCloudSigmaFirewallPolicy() *schema.Resource {
 							Optional: true,
 						},
 						"destination_port_range": {
-							Type:     schema.TypeInt,
-							Optional: true,
+							Type:         schema.TypeInt,
+							Optional:     true,
 							ValidateFunc: validation.NoZeroValues,
 						},
 						"protocol": {
@@ -99,8 +99,8 @@ func resourceCloudSigmaFirewallPolicy() *schema.Resource {
 							Optional: true,
 						},
 						"source_port_range": {
-							Type:     schema.TypeInt,
-							Optional: true,
+							Type:         schema.TypeInt,
+							Optional:     true,
 							ValidateFunc: validation.NoZeroValues,
 						},
 					},
