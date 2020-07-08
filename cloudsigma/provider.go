@@ -43,18 +43,23 @@ func Provider() terraform.ResourceProvider {
 			"cloudsigma_ssh_key":         resourceCloudSigmaSSHKey(),
 			"cloudsigma_tag":             resourceCloudSigmaTag(),
 		},
-
-		ConfigureFunc: providerConfigure,
 	}
+
+	provider.ConfigureFunc = providerConfigure(provider)
+
 	return provider
 }
 
-func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	config := &Config{
-		Username: d.Get("username").(string),
-		Password: d.Get("password").(string),
-		Location: d.Get("location").(string),
-	}
+func providerConfigure(provider *schema.Provider) schema.ConfigureFunc {
+	return func(d *schema.ResourceData) (interface{}, error) {
+		config := &Config{
+			Username: d.Get("username").(string),
+			Password: d.Get("password").(string),
+			Location: d.Get("location").(string),
+		}
 
-	return config.Client(), nil
+		config.loadAndValidate(provider.StopContext(), provider.TerraformVersion)
+
+		return config.Client(), nil
+	}
 }

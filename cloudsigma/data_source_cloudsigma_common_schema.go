@@ -40,18 +40,21 @@ func structToMap(data interface{}) (map[string]interface{}, error) {
 		return nil, err
 	}
 	err = json.Unmarshal(a, &structMap)
+	if err != nil {
+		return nil, err
+	}
 
 	newMap := make(map[string]interface{})
 	for k, v := range structMap {
-		switch v.(type) {
+		switch v := v.(type) {
 		case string:
-			newMap[strings.ToLower(k)] = v.(string)
+			newMap[strings.ToLower(k)] = v
 		case bool:
-			newMap[strings.ToLower(k)] = strconv.FormatBool(v.(bool))
+			newMap[strings.ToLower(k)] = strconv.FormatBool(v)
 		case int:
-			newMap[strings.ToLower(k)] = strconv.FormatInt(int64(v.(int)), 10)
+			newMap[strings.ToLower(k)] = strconv.FormatInt(int64(v), 10)
 		case float64:
-			newMap[strings.ToLower(k)] = strconv.FormatFloat(v.(float64), 'f', -1, 64)
+			newMap[strings.ToLower(k)] = strconv.FormatFloat(v, 'f', -1, 64)
 		default:
 			newMap[strings.ToLower(k)] = v
 		}

@@ -118,7 +118,9 @@ func resourceCloudSigmaTagUpdate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] Tag update: %#v", tag)
 
 	updateRequest := &cloudsigma.TagUpdateRequest{
-		Name: tag.Name,
+		Tag: &cloudsigma.Tag{
+			Name: tag.Name,
+		},
 	}
 	_, _, err := client.Tags.Update(context.Background(), tag.UUID, updateRequest)
 	if err != nil {
