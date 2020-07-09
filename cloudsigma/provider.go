@@ -43,6 +43,7 @@ func Provider() terraform.ResourceProvider {
 
 		ResourcesMap: map[string]*schema.Resource{
 			"cloudsigma_acl":             resourceCloudSigmaACL(),
+			"cloudsigma_drive":           resourceCloudSigmaDrive(),
 			"cloudsigma_firewall_policy": resourceCloudSigmaFirewallPolicy(),
 			"cloudsigma_server":          resourceCloudSigmaServer(),
 			"cloudsigma_ssh_key":         resourceCloudSigmaSSHKey(),
