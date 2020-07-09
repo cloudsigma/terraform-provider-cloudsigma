@@ -47,6 +47,7 @@ func Provider() terraform.ResourceProvider {
 			"cloudsigma_drive":           resourceCloudSigmaDrive(),
 			"cloudsigma_firewall_policy": resourceCloudSigmaFirewallPolicy(),
 			"cloudsigma_server":          resourceCloudSigmaServer(),
+			"cloudsigma_snapshot":        resourceCloudSigmaSnapshot(),
 			"cloudsigma_ssh_key":         resourceCloudSigmaSSHKey(),
 			"cloudsigma_tag":             resourceCloudSigmaTag(),
 		},
