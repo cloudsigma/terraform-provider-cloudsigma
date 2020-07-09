@@ -31,14 +31,15 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"cloudsigma_capabilities": dataSourceCloudSigmaCapabilities(),
-			"cloudsigma_cloud_status": dataSourceCloudSigmaCloudStatus(),
-			"cloudsigma_ip":           dataSourceCloudSigmaIP(),
-			"cloudsigma_license":      dataSourceCloudSigmaLicense(),
-			"cloudsigma_location":     dataSourceCloudSigmaLocation(),
-			"cloudsigma_profile":      dataSourceCloudSigmaProfile(),
-			"cloudsigma_subscription": dataSourceCloudSigmaSubscription(),
-			"cloudsigma_vlan":         dataSourceCloudSigmaVLAN(),
+			"cloudsigma_capabilities":  dataSourceCloudSigmaCapabilities(),
+			"cloudsigma_cloud_status":  dataSourceCloudSigmaCloudStatus(),
+			"cloudsigma_ip":            dataSourceCloudSigmaIP(),
+			"cloudsigma_library_drive": dataSourceCloudSigmaLibraryDrive(),
+			"cloudsigma_license":       dataSourceCloudSigmaLicense(),
+			"cloudsigma_location":      dataSourceCloudSigmaLocation(),
+			"cloudsigma_profile":       dataSourceCloudSigmaProfile(),
+			"cloudsigma_subscription":  dataSourceCloudSigmaSubscription(),
+			"cloudsigma_vlan":          dataSourceCloudSigmaVLAN(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
