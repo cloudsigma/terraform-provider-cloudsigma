@@ -3,6 +3,8 @@ package cloudsigma
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -59,6 +61,29 @@ func resourceCloudSigmaSnapshotCreate(d *schema.ResourceData, meta interface{}) 
 			},
 		},
 	}
+
+	// check if drive status is mounted or unmounted
+	driveUUID := d.Get("drive").(string)
+	retryCount := 5
+	currentRetry := 1
+	for {
+		drive, _, err := client.Drives.Get(context.Background(), driveUUID)
+		if err != nil {
+			log.Printf("[DEBUG] error getting drive with uuid: %v", driveUUID)
+			if currentRetry <= retryCount {
+				currentRetry++
+				log.Printf("[DEBUG] waiting 5 seconds before next call...")
+				time.Sleep(5 * time.Second)
+				continue
+			}
+			return fmt.Errorf("error getting drive with uuid %v: %v", driveUUID, err)
+		}
+		if drive.Status == "mounted" || drive.Status == "unmounted" {
+			break
+		}
+		time.Sleep(2 * time.Second)
+	}
+
 	snapshots, _, err := client.Snapshots.Create(context.Background(), createRequest)
 	if err != nil {
 		return fmt.Errorf("error creating snapshot: %s", err)
