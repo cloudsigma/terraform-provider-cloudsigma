@@ -11,20 +11,29 @@ cache:
   directories:
     - .bin/
 
+install: true
+
 jobs:
   fast_finish: true
   include:
-    - name: "Lint"
-      script: make lint
+    - stage: "Tests"
+      name: "Lint"
+      script: make tools lint
     - name: "Test"
-      script: make test
+      script: make tools test
     - name: "Website"
-      # enable after our provider is moved to `terraform-providers`
       script: echo "testing website"
+    - stage: "Releases"
+      name: "GitHub Releases"
+      if: tag is present
+      script: make clean release
+      deploy:
+        provider: releases
+        token:
+          secure: wEsAIg8IAYO43fLQQwXIH4KkDy96d6z4h41Iry82aPmajwS0Mx9xgpILEznc6cL3clhJuC2gtPb7O9qBrZVr9djfvCNqi7ui7xvDq+M308JkTqyYxUMNPqMwAMLIS8TnweQ7+sH/uDocFFNKUdEAC4s+L9t4qRpcLMjLcPlK2nkL82YDUp/WWraHqm9VkOtKLjF+yO1+giMnBbvoVfxg3jSVU2fZTbQTsR4x+LpS1TBM2zPIXu45vljGN0W19zd96YxfIkrp1lH58LVtFpym+Mci8/UpdIKZx9Su6hc5gEtbw08TmPvSsOwwZY8FMTl+ZTMQGVFgN3DDSHA1eveIPCv0gEenCEB2GflpsxkeaSAB9eUW57XuVunDRKilebItsCnPTpjr7N4zVdhVALhbsb6c92h7zJxKYFBqbxkyfVuVQ+I8QqogX1xDugUPYd9a+ft3TxZSVDPrcYQZd4itKatN2QYtzA2jIIKabx39usLogcL2RhphVrEZ6GF90kawGU8ft8ouT084bL7hS81JYzl57YurEqBMBFOK18sKqDN60CAuD8dbEEIyspAWx5BqnhDQAqcjFod6stL4Ytj0oHTqI9rGlw/hcRTxwEY01d7psyaOQP3ZNGCPld3AmvXAMMtsca/It5wZxgKwWglmxWg7aztlqEhcwaJSPuZ0I7Y=
+        file_glob: true
+        file: build/*
+        skip_cleanup: true
+        on:
+          tags: true
 
-install:
-  - make tools
-
-branches:
-  only:
-    - master
