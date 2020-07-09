@@ -65,6 +65,20 @@ else
 endif
 
 
+## release: Build release binaries for all supported versions.
+.PHONY: release
+release:
+	@echo "==> Building release binaries..."
+	@echo "    running go build for GOOS=darwin GOARCH=amd64"
+	@GOARCH=amd64 GOOS=darwin go build -o $(BUILD_DIR)/$(PROJECT_NAME)_darwin_amd64 main.go
+	@echo "    running go build for GOOS=linux GOARCH=amd64"
+	@GOARCH=amd64 GOOS=linux go build -o $(BUILD_DIR)/$(PROJECT_NAME)_linux_amd64 main.go
+	@echo "    running go build for GOOS=windows GOARCH=amd64"
+	@GOARCH=amd64 GOOS=windows go build -o $(BUILD_DIR)/$(PROJECT_NAME)_windows_amd64.exe main.go
+	@echo "==> Generate checksums..."
+	@cd $(BUILD_DIR) && for f in *; do sha256sum "$$f" > "$$f.sha256"; done
+
+
 ## website: Build website for the provider.
 website:
 .PHONY: website
@@ -74,6 +88,7 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@echo "==> Building website for CloudSigma provider..."
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
+
 
 ## website-test: Check website for the provider.
 .PHONY: website-test
