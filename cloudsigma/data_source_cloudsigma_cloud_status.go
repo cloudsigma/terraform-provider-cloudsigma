@@ -9,9 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func dataSourceCloudSigmaCapabilities() *schema.Resource {
+func dataSourceCloudSigmaCloudStatus() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceCloudSigmaCapabilitiesRead,
+		Read: dataSourceCloudSigmaCloudStatusRead,
 
 		Schema: map[string]*schema.Schema{
 			"guest": {
@@ -30,7 +30,7 @@ func dataSourceCloudSigmaCapabilities() *schema.Resource {
 	}
 }
 
-func dataSourceCloudSigmaCapabilitiesRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceCloudSigmaCloudStatusRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*cloudsigma.Client)
 
 	cloudStatus, _, err := client.CloudStatus.Get(context.Background())

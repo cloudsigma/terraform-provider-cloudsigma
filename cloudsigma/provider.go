@@ -31,9 +31,11 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"cloudsigma_capabilities": dataSourceCloudSigmaCapabilities(),
+			// "cloudsigma_capabilities": dataSourceCloudSigmaCapabilities(),
+			"cloudsigma_cloud_status": dataSourceCloudSigmaCloudStatus(),
 			"cloudsigma_license":      dataSourceCloudSigmaLicense(),
 			"cloudsigma_location":     dataSourceCloudSigmaLocation(),
+			"cloudsigma_profile":      dataSourceCloudSigmaProfile(),
 			"cloudsigma_subscription": dataSourceCloudSigmaSubscription(),
 		},
 
