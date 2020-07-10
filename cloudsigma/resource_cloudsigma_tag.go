@@ -15,6 +15,9 @@ func resourceCloudSigmaTag() *schema.Resource {
 		Read:   resourceCloudSigmaTagRead,
 		Update: resourceCloudSigmaTagUpdate,
 		Delete: resourceCloudSigmaTagDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		SchemaVersion: 0,
 
