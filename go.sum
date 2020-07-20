@@ -33,8 +33,8 @@ github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kB
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cheggaaa/pb v1.0.27/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXHm81s=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
-github.com/cloudsigma/cloudsigma-sdk-go v0.4.1-0.20200709144050-3175ccf1cd71 h1:HB2ZvJ5VOs2RNPNYsbf1fDFqaqf4aqAYg54J+2RApx4=
-github.com/cloudsigma/cloudsigma-sdk-go v0.4.1-0.20200709144050-3175ccf1cd71/go.mod h1:oV7Cz2HpRlaPldUkhDnvySkwSMpeRNvo0vBAptLFKmI=
+github.com/cloudsigma/cloudsigma-sdk-go v0.5.1-0.20200719215256-cb641fea6844 h1:+bP3d8kbWE51hADCiZVRqidS8itsT1/CW59uN4JJdhk=
+github.com/cloudsigma/cloudsigma-sdk-go v0.5.1-0.20200719215256-cb641fea6844/go.mod h1:oV7Cz2HpRlaPldUkhDnvySkwSMpeRNvo0vBAptLFKmI=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

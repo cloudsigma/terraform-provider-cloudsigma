@@ -54,7 +54,7 @@ func resourceCloudSigmaSnapshotCreate(d *schema.ResourceData, meta interface{}) 
 	createRequest := &cloudsigma.SnapshotCreateRequest{
 		Snapshots: []cloudsigma.Snapshot{
 			{
-				Drive: cloudsigma.Drive{
+				Drive: &cloudsigma.Drive{
 					UUID: d.Get("drive").(string),
 				},
 				Name: d.Get("name").(string),
@@ -119,7 +119,7 @@ func resourceCloudSigmaSnapshotUpdate(d *schema.ResourceData, meta interface{}) 
 	client := meta.(*cloudsigma.Client)
 
 	snapshot := &cloudsigma.Snapshot{
-		Drive: cloudsigma.Drive{},
+		Drive: &cloudsigma.Drive{},
 		UUID:  d.Id(),
 	}
 
