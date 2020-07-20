@@ -64,7 +64,6 @@ func resourceCloudSigmaServerCreate(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("error creating server: %s", err)
 	}
 
-	// we create only one server
 	server := servers[0]
 	log.Printf("[INFO] Server ID: %s", server.UUID)
 	d.SetId(server.UUID)
@@ -80,7 +79,7 @@ func resourceCloudSigmaServerCreate(d *schema.ResourceData, meta interface{}) er
 		Target:  []string{"running"},
 		Refresh: serverStateRefreshFunc(client, server.UUID),
 		Timeout: 10 * time.Minute,
-		Delay:   10 * time.Second,
+		Delay:   5 * time.Second,
 	}
 	if _, err := stateConf.WaitForState(); err != nil {
 		return fmt.Errorf("error waiting for server (%s) to become running: %s", server.UUID, err)
@@ -129,7 +128,7 @@ func resourceCloudSigmaServerDelete(d *schema.ResourceData, meta interface{}) er
 		Target:  []string{"stopped"},
 		Refresh: serverStateRefreshFunc(client, d.Id()),
 		Timeout: 10 * time.Minute,
-		Delay:   10 * time.Second,
+		Delay:   5 * time.Second,
 	}
 	if _, err := stateConf.WaitForState(); err != nil {
 		return fmt.Errorf("error waiting for server (%s) to become stopped: %s", d.Id(), err)
