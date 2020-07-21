@@ -154,14 +154,3 @@ func serverStateRefreshFunc(client *cloudsigma.Client, serverUUID string) resour
 		return server, server.Status, nil
 	}
 }
-
-func driveStateRefreshFunc(client *cloudsigma.Client, uuid string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		drive, _, err := client.Drives.Get(context.Background(), uuid)
-		if err != nil {
-			return nil, "", fmt.Errorf("error retrieving drive with uuid %s: %s", uuid, err)
-		}
-
-		return drive, drive.Status, nil
-	}
-}
