@@ -1,16 +1,13 @@
 ---
-layout: "cloudsigma"
 page_title: "CloudSigma: cloudsigma_acl"
-sidebar_current: "docs-cloudsigma-resource-acl"
-description: |-
-  Provides a CloudSigma ACL resource.
+
 ---
 
-# cloudsigma\_acl
+# Resource: cloudsigma_acl
 
-Provides a CloudSigma ACL resource. Access Control Lists (ACLs) can be used to grant permissions
-to another user to manage your resources. Permissions can be granted on servers, drives, network
-resources, and firewall policies.
+Provides a CloudSigma ACL resource. Access Control Lists (ACLs) can be used to
+grant permissions to another user to manage your resources. Permissions can be
+granted on servers, drives, network resources, and firewall policies.
 
 
 ## Example Usage

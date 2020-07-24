@@ -1,15 +1,13 @@
 ---
-layout: "cloudsigma"
 page_title: "CloudSigma: cloudsigma_tag"
-sidebar_current: "docs-cloudsigma-resource-tag"
-description: |-
-  Provides a CloudSigma tag resource.
+
 ---
 
-# cloudsigma\_tag
+# Resource: cloudsigma_tag
 
-Provides a CloudSigma tag resource. A Tag is a label that can be applied to a CloudSigma resource in order to better
-organize or facilitate the lookups and actions on it. Tags created with this resource can be referenced in your
+Provides a CloudSigma tag resource. A Tag is a label that can be applied to
+a CloudSigma resource in order to better organize or facilitate the lookups
+and actions on it. Tags created with this resource can be referenced in your
 configurations via their ID.
 
 

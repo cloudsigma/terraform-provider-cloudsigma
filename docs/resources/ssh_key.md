@@ -1,27 +1,23 @@
 ---
-layout: "cloudsigma"
-page_title: "CloudSigma: cloudsigma_ssh_key"
-sidebar_current: "docs-cloudsigma-resource-ssh-key"
-description: |-
-  Provides a CloudSigma SSH key resource.
+page_title: "CloudSigma: cloudsigma_ssh_key
+
 ---
 
-# cloudsigma\_ssh_key
+# Resource: cloudsigma_ssh_key
 
- Provides a CloudSigma SSH key resource. to allow you to manage SSH keys. Keys created with this resource can be referenced
- in your server configuration via their ID.
+Provides a CloudSigma SSH key resource. to allow you to manage SSH keys. Keys
+created with this resource can be referenced in your server configuration via
+their IDs.
 
 
 ## Example Usage
 
 ```hcl
 # Create a new SSH key
-resource "cloudsigma_ssh_key" "default" {
-  name       = "Terraform Example"
+resource "cloudsigma_ssh_key" "admin" {
+  name       = "admin"
   public_key = file("/Users/terraform/.ssh/id_rsa.pub")
 }
-
-...
 ```
 
 
