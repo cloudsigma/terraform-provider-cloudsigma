@@ -13,8 +13,11 @@ DEV_GOOS := $(shell go env GOOS)
 ## tools: Install required tooling.
 .PHONY: tools
 tools:
-	@echo "Installing required tooling..."
+ifeq (,$(wildcard ./.bin/golangci-lint*))
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b .bin/ v1.24.0
+else
+	@echo "==> Required tooling is already installed"
+endif
 
 
 ## clean: Delete the build directory.
