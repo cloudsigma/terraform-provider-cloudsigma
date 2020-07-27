@@ -3,15 +3,15 @@ package cloudsigma
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCloudSigmaLibraryDrive() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceCloudSigmaLibraryDriveRead,
+		ReadContext: dataSourceCloudSigmaLibraryDriveRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
@@ -56,17 +56,17 @@ func dataSourceCloudSigmaLibraryDrive() *schema.Resource {
 	}
 }
 
-func dataSourceCloudSigmaLibraryDriveRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceCloudSigmaLibraryDriveRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
 	filters, filtersOk := d.GetOk("filter")
 	if !filtersOk {
-		return fmt.Errorf("issue with filters: %v", filtersOk)
+		return diag.Errorf("issue with filters: %v", filtersOk)
 	}
 
-	libdrives, _, err := client.LibraryDrives.List(context.Background())
+	libdrives, _, err := client.LibraryDrives.List(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting libdrives: %v", err)
+		return diag.Errorf("error getting libdrives: %v", err)
 	}
 
 	libdriveList := make([]cloudsigma.LibraryDrive, 0)
@@ -75,7 +75,7 @@ func dataSourceCloudSigmaLibraryDriveRead(d *schema.ResourceData, meta interface
 	for _, libdrive := range libdrives {
 		sm, err := structToMap(libdrive)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if filterLoop(f, sm) {
@@ -84,10 +84,10 @@ func dataSourceCloudSigmaLibraryDriveRead(d *schema.ResourceData, meta interface
 	}
 
 	if len(libdriveList) > 1 {
-		return errors.New("your search returned too many results. Please refine your search to be more specific")
+		return diag.FromErr(errors.New("your search returned too many results. Please refine your search to be more specific"))
 	}
 	if len(libdriveList) < 1 {
-		return errors.New("no results were found")
+		return diag.FromErr(errors.New("no results were found"))
 	}
 
 	d.SetId(libdriveList[0].UUID)

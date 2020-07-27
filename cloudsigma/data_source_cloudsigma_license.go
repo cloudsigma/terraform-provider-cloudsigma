@@ -3,15 +3,15 @@ package cloudsigma
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCloudSigmaLicense() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceCloudSigmaLicenseRead,
+		ReadContext: dataSourceCloudSigmaLicenseRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
@@ -44,17 +44,17 @@ func dataSourceCloudSigmaLicense() *schema.Resource {
 	}
 }
 
-func dataSourceCloudSigmaLicenseRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceCloudSigmaLicenseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
 	filters, filtersOk := d.GetOk("filter")
 	if !filtersOk {
-		return fmt.Errorf("issue with filters: %v", filtersOk)
+		return diag.Errorf("issue with filters: %v", filtersOk)
 	}
 
-	licenses, _, err := client.Licenses.List(context.Background())
+	licenses, _, err := client.Licenses.List(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting licenses: %v", err)
+		return diag.Errorf("error getting licenses: %v", err)
 	}
 
 	licenseList := make([]cloudsigma.License, 0)
@@ -63,7 +63,7 @@ func dataSourceCloudSigmaLicenseRead(d *schema.ResourceData, meta interface{}) e
 	for _, license := range licenses {
 		sm, err := structToMap(license)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if filterLoop(f, sm) {
@@ -72,10 +72,10 @@ func dataSourceCloudSigmaLicenseRead(d *schema.ResourceData, meta interface{}) e
 	}
 
 	if len(licenseList) > 1 {
-		return errors.New("your search returned too many results. Please refine your search to be more specific")
+		return diag.FromErr(errors.New("your search returned too many results. Please refine your search to be more specific"))
 	}
 	if len(licenseList) < 1 {
-		return errors.New("no results were found")
+		return diag.FromErr(errors.New("no results were found"))
 	}
 
 	d.SetId(licenseList[0].Name)

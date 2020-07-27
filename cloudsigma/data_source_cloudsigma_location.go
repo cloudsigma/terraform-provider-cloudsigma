@@ -3,15 +3,15 @@ package cloudsigma
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCloudSigmaLocation() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceCloudSigmaLocationRead,
+		ReadContext: dataSourceCloudSigmaLocationRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
@@ -36,17 +36,17 @@ func dataSourceCloudSigmaLocation() *schema.Resource {
 	}
 }
 
-func dataSourceCloudSigmaLocationRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceCloudSigmaLocationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
 	filters, filtersOk := d.GetOk("filter")
 	if !filtersOk {
-		return fmt.Errorf("issue with filters: %v", filtersOk)
+		return diag.Errorf("issue with filters: %v", filtersOk)
 	}
 
 	locations, _, err := client.Locations.List(context.Background())
 	if err != nil {
-		return fmt.Errorf("error getting locations: %v", err)
+		return diag.Errorf("error getting locations: %v", err)
 	}
 
 	locationList := make([]cloudsigma.Location, 0)
@@ -55,7 +55,7 @@ func dataSourceCloudSigmaLocationRead(d *schema.ResourceData, meta interface{}) 
 	for _, location := range locations {
 		sm, err := structToMap(location)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if filterLoop(f, sm) {
@@ -64,10 +64,10 @@ func dataSourceCloudSigmaLocationRead(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if len(locationList) > 1 {
-		return errors.New("your search returned too many results. Please refine your search to be more specific")
+		return diag.FromErr(errors.New("your search returned too many results. Please refine your search to be more specific"))
 	}
 	if len(locationList) < 1 {
-		return errors.New("no results were found")
+		return diag.FromErr(errors.New("no results were found"))
 	}
 
 	d.SetId(locationList[0].ID)

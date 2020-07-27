@@ -3,15 +3,15 @@ package cloudsigma
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCloudSigmaIP() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceCloudSigmaIPRead,
+		ReadContext: dataSourceCloudSigmaIPRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
@@ -32,17 +32,17 @@ func dataSourceCloudSigmaIP() *schema.Resource {
 	}
 }
 
-func dataSourceCloudSigmaIPRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceCloudSigmaIPRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
 	filters, filtersOk := d.GetOk("filter")
 	if !filtersOk {
-		return fmt.Errorf("issue with filters: %v", filtersOk)
+		return diag.Errorf("issue with filters: %v", filtersOk)
 	}
 
-	ips, _, err := client.IPs.List(context.Background())
+	ips, _, err := client.IPs.List(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting ips: %v", err)
+		return diag.Errorf("error getting ips: %v", err)
 	}
 
 	ipList := make([]cloudsigma.IP, 0)
@@ -51,7 +51,7 @@ func dataSourceCloudSigmaIPRead(d *schema.ResourceData, meta interface{}) error 
 	for _, ip := range ips {
 		sm, err := structToMap(ip)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if filterLoop(f, sm) {
@@ -60,10 +60,10 @@ func dataSourceCloudSigmaIPRead(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	if len(ipList) > 1 {
-		return errors.New("your search returned too many results. Please refine your search to be more specific")
+		return diag.FromErr(errors.New("your search returned too many results. Please refine your search to be more specific"))
 	}
 	if len(ipList) < 1 {
-		return errors.New("no results were found")
+		return diag.FromErr(errors.New("no results were found"))
 	}
 
 	d.SetId(ipList[0].UUID)

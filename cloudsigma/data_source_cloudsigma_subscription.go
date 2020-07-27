@@ -3,15 +3,15 @@ package cloudsigma
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCloudSigmaSubscription() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceCloudSigmaSubscriptionRead,
+		ReadContext: dataSourceCloudSigmaSubscriptionRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
@@ -60,17 +60,17 @@ func dataSourceCloudSigmaSubscription() *schema.Resource {
 	}
 }
 
-func dataSourceCloudSigmaSubscriptionRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceCloudSigmaSubscriptionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
 	filters, filtersOk := d.GetOk("filter")
 	if !filtersOk {
-		return fmt.Errorf("issue with filters: %v", filtersOk)
+		return diag.Errorf("issue with filters: %v", filtersOk)
 	}
 
-	subscriptions, _, err := client.Subscriptions.List(context.Background())
+	subscriptions, _, err := client.Subscriptions.List(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting subscriptions: %v", err)
+		return diag.Errorf("error getting subscriptions: %v", err)
 	}
 
 	subscriptionList := make([]cloudsigma.Subscription, 0)
@@ -79,7 +79,7 @@ func dataSourceCloudSigmaSubscriptionRead(d *schema.ResourceData, meta interface
 	for _, subscription := range subscriptions {
 		sm, err := structToMap(subscription)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if filterLoop(f, sm) {
@@ -88,10 +88,10 @@ func dataSourceCloudSigmaSubscriptionRead(d *schema.ResourceData, meta interface
 	}
 
 	if len(subscriptionList) > 1 {
-		return errors.New("your search returned too many results. Please refine your search to be more specific")
+		return diag.FromErr(errors.New("your search returned too many results. Please refine your search to be more specific"))
 	}
 	if len(subscriptionList) < 1 {
-		return errors.New("no results were found")
+		return diag.FromErr(errors.New("no results were found"))
 	}
 
 	d.SetId(subscriptionList[0].UUID)

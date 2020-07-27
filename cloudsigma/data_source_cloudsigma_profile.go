@@ -2,15 +2,15 @@ package cloudsigma
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCloudSigmaProfile() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceCloudSigmaProfileRead,
+		ReadContext: dataSourceCloudSigmaProfileRead,
 
 		Schema: map[string]*schema.Schema{
 			"address": {
@@ -37,12 +37,12 @@ func dataSourceCloudSigmaProfile() *schema.Resource {
 	}
 }
 
-func dataSourceCloudSigmaProfileRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceCloudSigmaProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	profile, _, err := client.Profile.Get(context.Background())
+	profile, _, err := client.Profile.Get(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting profile: %v", err)
+		return diag.Errorf("error getting profile: %v", err)
 	}
 
 	d.SetId(profile.UUID)
