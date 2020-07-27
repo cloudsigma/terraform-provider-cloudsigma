@@ -2,19 +2,19 @@ package cloudsigma
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceCloudSigmaSSHKey() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceCloudSigmaSSHKeyCreate,
-		Read:   resourceCloudSigmaSSHKeyRead,
-		Update: resourceCloudSigmaSSHKeyUpdate,
-		Delete: resourceCloudSigmaSSHKeyDelete,
+		CreateContext: resourceCloudSigmaSSHKeyCreate,
+		ReadContext:   resourceCloudSigmaSSHKeyRead,
+		UpdateContext: resourceCloudSigmaSSHKeyUpdate,
+		DeleteContext: resourceCloudSigmaSSHKeyDelete,
 
 		SchemaVersion: 0,
 
@@ -27,20 +27,22 @@ func resourceCloudSigmaSSHKey() *schema.Resource {
 			"private_key": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 
 			"public_key": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 		},
 	}
 }
 
-func resourceCloudSigmaSSHKeyCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaSSHKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	keypairCreateRequest := &cloudsigma.KeypairCreateRequest{
+	createRequest := &cloudsigma.KeypairCreateRequest{
 		Keypairs: []cloudsigma.Keypair{
 			{
 				Name:      d.Get("name").(string),
@@ -48,32 +50,29 @@ func resourceCloudSigmaSSHKeyCreate(d *schema.ResourceData, meta interface{}) er
 			},
 		},
 	}
-
-	log.Printf("[DEBUG] SSH key create configuration: %#v", keypairCreateRequest)
-	keypairs, _, err := client.Keypairs.Create(context.Background(), keypairCreateRequest)
+	log.Printf("[DEBUG] SSH key create configuration: %#v", *createRequest)
+	keypairs, _, err := client.Keypairs.Create(ctx, createRequest)
 	if err != nil {
-		return fmt.Errorf("error creating SSH key: %s", err)
+		return diag.FromErr(err)
 	}
 
-	keypair := keypairs[0]
+	d.SetId(keypairs[0].UUID)
+	log.Printf("[INFO] SSH key ID: %s", d.Id())
 
-	d.SetId(keypair.UUID)
-	log.Printf("[INFO] SSH key: %s", keypair.UUID)
-
-	return resourceCloudSigmaSSHKeyRead(d, meta)
+	return resourceCloudSigmaSSHKeyRead(ctx, d, meta)
 }
 
-func resourceCloudSigmaSSHKeyRead(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaSSHKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	keypair, resp, err := client.Keypairs.Get(context.Background(), d.Id())
+	keypair, resp, err := client.Keypairs.Get(ctx, d.Id())
 	if err != nil {
 		// If the key is somehow already destroyed, mark as successfully gone
 		if resp != nil && resp.StatusCode == 404 {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("error retrieving SSH key: %s", err)
+		return diag.FromErr(err)
 	}
 
 	_ = d.Set("name", keypair.Name)
@@ -83,7 +82,7 @@ func resourceCloudSigmaSSHKeyRead(d *schema.ResourceData, meta interface{}) erro
 	return nil
 }
 
-func resourceCloudSigmaSSHKeyUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaSSHKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
 	keypair := &cloudsigma.Keypair{
@@ -97,26 +96,24 @@ func resourceCloudSigmaSSHKeyUpdate(d *schema.ResourceData, meta interface{}) er
 		keypair.PublicKey = publicKey.(string)
 	}
 
-	log.Printf("[DEBUG] SSH key update: %#v", keypair)
-
 	updateRequest := &cloudsigma.KeypairUpdateRequest{
 		Keypair: keypair,
 	}
-	_, _, err := client.Keypairs.Update(context.Background(), keypair.UUID, updateRequest)
+	log.Printf("[DEBUG] SSH key update configuration: %#v", *updateRequest)
+	_, _, err := client.Keypairs.Update(context.Background(), d.Id(), updateRequest)
 	if err != nil {
-		return fmt.Errorf("failed to update SSH key: %s", err)
+		return diag.FromErr(err)
 	}
 
-	return resourceCloudSigmaSSHKeyRead(d, meta)
+	return resourceCloudSigmaSSHKeyRead(ctx, d, meta)
 }
 
-func resourceCloudSigmaSSHKeyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaSSHKeyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	log.Printf("[INFO] Deleting SSH key: %s", d.Id())
-	_, err := client.Keypairs.Delete(context.Background(), d.Id())
+	_, err := client.Keypairs.Delete(ctx, d.Id())
 	if err != nil {
-		return fmt.Errorf("error deleting SSH key: %s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

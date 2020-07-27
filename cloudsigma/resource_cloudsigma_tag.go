@@ -74,7 +74,7 @@ func resourceCloudSigmaTagCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	d.SetId(tags[0].UUID)
-	log.Printf("[INFO] Tag ID: %s", tags[0].UUID)
+	log.Printf("[INFO] Tag ID: %s", d.Id())
 
 	return resourceCloudSigmaTagRead(ctx, d, meta)
 }
