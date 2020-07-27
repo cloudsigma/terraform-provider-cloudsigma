@@ -4,10 +4,11 @@ import (
 	"context"
 	"os"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// Provider returns a schema.Provider for cloudsigma.
+// Provider returns a schema.Provider for CloudSigma.
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
@@ -15,11 +16,13 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_USERNAME", os.Getenv("CLOUDSIGMA_USERNAME")),
+				Description: "The CloudSigma user email.",
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_PASSWORD", os.Getenv("CLOUDSIGMA_PASSWORD")),
+				Description: "The CloudSigma password.",
 			},
 			"location": {
 				Type:        schema.TypeString,
@@ -51,20 +54,20 @@ func Provider() *schema.Provider {
 		},
 	}
 
-	provider.ConfigureFunc = providerConfigure(provider)
+	provider.ConfigureContextFunc = providerConfigure(provider)
 
 	return provider
 }
 
-func providerConfigure(provider *schema.Provider) schema.ConfigureFunc {
-	return func(d *schema.ResourceData) (interface{}, error) {
+func providerConfigure(provider *schema.Provider) schema.ConfigureContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		config := &Config{
 			Username: d.Get("username").(string),
 			Password: d.Get("password").(string),
 			Location: d.Get("location").(string),
 		}
 
-		config.loadAndValidate(context.Background(), provider.TerraformVersion)
+		config.loadAndValidate(ctx, provider.TerraformVersion)
 
 		return config.Client(), nil
 	}

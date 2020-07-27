@@ -2,21 +2,21 @@ package cloudsigma
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceCloudSigmaTag() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceCloudSigmaTagCreate,
-		Read:   resourceCloudSigmaTagRead,
-		Update: resourceCloudSigmaTagUpdate,
-		Delete: resourceCloudSigmaTagDelete,
+		CreateContext: resourceCloudSigmaTagCreate,
+		ReadContext:   resourceCloudSigmaTagRead,
+		UpdateContext: resourceCloudSigmaTagUpdate,
+		DeleteContext: resourceCloudSigmaTagDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		SchemaVersion: 0,
@@ -27,26 +27,26 @@ func resourceCloudSigmaTag() *schema.Resource {
 				Required: true,
 			},
 
-			"owner": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"resource_uri": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-
-						"uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-					},
-				},
-			},
+			// "owner": {
+			// 	Type:     schema.TypeList,
+			// 	Optional: true,
+			// 	Computed: true,
+			// 	Elem: &schema.Resource{
+			// 		Schema: map[string]*schema.Schema{
+			// 			"resource_uri": {
+			// 				Type:     schema.TypeString,
+			// 				Optional: true,
+			// 				Computed: true,
+			// 			},
+			//
+			// 			"uuid": {
+			// 				Type:     schema.TypeString,
+			// 				Optional: true,
+			// 				Computed: true,
+			// 			},
+			// 		},
+			// 	},
+			// },
 
 			"resource_uri": {
 				Type:     schema.TypeString,
@@ -56,90 +56,83 @@ func resourceCloudSigmaTag() *schema.Resource {
 	}
 }
 
-func resourceCloudSigmaTagCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaTagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	log.Printf("[DEBUG] Creating CloudSigma tag...")
-
-	tagCreateRequest := &cloudsigma.TagCreateRequest{
+	// build create configuration
+	createRequest := &cloudsigma.TagCreateRequest{
 		Tags: []cloudsigma.Tag{
 			{
 				Name: d.Get("name").(string),
 			},
 		},
 	}
-	log.Printf("[DEBUG] Tag create configuration: %#v", tagCreateRequest)
-	tags, _, err := client.Tags.Create(context.Background(), tagCreateRequest)
+	log.Printf("[DEBUG] Tag create configuration: %#v", *createRequest)
+	tags, _, err := client.Tags.Create(ctx, createRequest)
 	if err != nil {
-		return fmt.Errorf("error creating tag: %s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(tags[0].UUID)
-	log.Printf("[INFO] Tag: %s", tags[0].UUID)
+	log.Printf("[INFO] Tag ID: %s", tags[0].UUID)
 
-	return resourceCloudSigmaTagRead(d, meta)
+	return resourceCloudSigmaTagRead(ctx, d, meta)
 }
 
-func resourceCloudSigmaTagRead(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaTagRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	tag, resp, err := client.Tags.Get(context.Background(), d.Id())
+	tag, resp, err := client.Tags.Get(ctx, d.Id())
 	if err != nil {
 		// If the tag is somehow already destroyed, mark as successfully gone
 		if resp != nil && resp.StatusCode == 404 {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("error retrieving tag: %s", err)
+		return diag.FromErr(err)
 	}
 
 	_ = d.Set("name", tag.Name)
 	_ = d.Set("resource_uri", tag.ResourceURI)
 
-	owner := []map[string]interface{}{
-		{
-			"resource_uri": tag.Owner.ResourceURI,
-			"uuid":         tag.Owner.UUID,
-		},
-	}
-	_ = d.Set("owner", owner)
+	// owner := []map[string]interface{}{
+	// 	{
+	// 		"resource_uri": tag.Owner.ResourceURI,
+	// 		"uuid":         tag.Owner.UUID,
+	// 	},
+	// }
+	// _ = d.Set("owner", owner)
 
 	return nil
 }
 
-func resourceCloudSigmaTagUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaTagUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	tag := &cloudsigma.Tag{
-		UUID: d.Id(),
+	if d.HasChange("name") {
+		_, newName := d.GetChange("name")
+		updateRequest := &cloudsigma.TagUpdateRequest{
+			Tag: &cloudsigma.Tag{
+				Name: newName.(string),
+			},
+		}
+		log.Printf("[DEBUG] Tag update configuration: %#v", *updateRequest)
+		_, _, err := client.Tags.Update(context.Background(), d.Id(), updateRequest)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
 	}
 
-	if name, ok := d.GetOk("name"); ok {
-		tag.Name = name.(string)
-	}
-
-	log.Printf("[DEBUG] Tag update: %#v", tag)
-
-	updateRequest := &cloudsigma.TagUpdateRequest{
-		Tag: &cloudsigma.Tag{
-			Name: tag.Name,
-		},
-	}
-	_, _, err := client.Tags.Update(context.Background(), tag.UUID, updateRequest)
-	if err != nil {
-		return fmt.Errorf("failed to update tag: %s", err)
-	}
-
-	return resourceCloudSigmaTagRead(d, meta)
+	return resourceCloudSigmaTagRead(ctx, d, meta)
 }
 
-func resourceCloudSigmaTagDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaTagDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	log.Printf("[INFO] Deleting tag: %s", d.Id())
-	_, err := client.Tags.Delete(context.Background(), d.Id())
+	_, err := client.Tags.Delete(ctx, d.Id())
 	if err != nil {
-		return fmt.Errorf("error deleting tag: %s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
