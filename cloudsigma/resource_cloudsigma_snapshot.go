@@ -2,20 +2,21 @@ package cloudsigma
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceCloudSigmaSnapshot() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceCloudSigmaSnapshotCreate,
-		Read:   resourceCloudSigmaSnapshotRead,
-		Update: resourceCloudSigmaSnapshotUpdate,
-		Delete: resourceCloudSigmaSnapshotDelete,
+		CreateContext: resourceCloudSigmaSnapshotCreate,
+		ReadContext:   resourceCloudSigmaSnapshotRead,
+		UpdateContext: resourceCloudSigmaSnapshotUpdate,
+		DeleteContext: resourceCloudSigmaSnapshotDelete,
 
 		SchemaVersion: 0,
 
@@ -48,8 +49,22 @@ func resourceCloudSigmaSnapshot() *schema.Resource {
 	}
 }
 
-func resourceCloudSigmaSnapshotCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaSnapshotCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
+
+	// check if drive status is mounted or unmounted
+	driveUUID := d.Get("drive").(string)
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"cloning_dst", "creating"},
+		Target:     []string{"mounted", "unmounted"},
+		Refresh:    driveStateRefreshFunc(ctx, client, driveUUID),
+		Timeout:    10 * time.Minute,
+		Delay:      5 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.FromErr(err)
+	}
 
 	createRequest := &cloudsigma.SnapshotCreateRequest{
 		Snapshots: []cloudsigma.Snapshot{
@@ -61,49 +76,28 @@ func resourceCloudSigmaSnapshotCreate(d *schema.ResourceData, meta interface{}) 
 			},
 		},
 	}
-
-	// check if drive status is mounted or unmounted
-	driveUUID := d.Get("drive").(string)
-	retryCount := 5
-	currentRetry := 1
-	for {
-		drive, _, err := client.Drives.Get(context.Background(), driveUUID)
-		if err != nil {
-			log.Printf("[DEBUG] error getting drive with uuid: %v", driveUUID)
-			if currentRetry <= retryCount {
-				currentRetry++
-				log.Printf("[DEBUG] waiting 5 seconds before next call...")
-				time.Sleep(5 * time.Second)
-				continue
-			}
-			return fmt.Errorf("error getting drive with uuid %v: %v", driveUUID, err)
-		}
-		if drive.Status == "mounted" || drive.Status == "unmounted" {
-			break
-		}
-		time.Sleep(2 * time.Second)
-	}
-
-	snapshots, _, err := client.Snapshots.Create(context.Background(), createRequest)
+	log.Printf("[DEBUG] Snapshot create configuration: %#v", *createRequest)
+	snapshots, _, err := client.Snapshots.Create(ctx, createRequest)
 	if err != nil {
-		return fmt.Errorf("error creating snapshot: %s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(snapshots[0].UUID)
+	log.Printf("[INFO] Snapshot ID: %s", d.Id())
 
-	return resourceCloudSigmaSnapshotRead(d, meta)
+	return resourceCloudSigmaSnapshotRead(ctx, d, meta)
 }
 
-func resourceCloudSigmaSnapshotRead(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaSnapshotRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	snapshot, resp, err := client.Snapshots.Get(context.Background(), d.Id())
+	snapshot, resp, err := client.Snapshots.Get(ctx, d.Id())
 	if err != nil {
 		if resp != nil && resp.StatusCode == 404 {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("error retrieving snapshot: %s", err)
+		return diag.FromErr(err)
 	}
 
 	_ = d.Set("drive", snapshot.Drive.UUID)
@@ -115,7 +109,7 @@ func resourceCloudSigmaSnapshotRead(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-func resourceCloudSigmaSnapshotUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaSnapshotUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
 	snapshot := &cloudsigma.Snapshot{
@@ -133,21 +127,21 @@ func resourceCloudSigmaSnapshotUpdate(d *schema.ResourceData, meta interface{}) 
 	updateRequest := &cloudsigma.SnapshotUpdateRequest{
 		Snapshot: snapshot,
 	}
-
-	_, _, err := client.Snapshots.Update(context.Background(), snapshot.UUID, updateRequest)
+	log.Printf("[DEBUG] Snapshot update configuration: %#v", *updateRequest)
+	_, _, err := client.Snapshots.Update(ctx, snapshot.UUID, updateRequest)
 	if err != nil {
-		return fmt.Errorf("failed to update snapshot: %s", err)
+		return diag.FromErr(err)
 	}
 
-	return resourceCloudSigmaSnapshotRead(d, meta)
+	return resourceCloudSigmaSnapshotRead(ctx, d, meta)
 }
 
-func resourceCloudSigmaSnapshotDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaSnapshotDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	_, err := client.Snapshots.Delete(context.Background(), d.Id())
+	_, err := client.Snapshots.Delete(ctx, d.Id())
 	if err != nil {
-		return fmt.Errorf("error deleting snapshot: %s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

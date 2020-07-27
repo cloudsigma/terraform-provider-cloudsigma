@@ -86,7 +86,7 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 	d.SetId(server.UUID)
 
 	// start server
-	err = startServer(client, d.Id())
+	err = startServer(ctx, client, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -152,7 +152,7 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 		log.Printf("[DEBUG] Server update configuration: %#v", *updateRequest)
 		// stop server first
-		err := stopServer(client, d.Id())
+		err := stopServer(ctx, client, d.Id())
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -162,7 +162,7 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 			return diag.FromErr(err)
 		}
 		// start server again
-		err = startServer(client, d.Id())
+		err = startServer(ctx, client, d.Id())
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -175,7 +175,7 @@ func resourceCloudSigmaServerDelete(ctx context.Context, d *schema.ResourceData,
 	client := meta.(*cloudsigma.Client)
 
 	// Stop server
-	err := stopServer(client, d.Id())
+	err := stopServer(ctx, client, d.Id())
 	if err != nil {
 		return diag.Errorf("error stopping server: %s", err)
 	}
@@ -191,9 +191,9 @@ func resourceCloudSigmaServerDelete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func serverStateRefreshFunc(client *cloudsigma.Client, serverUUID string) resource.StateRefreshFunc {
+func serverStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, serverUUID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		server, _, err := client.Servers.Get(context.Background(), serverUUID)
+		server, _, err := client.Servers.Get(ctx, serverUUID)
 		if err != nil {
 			return nil, "", fmt.Errorf("error retrieving server with uuid %s: %s", serverUUID, err)
 		}
@@ -202,11 +202,11 @@ func serverStateRefreshFunc(client *cloudsigma.Client, serverUUID string) resour
 	}
 }
 
-func startServer(client *cloudsigma.Client, serverUUID string) error {
+func startServer(ctx context.Context, client *cloudsigma.Client, serverUUID string) error {
 	log.Printf("[DEBUG] Starting server (%s)", serverUUID)
 
 	log.Printf("[DEBUG] Checking server status before starting")
-	server, _, err := client.Servers.Get(context.Background(), serverUUID)
+	server, _, err := client.Servers.Get(ctx, serverUUID)
 	if err != nil {
 		return fmt.Errorf("error retrieving server: %s", err)
 	}
@@ -216,30 +216,30 @@ func startServer(client *cloudsigma.Client, serverUUID string) error {
 		return nil
 	}
 
-	_, _, err = client.Servers.Start(context.Background(), server.UUID)
+	_, _, err = client.Servers.Start(ctx, server.UUID)
 	if err != nil {
 		return fmt.Errorf("error starting server: %s", err)
 	}
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"stopped", "starting"},
 		Target:     []string{"running"},
-		Refresh:    serverStateRefreshFunc(client, server.UUID),
+		Refresh:    serverStateRefreshFunc(ctx, client, server.UUID),
 		Timeout:    10 * time.Minute,
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	if _, err := stateConf.WaitForStateContext(context.Background()); err != nil {
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		return fmt.Errorf("error waiting for server (%s) to become running: %s", server.UUID, err)
 	}
 
 	return nil
 }
 
-func stopServer(client *cloudsigma.Client, serverUUID string) error {
+func stopServer(ctx context.Context, client *cloudsigma.Client, serverUUID string) error {
 	log.Printf("[DEBUG] Stopping server (%s)", serverUUID)
 
 	log.Printf("[DEBUG] Checking server status before stopping")
-	server, _, err := client.Servers.Get(context.Background(), serverUUID)
+	server, _, err := client.Servers.Get(ctx, serverUUID)
 	if err != nil {
 		return fmt.Errorf("error retrieving server: %s", err)
 	}
@@ -256,7 +256,7 @@ func stopServer(client *cloudsigma.Client, serverUUID string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"running", "stopping"},
 		Target:     []string{"stopped"},
-		Refresh:    serverStateRefreshFunc(client, server.UUID),
+		Refresh:    serverStateRefreshFunc(ctx, client, server.UUID),
 		Timeout:    10 * time.Minute,
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
