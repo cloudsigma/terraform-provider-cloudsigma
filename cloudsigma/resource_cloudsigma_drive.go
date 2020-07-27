@@ -119,7 +119,7 @@ func resourceCloudSigmaDriveCreate(d *schema.ResourceData, meta interface{}) err
 		MinTimeout: 3 * time.Second,
 	}
 
-	if _, err := stateConf.WaitForState(); err != nil {
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		return fmt.Errorf("error waiting for Drive (%s) to become available: %s", d.Id(), err)
 	}
 

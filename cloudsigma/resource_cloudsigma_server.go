@@ -221,7 +221,7 @@ func startServer(client *cloudsigma.Client, serverUUID string) error {
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	if _, err := stateConf.WaitForState(); err != nil {
+	if _, err := stateConf.WaitForStateContext(context.Background()); err != nil {
 		return fmt.Errorf("error waiting for server (%s) to become running: %s", server.UUID, err)
 	}
 
@@ -254,7 +254,7 @@ func stopServer(client *cloudsigma.Client, serverUUID string) error {
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	if _, err := stateConf.WaitForState(); err != nil {
+	if _, err := stateConf.WaitForStateContext(context.Background()); err != nil {
 		return fmt.Errorf("error waiting for server (%s) to become stopped: %s", server.UUID, err)
 	}
 

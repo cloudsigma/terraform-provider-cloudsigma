@@ -18,8 +18,8 @@ func TestAccResourceCloudSigmaServer_Basic(t *testing.T) {
 	config := fmt.Sprintf(testAccResourceCloudSigmaServerConfig, serverCPU, serverDrive, serverMemory, serverName, serverVNCPassword)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck: func() { testAccPreCheck(t) },
+		// Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: config,
