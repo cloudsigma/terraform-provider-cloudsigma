@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -14,10 +15,10 @@ import (
 
 func resourceCloudSigmaDrive() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceCloudSigmaDriveCreate,
-		Read:   resourceCloudSigmaDriveRead,
-		Update: resourceCloudSigmaDriveUpdate,
-		Delete: resourceCloudSigmaDriveDelete,
+		CreateContext: resourceCloudSigmaDriveCreate,
+		ReadContext:   resourceCloudSigmaDriveRead,
+		UpdateContext: resourceCloudSigmaDriveUpdate,
+		DeleteContext: resourceCloudSigmaDriveDelete,
 
 		SchemaVersion: 0,
 
@@ -65,9 +66,8 @@ func resourceCloudSigmaDrive() *schema.Resource {
 	}
 }
 
-func resourceCloudSigmaDriveCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
-	ctx := context.Background()
 
 	cloneDriveUUID := d.Get("clone_drive_id").(string)
 	if cloneDriveUUID != "" {
@@ -79,10 +79,10 @@ func resourceCloudSigmaDriveCreate(d *schema.ResourceData, meta interface{}) err
 				Size:  d.Get("size").(int),
 			},
 		}
-		log.Printf("[DEBUG] Drive clone configuration: %#+v", cloneRequest)
+		log.Printf("[DEBUG] Drive clone configuration: %#+v", *cloneRequest)
 		drive, _, err := client.Drives.Clone(ctx, cloneDriveUUID, cloneRequest)
 		if err != nil {
-			return fmt.Errorf("error cloning drive: %s", err)
+			return diag.FromErr(err)
 		}
 
 		d.SetId(drive.UUID)
@@ -101,7 +101,7 @@ func resourceCloudSigmaDriveCreate(d *schema.ResourceData, meta interface{}) err
 		log.Printf("[DEBUG] Drive create configuration: %#v", *createRequest)
 		drives, _, err := client.Drives.Create(ctx, createRequest)
 		if err != nil {
-			return fmt.Errorf("error creating drive: %s", err)
+			return diag.FromErr(err)
 		}
 		drive := &drives[0]
 
@@ -109,34 +109,33 @@ func resourceCloudSigmaDriveCreate(d *schema.ResourceData, meta interface{}) err
 		log.Printf("[INFO] Drive ID: %s", d.Id())
 	}
 
-	log.Printf("[DEBUG] Waiting for Drive (%s) to become available", d.Id())
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"cloning_dst", "creating"},
 		Target:     []string{"unmounted"},
-		Refresh:    driveStateRefreshFunc(client, d.Id()),
+		Refresh:    driveStateRefreshFunc(ctx, client, d.Id()),
 		Timeout:    10 * time.Minute,
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
 
 	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
-		return fmt.Errorf("error waiting for Drive (%s) to become available: %s", d.Id(), err)
+		return diag.FromErr(err)
 	}
 
-	return resourceCloudSigmaDriveRead(d, meta)
+	return resourceCloudSigmaDriveRead(ctx, d, meta)
 }
 
-func resourceCloudSigmaDriveRead(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaDriveRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
 	// Refresh the Drive state
-	drive, resp, err := client.Drives.Get(context.Background(), d.Id())
+	drive, resp, err := client.Drives.Get(ctx, d.Id())
 	if err != nil {
 		if resp != nil && resp.StatusCode == 404 {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("error retrieving drive: %s", err)
+		return diag.FromErr(err)
 	}
 
 	_ = d.Set("media", drive.Media)
@@ -149,7 +148,7 @@ func resourceCloudSigmaDriveRead(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceCloudSigmaDriveUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
 	drive := &cloudsigma.Drive{
@@ -169,21 +168,22 @@ func resourceCloudSigmaDriveUpdate(d *schema.ResourceData, meta interface{}) err
 	updateRequest := &cloudsigma.DriveUpdateRequest{
 		Drive: drive,
 	}
+	log.Printf("[DEBUG] Drive update configuration: %#v", *updateRequest)
 
-	_, _, err := client.Drives.Update(context.Background(), drive.UUID, updateRequest)
+	_, _, err := client.Drives.Update(ctx, d.Id(), updateRequest)
 	if err != nil {
-		return fmt.Errorf("failed to update drive: %s", err)
+		return diag.FromErr(err)
 	}
 
-	return resourceCloudSigmaDriveRead(d, meta)
+	return resourceCloudSigmaDriveRead(ctx, d, meta)
 }
 
-func resourceCloudSigmaDriveDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceCloudSigmaDriveDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	_, err := client.Drives.Delete(context.Background(), d.Id())
+	_, err := client.Drives.Delete(ctx, d.Id())
 	if err != nil {
-		return fmt.Errorf("error deleting drive: %s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
@@ -191,9 +191,9 @@ func resourceCloudSigmaDriveDelete(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-func driveStateRefreshFunc(client *cloudsigma.Client, uuid string) resource.StateRefreshFunc {
+func driveStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, uuid string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		drive, _, err := client.Drives.Get(context.Background(), uuid)
+		drive, _, err := client.Drives.Get(ctx, uuid)
 		if err != nil {
 			return nil, "", fmt.Errorf("error retrieving drive with uuid %s: %s", uuid, err)
 		}
