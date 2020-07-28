@@ -11,15 +11,14 @@ import (
 
 func TestAccResourceCloudSigmaServer_Basic(t *testing.T) {
 	serverCPU := 2000
-	serverDrive := "044263cf-0a85-41f2-99b5-8d2a67294001"
-	serverMemory := 1024
+	serverMemory := 512 * 1024 * 1024
 	serverName := fmt.Sprintf("server-%s", acctest.RandString(10))
 	serverVNCPassword := fmt.Sprintf("vnc-%s", acctest.RandString(10))
-	config := fmt.Sprintf(testAccResourceCloudSigmaServerConfig, serverCPU, serverDrive, serverMemory, serverName, serverVNCPassword)
+	config := fmt.Sprintf(testAccResourceCloudSigmaServerConfig, serverCPU, serverMemory, serverName, serverVNCPassword)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() { testAccPreCheck(t) },
-		// Providers: testAccProviders,
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: config,
@@ -37,7 +36,6 @@ func TestAccResourceCloudSigmaServer_Basic(t *testing.T) {
 const testAccResourceCloudSigmaServerConfig = `
 resource "cloudsigma_server" "foobar" {
 	cpu          = %d
-  drive        = "%s"
   memory       = %d
   name         = "%s"
   vnc_password = "%s"
