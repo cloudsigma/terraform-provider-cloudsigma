@@ -97,6 +97,19 @@ func resourceCloudSigmaDriveAttachmentCreate(ctx context.Context, d *schema.Reso
 }
 
 func resourceCloudSigmaDriveAttachmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*cloudsigma.Client)
+
+	driveUUID := d.Get("drive_id").(string)
+	_, resp, err := client.Drives.Get(ctx, driveUUID)
+	if err != nil {
+		// if the drive is already destroyed, mark as removed
+		if resp != nil && resp.StatusCode == 404 {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
