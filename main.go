@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/cloudsigma/terraform-provider-cloudsigma/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"github.com/terraform-providers/terraform-provider-cloudsigma/cloudsigma"
 )
 
 func main() {

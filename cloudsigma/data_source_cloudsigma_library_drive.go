@@ -64,7 +64,10 @@ func dataSourceCloudSigmaLibraryDriveRead(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("issue with filters: %v", filtersOk)
 	}
 
-	libdrives, _, err := client.LibraryDrives.List(ctx)
+	opts := &cloudsigma.LibraryDriveListOptions{
+		ListOptions: cloudsigma.ListOptions{Limit: 0},
+	}
+	libdrives, _, err := client.LibraryDrives.List(ctx, opts)
 	if err != nil {
 		return diag.Errorf("error getting libdrives: %v", err)
 	}
