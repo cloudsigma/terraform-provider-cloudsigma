@@ -20,7 +20,7 @@ options:
       refactor: Code Refactoring
       chore: Maintaining
   header:
-    pattern: "^(\\w*)(?:\\(([\\w\\$\\.\\-\\*\\s]*)\\))?\\:\\s(.*)$"
+    pattern: "^(\\w*)(?:\\((.*)\\))?\\:\\s(.*)$"
     pattern_maps:
       - Type
       - Scope
