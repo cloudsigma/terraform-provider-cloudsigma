@@ -1,6 +1,10 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Maintaining
+- enable GitHub actions
+- automate release process with GoReleaser
+
 
 <a name="v0.1.0"></a>
 ## v0.1.0 (2020-08-23)
