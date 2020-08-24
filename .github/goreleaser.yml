@@ -1,0 +1,26 @@
+archives:
+  - format: zip
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - binary: '{{ .ProjectName }}_{{ .Version }}'
+    flags:
+      - -trimpath
+    goarch:
+      - amd64
+    goos:
+      - darwin
+      - linux
+      - windows
+changelog:
+  skip: true
+checksum:
+  name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
+  algorithm: sha256
+dist: build
+env:
+  - CGO_ENABLED=0
+release:
+  disable: true
