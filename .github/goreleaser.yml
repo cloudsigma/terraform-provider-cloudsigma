@@ -10,7 +10,9 @@ builds:
       - -trimpath
     goarch:
       - amd64
+      - arm64
     goos:
+      - freebsd
       - darwin
       - linux
       - windows
@@ -23,4 +25,14 @@ dist: build
 env:
   - CGO_ENABLED=0
 release:
-  disable: true
+  draft: true
+signs:
+  - artifacts: checksum
+    args:
+      - "--batch"
+      - "--local-user"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
