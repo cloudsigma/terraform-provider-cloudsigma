@@ -1,7 +1,11 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Features
+- **resource/cloudsigma_remote_snapshot:** add new resource for remote snapshots
+
 ### Maintaining
+- run GoReleaser with GitHub actions
 - enable GitHub actions
 - automate release process with GoReleaser
 
