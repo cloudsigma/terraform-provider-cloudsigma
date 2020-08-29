@@ -1,11 +1,14 @@
 archives:
-  - format: zip
+  - files:
+      - LICENSE
+      - README.md
+    format: zip
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 before:
   hooks:
     - go mod tidy
 builds:
-  - binary: '{{ .ProjectName }}_{{ .Version }}'
+  - binary: '{{ .ProjectName }}_v{{ .Version }}'
     flags:
       - -trimpath
     goarch:
@@ -16,6 +19,7 @@ builds:
       - darwin
       - linux
       - windows
+    mod_timestamp: '{{ .CommitTimestamp }}'
 changelog:
   skip: true
 checksum:

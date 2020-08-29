@@ -1,6 +1,9 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Bug Fixes
+* add missing  prefix by binary file name
+
 
 <a name="v0.1.1"></a>
 ## v0.1.1 (2020-08-28)
