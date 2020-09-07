@@ -4,6 +4,9 @@
 ### Bug Fixes
 * add missing  prefix by binary file name
 
+### Documentation
+* add getting-started guide to documentation
+
 
 <a name="v0.1.1"></a>
 ## v0.1.1 (2020-08-28)
