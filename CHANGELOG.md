@@ -1,10 +1,16 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v0.1.2"></a>
+## v0.1.2 (2020-09-07)
+
 ### Bug Fixes
+
 * add missing  prefix by binary file name
 
 ### Documentation
+
 * add getting-started guide to documentation
 
 
