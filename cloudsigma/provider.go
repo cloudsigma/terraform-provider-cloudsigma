@@ -46,7 +46,6 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"cloudsigma_acl":              resourceCloudSigmaACL(),
 			"cloudsigma_drive":            resourceCloudSigmaDrive(),
-			"cloudsigma_drive_attachment": resourceCloudSigmaDriveAttachment(),
 			"cloudsigma_firewall_policy":  resourceCloudSigmaFirewallPolicy(),
 			"cloudsigma_remote_snapshot":  resourceCloudSigmaRemoteSnapshot(),
 			"cloudsigma_server":           resourceCloudSigmaServer(),
