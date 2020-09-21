@@ -44,14 +44,14 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"cloudsigma_acl":              resourceCloudSigmaACL(),
-			"cloudsigma_drive":            resourceCloudSigmaDrive(),
-			"cloudsigma_firewall_policy":  resourceCloudSigmaFirewallPolicy(),
-			"cloudsigma_remote_snapshot":  resourceCloudSigmaRemoteSnapshot(),
-			"cloudsigma_server":           resourceCloudSigmaServer(),
-			"cloudsigma_snapshot":         resourceCloudSigmaSnapshot(),
-			"cloudsigma_ssh_key":          resourceCloudSigmaSSHKey(),
-			"cloudsigma_tag":              resourceCloudSigmaTag(),
+			"cloudsigma_acl":             resourceCloudSigmaACL(),
+			"cloudsigma_drive":           resourceCloudSigmaDrive(),
+			"cloudsigma_firewall_policy": resourceCloudSigmaFirewallPolicy(),
+			"cloudsigma_remote_snapshot": resourceCloudSigmaRemoteSnapshot(),
+			"cloudsigma_server":          resourceCloudSigmaServer(),
+			"cloudsigma_snapshot":        resourceCloudSigmaSnapshot(),
+			"cloudsigma_ssh_key":         resourceCloudSigmaSSHKey(),
+			"cloudsigma_tag":             resourceCloudSigmaTag(),
 		},
 	}
 
