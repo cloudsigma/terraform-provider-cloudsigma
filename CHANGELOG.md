@@ -1,6 +1,13 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Features
+* **resource/cloudsigma_drive_attachment:** remove drive_attachment resource
+* **resource/cloudsigma_server:** add 'drive' option to attach server drives
+
+### Maintaining
+* upgrade terraform-plugin-sdk to v2.0.3
+
 
 <a name="v0.1.2"></a>
 ## v0.1.2 (2020-09-07)
