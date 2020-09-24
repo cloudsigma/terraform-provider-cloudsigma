@@ -29,6 +29,19 @@ func resourceCloudSigmaServer() *schema.Resource {
 				ValidateFunc: validation.IntBetween(250, 124000), // 256MB - 128GB
 			},
 
+			"drive": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"uuid": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
+
 			"memory": {
 				Type:         schema.TypeInt,
 				Required:     true,
@@ -85,6 +98,36 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 	// store the resulting UUID so we can look this up later
 	d.SetId(server.UUID)
 
+	// attach drives
+	if ds, ok := d.GetOk("drive"); ok {
+		serverDrives := server.Drives
+
+		drives := ds.([]interface{})
+		for _, dr := range drives {
+			drive := dr.(map[string]interface{})
+
+			serverDrives = append(serverDrives, cloudsigma.ServerDrive{
+				BootOrder:  len(serverDrives),
+				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)),
+				Device:     "virtio",
+				Drive:      &cloudsigma.Drive{UUID: drive["uuid"].(string)},
+			})
+		}
+
+		attachRequest := &cloudsigma.ServerAttachDriveRequest{
+			CPU:         server.CPU,
+			Drives:      serverDrives,
+			Memory:      server.Memory,
+			Name:        server.Name,
+			VNCPassword: server.VNCPassword,
+		}
+		log.Printf("[DEBUG] Server attach drive configuration: %#v", *attachRequest)
+		_, _, err := client.Servers.AttachDrive(ctx, d.Id(), attachRequest)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// start server
 	err = startServer(ctx, client, d.Id())
 	if err != nil {
@@ -119,56 +162,50 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	if d.HasChange("name") {
-		// we don't need to stop server when updating 'name'
-		_, newName := d.GetChange("name")
-		updateRequest := &cloudsigma.ServerUpdateRequest{
-			Server: &cloudsigma.Server{
-				CPU:         d.Get("cpu").(int),
-				Memory:      d.Get("memory").(int),
-				Name:        newName.(string),
-				VNCPassword: d.Get("vnc_password").(string),
-			},
-		}
-		log.Printf("[DEBUG] Server update configuration: %#v", *updateRequest)
-		_, _, err := client.Servers.Update(ctx, d.Id(), updateRequest)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	updateRequest := &cloudsigma.ServerUpdateRequest{
+		Server: &cloudsigma.Server{
+			CPU:         d.Get("cpu").(int),
+			Memory:      d.Get("memory").(int),
+			Name:        d.Get("name").(string),
+			VNCPassword: d.Get("vnc_password").(string),
+		},
 	}
 
-	if d.HasChanges("cpu", "memory", "vnc_password") {
-		// we need to stop server when updating 'cpu', 'memory' or 'vnc_password'
-		_, newCPU := d.GetChange("cpu")
-		_, newMemory := d.GetChange("memory")
-		_, newVNCPassword := d.GetChange("vnc_password")
-		updateRequest := &cloudsigma.ServerUpdateRequest{
-			Server: &cloudsigma.Server{
-				CPU:         newCPU.(int),
-				Memory:      newMemory.(int),
-				Name:        d.Get("name").(string),
-				VNCPassword: newVNCPassword.(string),
-			},
+	if d.HasChange("drive") {
+		serverDrives := make([]cloudsigma.ServerDrive, 0)
+
+		drives := d.Get("drive").([]interface{})
+		for _, dr := range drives {
+			drive := dr.(map[string]interface{})
+
+			serverDrives = append(serverDrives, cloudsigma.ServerDrive{
+				BootOrder:  len(serverDrives),
+				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)),
+				Device:     "virtio",
+				Drive:      &cloudsigma.Drive{UUID: drive["uuid"].(string)},
+			})
 		}
-		log.Printf("[DEBUG] Server update configuration: %#v", *updateRequest)
-		// stop server first
-		err := stopServer(ctx, client, d.Id())
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		// update with new values
-		_, _, err = client.Servers.Update(ctx, d.Id(), updateRequest)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		// start server again
-		err = startServer(ctx, client, d.Id())
-		if err != nil {
-			return diag.FromErr(err)
-		}
+
+		updateRequest.Drives = serverDrives
 	}
 
-	return nil
+	err := stopServer(ctx, client, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	log.Printf("[DEBUG] Server update configuration: %#v", *updateRequest)
+	_, _, err = client.Servers.Update(ctx, d.Id(), updateRequest)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	err = startServer(ctx, client, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return resourceCloudSigmaServerRead(ctx, d, meta)
 }
 
 func resourceCloudSigmaServerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
