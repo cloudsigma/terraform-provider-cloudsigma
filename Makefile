@@ -35,7 +35,7 @@ lint:
 
 ## test: Run all unit tests.
 .PHONY: test
-test: lint
+test:
 	@echo "==> Running unit tests..."
 	@mkdir -p $(BUILD_DIR)
 	@go test -count=1 -v -cover -coverprofile=$(BUILD_DIR)/coverage.out -parallel=4 ./...
