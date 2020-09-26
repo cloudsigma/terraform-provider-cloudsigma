@@ -67,7 +67,7 @@ website:
 	@echo "Use this site to preview markdown rendering: https://registry.terraform.io/tools/doc-preview"
 
 
-help: GNUmakefile
+help: Makefile
 	@echo "Usage: make <command>"
 	@echo ""
 	@echo "Commands:"

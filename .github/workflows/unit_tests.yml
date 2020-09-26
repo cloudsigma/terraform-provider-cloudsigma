@@ -1,15 +1,18 @@
-name: build
+name: Unit tests
 on:
   pull_request:
-  push:
     branches:
-      - '**'
+      - master
+    paths:
+      - '**.go'
+  push:
+    paths:
+      - '**.go'
     tags-ignore:
       - 'v*'
 
 jobs:
-  build:
-    name: Test
+  unit_tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,8 +32,8 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-go-
 
-      - name: Lint
+      - name: Lint source code
         run: make tools lint
 
-      - name: Test
+      - name: Run unit tests
         run: make test
