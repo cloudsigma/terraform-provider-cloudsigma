@@ -1,15 +1,13 @@
-name: Unit tests
+name: unit tests
 on:
+  push:
+    paths:
+      - '**.go'
   pull_request:
     branches:
       - master
     paths:
       - '**.go'
-  push:
-    paths:
-      - '**.go'
-    tags-ignore:
-      - 'v*'
 
 jobs:
   unit_tests:
