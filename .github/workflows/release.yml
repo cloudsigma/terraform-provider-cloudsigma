@@ -27,11 +27,16 @@ jobs:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           PASSPHRASE: ${{ secrets.PASSPHRASE }}
 
+      - name: Generate changelog
+        run: |
+          go get -u github.com/git-chglog/git-chglog/cmd/git-chglog
+          git-chglog --config .github/changelog/config.yml $(git describe --tags $(git rev-list --tags --max-count=1)) -o DRAFT_CHANGELOG.md
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: release -f .github/goreleaser.yml --rm-dist
+          args: release -f .github/goreleaser.yml --rm-dist --release-notes=DRAFT_CHANGELOG.md
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
