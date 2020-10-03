@@ -34,6 +34,52 @@ resource "cloudsigma_server" "example" {
 ```
 
 
+## Authentication
+
+The CloudSigma authentication is based on HTTP Basic Authentication with an
+user email as an **username** and a **password**.
+
+The CloudSigma provider offers two ways of providing these credentials. The
+following methods are supported, in this priority order:
+
+1. [Static credentials](#static-credentials)
+2. [Environment variables](#environment-variables)
+
+### Static credentials
+
+!> **Warning:** Hard-coding credentials into any Terraform configuration is not
+recommended, and risks secret leakage should this file ever be committed to a
+public version control system. We recommend to use `terraform.tfvars` file and
+add this file to your .gitignore.
+
+Static credentials can be provided by adding `username` and `password` attributes
+in-line in the CloudSigma provider block.
+
+```hcl
+provider "cloudsigma" {
+  username = "my-email"
+  password = "my-password"
+}
+```
+
+### Environment variables
+
+You can provide your credentials via the `CLOUDSIGMA_USERNAME`, `CLOUDSIGMA_PASSWORD`
+environment variables.
+
+```hcl
+provider "cloudsigma" {}
+```
+
+Usage:
+
+```bash
+$ export CLOUDSIGMA_USERNAME="my-email"
+$ export CLOUDSIGMA_PASSWORD="my-password"
+$ terraform plan
+```
+
+
 ## Argument Reference
 
 The following arguments are supported:
