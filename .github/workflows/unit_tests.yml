@@ -3,13 +3,6 @@ on:
   push:
     paths:
       - '**.go'
-    tags-ignore:
-      - 'v*'
-  pull_request:
-    branches:
-      - master
-    paths:
-      - '**.go'
 
 jobs:
   unit_tests:
