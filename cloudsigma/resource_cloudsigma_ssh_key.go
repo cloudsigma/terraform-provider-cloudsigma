@@ -19,21 +19,29 @@ func resourceCloudSigmaSSHKey() *schema.Resource {
 		SchemaVersion: 0,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+			"fingerprint": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The fingerprint of the SSH key",
 			},
 
-			"private_key": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+			"name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name of the SSH key",
 			},
 
 			"public_key": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "The public SSH key",
+			},
+
+			"uuid": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "UUID of the SSH key resource",
 			},
 		},
 	}
@@ -45,10 +53,12 @@ func resourceCloudSigmaSSHKeyCreate(ctx context.Context, d *schema.ResourceData,
 	createRequest := &cloudsigma.KeypairCreateRequest{
 		Keypairs: []cloudsigma.Keypair{
 			{
-				Name:      d.Get("name").(string),
-				PublicKey: d.Get("public_key").(string),
+				Name: d.Get("name").(string),
 			},
 		},
+	}
+	if publicKey, ok := d.GetOk("public_key"); ok {
+		createRequest.Keypairs[0].PublicKey = publicKey.(string)
 	}
 	log.Printf("[DEBUG] SSH key create configuration: %#v", *createRequest)
 	keypairs, _, err := client.Keypairs.Create(ctx, createRequest)
@@ -75,9 +85,10 @@ func resourceCloudSigmaSSHKeyRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
+	_ = d.Set("fingerprint", keypair.Fingerprint)
 	_ = d.Set("name", keypair.Name)
-	_ = d.Set("private_key", keypair.PrivateKey)
 	_ = d.Set("public_key", keypair.PublicKey)
+	_ = d.Set("uuid", keypair.UUID)
 
 	return nil
 }
@@ -89,18 +100,18 @@ func resourceCloudSigmaSSHKeyUpdate(ctx context.Context, d *schema.ResourceData,
 		UUID: d.Id(),
 	}
 
-	if name, ok := d.GetOk("name"); ok {
-		keypair.Name = name.(string)
+	if d.HasChange("name") {
+		keypair.Name = d.Get("name").(string)
 	}
-	if publicKey, ok := d.GetOk("public_key"); ok {
-		keypair.PublicKey = publicKey.(string)
+	if d.HasChange("public_key") {
+		keypair.PublicKey = d.Get("public_key").(string)
 	}
 
 	updateRequest := &cloudsigma.KeypairUpdateRequest{
 		Keypair: keypair,
 	}
 	log.Printf("[DEBUG] SSH key update configuration: %#v", *updateRequest)
-	_, _, err := client.Keypairs.Update(context.Background(), d.Id(), updateRequest)
+	_, _, err := client.Keypairs.Update(ctx, d.Id(), updateRequest)
 	if err != nil {
 		return diag.FromErr(err)
 	}
