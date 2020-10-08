@@ -1,4 +1,14 @@
 
+<a name="0.3.0"></a>
+## 0.3.0 (2020-10-07)
+
+### Documentation
+* add authentication section
+
+### Features
+* **resource/cloudsigma_ssh_key:** add fingerprint field
+
+
 <a name="v0.2.0"></a>
 ## v0.2.0 (2020-09-27)
 
