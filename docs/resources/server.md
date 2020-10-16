@@ -9,15 +9,37 @@ Provides a CloudSigma Server resource. This can be used to create, modify,
 and delete Servers.
 
 
-## Example Usage
+## Examples
+
+### Basic
 
 ```hcl
-# Create a new server with name 'web'
 resource "cloudsigma_server" "web" {
   cpu          = 2000              # 2GHz CPU
   memory       = 512 * 1024 * 1024 # 512MB RAM
   name         = "web"
   vnc_password = "cloudsigma"
+}
+```
+
+### With additional drives
+
+```hcl
+resource "cloudsigma_drive" "data" {
+  media = "disk"
+  name  = "web-data"
+  size  = 5 * 1024 * 1024 * 1024 # 5GB
+}
+
+resource "cloudsigma_server" "web" {
+  cpu          = 2000              # 2GHz CPU
+  memory       = 512 * 1024 * 1024 # 512MB RAM
+  name         = "web"
+  vnc_password = "cloudsigma"
+
+  drive {
+    uuid = cloudsigma_drive.data.id
+  }
 }
 ```
 
@@ -30,6 +52,8 @@ The following arguments are supported:
 * `memory` - (Required) Server's RAM measured in bytes
 * `name` - (Required) Human readable name of server
 * `vnc_password` - (Required) VNC Password to connect to server
+* `drive` - (Optional) Drive attached to the server on creation
+    - uuid - (Required) The UUID of the drive
 
 
 ## Attributes Reference
