@@ -35,6 +35,24 @@ func resourceCloudSigmaDrive() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"cdrom", "disk"}, false),
 			},
 
+			"mounted_on": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"resource_uri": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"uuid": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+
 			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -145,6 +163,10 @@ func resourceCloudSigmaDriveRead(ctx context.Context, d *schema.ResourceData, me
 	_ = d.Set("status", drive.Status)
 	_ = d.Set("storage_type", drive.StorageType)
 
+	if err := d.Set("mounted_on", flattenMountedOn(&drive.MountedOn)); err != nil {
+		return diag.Errorf("[DEBUG] Error setting Drive mounted_on - error: %#v", err)
+	}
+
 	return nil
 }
 
@@ -181,6 +203,20 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 func resourceCloudSigmaDriveDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
+	if v, ok := d.GetOk("mounted_on"); ok {
+		mountedOns, err := expandMountedOn(v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		for _, mountedOn := range mountedOns {
+			err := stopServer(ctx, client, mountedOn.UUID)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
 	_, err := client.Drives.Delete(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -200,4 +236,40 @@ func driveStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, uuid 
 
 		return drive, drive.Status, nil
 	}
+}
+
+func expandMountedOn(config []interface{}) ([]cloudsigma.ResourceLink, error) {
+	mountedOns := make([]cloudsigma.ResourceLink, 0, len(config))
+
+	for _, res := range config {
+		mountedOn := res.(map[string]interface{})
+
+		m := cloudsigma.ResourceLink{
+			ResourceURI: mountedOn["resource_uri"].(string),
+			UUID:        mountedOn["uuid"].(string),
+		}
+
+		mountedOns = append(mountedOns, m)
+	}
+
+	return mountedOns, nil
+}
+
+func flattenMountedOn(mountedOns *[]cloudsigma.ResourceLink) []interface{} {
+	if mountedOns != nil {
+		mos := make([]interface{}, len(*mountedOns))
+
+		for i, mountedOn := range *mountedOns {
+			mo := make(map[string]interface{})
+
+			mo["resource_uri"] = mountedOn.ResourceURI
+			mo["uuid"] = mountedOn.UUID
+
+			mos[i] = mo
+		}
+
+		return mos
+	}
+
+	return make([]interface{}, 0)
 }
