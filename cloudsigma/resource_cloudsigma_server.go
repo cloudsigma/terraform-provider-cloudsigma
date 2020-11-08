@@ -42,6 +42,11 @@ func resourceCloudSigmaServer() *schema.Resource {
 				},
 			},
 
+			"ipv4_address": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"memory": {
 				Type:         schema.TypeInt,
 				Required:     true,
@@ -51,6 +56,15 @@ func resourceCloudSigmaServer() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+
+			"ssh_keys": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.NoZeroValues,
+				},
 			},
 
 			"resource_uri": {
@@ -86,6 +100,12 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 			},
 		},
 	}
+
+	if v, ok := d.GetOk("ssh_keys"); ok {
+		sshKeys := expandSSHKeys(v.(*schema.Set).List())
+		createRequest.Servers[0].PublicKeys = sshKeys
+	}
+
 	log.Printf("[DEBUG] Server create configuration: %#v", *createRequest)
 	servers, _, err := client.Servers.Create(ctx, createRequest)
 	if err != nil {
@@ -151,6 +171,7 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	_ = d.Set("cpu", server.CPU)
+	_ = d.Set("ipv4_address", findIPv4Address(server, "public"))
 	_ = d.Set("memory", server.Memory)
 	_ = d.Set("name", server.Name)
 	_ = d.Set("resource_uri", server.ResourceURI)
@@ -211,14 +232,24 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 func resourceCloudSigmaServerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
+	server, resp, err := client.Servers.Get(ctx, d.Id())
+	if err != nil {
+		// handle remotely destroyed server
+		if resp != nil && resp.StatusCode == 404 {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(err)
+	}
+
 	// Stop server
-	err := stopServer(ctx, client, d.Id())
+	err = stopServer(ctx, client, server.UUID)
 	if err != nil {
 		return diag.Errorf("error stopping server: %s", err)
 	}
 
 	// Delete server
-	_, err = client.Servers.Delete(ctx, d.Id())
+	_, err = client.Servers.Delete(ctx, server.UUID)
 	if err != nil {
 		return diag.Errorf("error deleting server: %s", err)
 	}
@@ -226,6 +257,27 @@ func resourceCloudSigmaServerDelete(ctx context.Context, d *schema.ResourceData,
 	d.SetId("")
 
 	return nil
+}
+
+func expandSSHKeys(sshKeys []interface{}) []cloudsigma.Keypair {
+	expandedSshKeys := make([]cloudsigma.Keypair, len(sshKeys))
+	for i, s := range sshKeys {
+		sshKey := s.(string)
+		var expandedSshKey cloudsigma.Keypair
+		expandedSshKey.UUID = sshKey
+		expandedSshKeys[i] = expandedSshKey
+	}
+
+	return expandedSshKeys
+}
+
+func findIPv4Address(server *cloudsigma.Server, addrType string) string {
+	for _, nic := range server.Runtime.RuntimeNICs {
+		if nic.InterfaceType == addrType {
+			return nic.IPv4.UUID
+		}
+	}
+	return ""
 }
 
 func serverStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, serverUUID string) resource.StateRefreshFunc {
@@ -276,8 +328,11 @@ func stopServer(ctx context.Context, client *cloudsigma.Client, serverUUID strin
 	log.Printf("[DEBUG] Stopping server (%s)", serverUUID)
 
 	log.Printf("[DEBUG] Checking server status before stopping")
-	server, _, err := client.Servers.Get(ctx, serverUUID)
+	server, resp, err := client.Servers.Get(ctx, serverUUID)
 	if err != nil {
+		if resp != nil && resp.StatusCode == 404 {
+			return nil
+		}
 		return fmt.Errorf("error retrieving server: %s", err)
 	}
 

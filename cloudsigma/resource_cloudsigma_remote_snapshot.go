@@ -51,11 +51,11 @@ func resourceCloudSigmaRemoteSnapshotCreate(ctx context.Context, d *schema.Resou
 	client := meta.(*cloudsigma.Client)
 
 	createRequest := &cloudsigma.RemoteSnapshotCreateRequest{
-		Drive: &cloudsigma.Drive{
-			UUID: d.Get("drive").(string),
-		},
-		Location: d.Get("location").(string),
-		Name:     d.Get("name").(string),
+		// Drive: &cloudsigma.Drive{
+		// 	UUID: d.Get("drive").(string),
+		// },
+		// Location: d.Get("location").(string),
+		// Name:     d.Get("name").(string),
 	}
 	log.Printf("[DEBUG] Remote snapshot create configuration: %#v", *createRequest)
 	remoteSnapshots, _, err := client.RemoteSnapshots.Create(ctx, createRequest)
