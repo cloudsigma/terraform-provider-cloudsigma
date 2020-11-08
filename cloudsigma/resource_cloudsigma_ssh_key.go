@@ -3,6 +3,7 @@ package cloudsigma
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -19,16 +20,17 @@ func resourceCloudSigmaSSHKey() *schema.Resource {
 		SchemaVersion: 0,
 
 		Schema: map[string]*schema.Schema{
-			"fingerprint": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The fingerprint of the SSH key",
-			},
-
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The name of the SSH key",
+			},
+
+			"private_key": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "The private SSH key",
 			},
 
 			"public_key": {
@@ -36,6 +38,9 @@ func resourceCloudSigmaSSHKey() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "The public SSH key",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return strings.Trim(old, "\n") == strings.Trim(new, "\n")
+				},
 			},
 
 			"uuid": {
@@ -57,9 +62,13 @@ func resourceCloudSigmaSSHKeyCreate(ctx context.Context, d *schema.ResourceData,
 			},
 		},
 	}
-	if publicKey, ok := d.GetOk("public_key"); ok {
-		createRequest.Keypairs[0].PublicKey = publicKey.(string)
+	if v, ok := d.GetOk("private_key"); ok {
+		createRequest.Keypairs[0].PrivateKey = v.(string)
 	}
+	if v, ok := d.GetOk("public_key"); ok {
+		createRequest.Keypairs[0].PublicKey = strings.Trim(v.(string), "\n")
+	}
+
 	log.Printf("[DEBUG] SSH key create configuration: %#v", *createRequest)
 	keypairs, _, err := client.Keypairs.Create(ctx, createRequest)
 	if err != nil {
@@ -77,7 +86,6 @@ func resourceCloudSigmaSSHKeyRead(ctx context.Context, d *schema.ResourceData, m
 
 	keypair, resp, err := client.Keypairs.Get(ctx, d.Id())
 	if err != nil {
-		// If the key is somehow already destroyed, mark as successfully gone
 		if resp != nil && resp.StatusCode == 404 {
 			d.SetId("")
 			return nil
@@ -85,8 +93,8 @@ func resourceCloudSigmaSSHKeyRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	_ = d.Set("fingerprint", keypair.Fingerprint)
 	_ = d.Set("name", keypair.Name)
+	_ = d.Set("private_key", keypair.PrivateKey)
 	_ = d.Set("public_key", keypair.PublicKey)
 	_ = d.Set("uuid", keypair.UUID)
 
@@ -102,6 +110,9 @@ func resourceCloudSigmaSSHKeyUpdate(ctx context.Context, d *schema.ResourceData,
 
 	if d.HasChange("name") {
 		keypair.Name = d.Get("name").(string)
+	}
+	if d.HasChange("private_key") {
+		keypair.PrivateKey = d.Get("private_key").(string)
 	}
 	if d.HasChange("public_key") {
 		keypair.PublicKey = d.Get("public_key").(string)
@@ -122,8 +133,13 @@ func resourceCloudSigmaSSHKeyUpdate(ctx context.Context, d *schema.ResourceData,
 func resourceCloudSigmaSSHKeyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	_, err := client.Keypairs.Delete(ctx, d.Id())
+	resp, err := client.Keypairs.Delete(ctx, d.Id())
 	if err != nil {
+		// handle remotely destroyed keys
+		if resp != nil && resp.StatusCode == 404 {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 
