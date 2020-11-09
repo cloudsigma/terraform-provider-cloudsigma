@@ -1,6 +1,22 @@
 
-<a name="0.3.0"></a>
-## 0.3.0 (2020-10-07)
+<a name="v1.0.0"></a>
+## v1.0.0 (2020-11-09)
+
+### Documentation
+* add examples with additional drive for server resource
+
+### Features
+* **resource/cloudsigma_drive:** add uuid field
+* **resource/cloudsigma_server:** add ipv4_address, ssh_keys fields
+* **resource/cloudsigma_server:** add mounted_on field
+* **resource/cloudsigma_ssh_key:** add private_key field
+
+### Maintaining
+* upgrade terraform-plugin-sdk to v2.2.0
+
+
+<a name="v0.3.0"></a>
+## v0.3.0 (2020-10-08)
 
 ### Documentation
 * add authentication section
