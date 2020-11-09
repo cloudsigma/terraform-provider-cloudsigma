@@ -80,6 +80,12 @@ func resourceCloudSigmaDrive() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+
+			"uuid": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "UUID of the drive resource",
+			},
 		},
 	}
 }
@@ -162,6 +168,7 @@ func resourceCloudSigmaDriveRead(ctx context.Context, d *schema.ResourceData, me
 	_ = d.Set("size", drive.Size)
 	_ = d.Set("status", drive.Status)
 	_ = d.Set("storage_type", drive.StorageType)
+	_ = d.Set("uuid", drive.UUID)
 
 	if err := d.Set("mounted_on", flattenMountedOn(&drive.MountedOn)); err != nil {
 		return diag.Errorf("[DEBUG] Error setting Drive mounted_on - error: %#v", err)
