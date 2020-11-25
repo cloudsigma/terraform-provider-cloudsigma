@@ -1,4 +1,14 @@
 
+<a name="v1.0.1"></a>
+## v1.0.1 (2020-11-25)
+
+### Bug Fixes
+* **resource/cloudsigma_server:** check if server runtime before IP address assignment
+
+### Maintaining
+* update terraform-plugin-sdk to v2.3.0
+
+
 <a name="v1.0.0"></a>
 ## v1.0.0 (2020-11-09)
 
