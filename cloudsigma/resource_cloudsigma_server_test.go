@@ -2,9 +2,11 @@ package cloudsigma
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"testing"
 
+	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,3 +45,34 @@ resource "cloudsigma_server" "foobar" {
   vnc_password = "%s"
 }
 `
+
+func TestResourceCloudSigmaServer_findIPv4Address(t *testing.T) {
+	cases := []struct {
+		server      *cloudsigma.Server
+		addressType string
+		expected    string
+	}{
+		{&cloudsigma.Server{}, "public", ""},
+		{&cloudsigma.Server{
+			Runtime: &cloudsigma.ServerRuntime{
+				RuntimeNICs: []cloudsigma.ServerRuntimeNIC{{
+					InterfaceType: "private", IPv4: cloudsigma.ServerRuntimeIP{UUID: "10.1.1.1"},
+				}},
+			},
+		}, "public", ""},
+		{&cloudsigma.Server{
+			Runtime: &cloudsigma.ServerRuntime{
+				RuntimeNICs: []cloudsigma.ServerRuntimeNIC{{
+					InterfaceType: "public", IPv4: cloudsigma.ServerRuntimeIP{UUID: "178.33.44.55"},
+				}},
+			},
+		}, "public", "178.33.44.55"},
+	}
+
+	for _, c := range cases {
+		got := findIPv4Address(c.server, c.addressType)
+		if !reflect.DeepEqual(c.expected, got) {
+			t.Fatalf("expected: %v, got: %v", c.expected, got)
+		}
+	}
+}
