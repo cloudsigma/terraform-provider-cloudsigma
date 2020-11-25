@@ -272,6 +272,10 @@ func expandSSHKeys(sshKeys []interface{}) []cloudsigma.Keypair {
 }
 
 func findIPv4Address(server *cloudsigma.Server, addrType string) string {
+	if server.Runtime == nil {
+		return ""
+	}
+
 	for _, nic := range server.Runtime.RuntimeNICs {
 		if nic.InterfaceType == addrType {
 			return nic.IPv4.UUID
