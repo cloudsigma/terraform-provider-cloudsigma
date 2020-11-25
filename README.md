@@ -17,7 +17,7 @@ environment.
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) 0.13+
+- [Terraform](https://www.terraform.io/downloads.html) 0.12+
 - [Go](https://golang.org/doc/install) 1.14 (to build the provider plugin)
 
 
