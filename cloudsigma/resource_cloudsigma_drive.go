@@ -30,9 +30,9 @@ func resourceCloudSigmaDrive() *schema.Resource {
 			},
 
 			"media": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"cdrom", "disk"}, false),
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"cdrom", "disk"}, false)),
 			},
 
 			"mounted_on": {
@@ -54,9 +54,9 @@ func resourceCloudSigmaDrive() *schema.Resource {
 			},
 
 			"name": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.NoZeroValues,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.NoZeroValues),
 			},
 
 			"resource_uri": {
@@ -65,9 +65,9 @@ func resourceCloudSigmaDrive() *schema.Resource {
 			},
 
 			"size": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				ValidateFunc: validation.IntAtLeast(536870912), // 536870912 = 512MB
+				Type:             schema.TypeInt,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(536870912)), // 536870912 = 512MB
 			},
 
 			"status": {
