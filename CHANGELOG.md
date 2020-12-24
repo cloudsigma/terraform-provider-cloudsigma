@@ -1,4 +1,15 @@
 
+<a name="v1.1.0"></a>
+## v1.1.0 (2020-12-24)
+
+### Features
+* **resource/cloudsigma_drive:** replace legacy SchemaValidateFunc with wrapper function
+* **resource/cloudsigma_server:** replace legacy SchemaValidateFunc with wrapper function
+
+### Maintaining
+* add support for openbsd systems
+
+
 <a name="v1.0.1"></a>
 ## v1.0.1 (2020-11-25)
 
