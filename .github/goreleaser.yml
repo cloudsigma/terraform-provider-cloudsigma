@@ -18,6 +18,7 @@ builds:
       - freebsd
       - darwin
       - linux
+      - openbsd
       - windows
     mod_timestamp: '{{ .CommitTimestamp }}'
 changelog:
