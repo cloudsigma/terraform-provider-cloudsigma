@@ -24,9 +24,9 @@ func resourceCloudSigmaServer() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"cpu": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				ValidateFunc: validation.IntBetween(250, 124000), // 256MB - 128GB
+				Type:             schema.TypeInt,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(250, 124000)), // 250MHz - 100GHz
 			},
 
 			"drive": {
@@ -48,9 +48,9 @@ func resourceCloudSigmaServer() *schema.Resource {
 			},
 
 			"memory": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				ValidateFunc: validation.IntBetween(268435456, 137438953472), // 256MB - 128GB
+				Type:             schema.TypeInt,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(268435456, 137438953472)), // 256MB - 128GB
 			},
 
 			"name": {
@@ -62,8 +62,8 @@ func resourceCloudSigmaServer() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validation.NoZeroValues,
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.NoZeroValues),
 				},
 			},
 
