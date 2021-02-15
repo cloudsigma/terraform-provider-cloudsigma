@@ -58,6 +58,24 @@ func resourceCloudSigmaServer() *schema.Resource {
 				Required: true,
 			},
 
+			"network": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"address": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"type": {
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"dhcp", "static"}, false)),
+						},
+					},
+				},
+			},
+
 			"ssh_keys": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -104,6 +122,25 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 	if v, ok := d.GetOk("ssh_keys"); ok {
 		sshKeys := expandSSHKeys(v.(*schema.Set).List())
 		createRequest.Servers[0].PublicKeys = sshKeys
+	}
+
+	if ns, ok := d.GetOk("network"); ok {
+		networks := ns.([]interface{})
+		for i, n := range networks {
+			network := n.(map[string]interface{})
+			networkType := network["type"].(string)
+			networkAddress := network["address"].(string)
+
+			if networkType == "static" && networkAddress == "" {
+				return diag.Errorf("network address cannot be empty if type is static")
+			}
+
+			conf := &cloudsigma.ServerIPConfiguration{
+				Type:      networkType,
+				IPAddress: &cloudsigma.IP{UUID: networkAddress},
+			}
+			createRequest.Servers[i].NICs[i].IP4Configuration = conf
+		}
 	}
 
 	log.Printf("[DEBUG] Server create configuration: %#v", *createRequest)
@@ -208,6 +245,26 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 
 		updateRequest.Drives = serverDrives
+	}
+
+	if d.HasChange("network") {
+		serverNICs := make([]cloudsigma.ServerNIC, 0)
+
+		networks := d.Get("network").([]interface{})
+		for _, n := range networks {
+			network := n.(map[string]interface{})
+
+			serverNICs = append(serverNICs, cloudsigma.ServerNIC{
+				BootOrder: len(serverNICs),
+				IP4Configuration: &cloudsigma.ServerIPConfiguration{
+					Type:      network["type"].(string),
+					IPAddress: &cloudsigma.IP{UUID: network["address"].(string)},
+				},
+				Model: "virtio",
+			})
+		}
+
+		updateRequest.NICs = serverNICs
 	}
 
 	err := stopServer(ctx, client, d.Id())
