@@ -43,6 +43,29 @@ resource "cloudsigma_server" "web" {
 }
 ```
 
+### With static IP address
+
+```hcl
+data "cloudsigma_ip" "load_balancer" {
+  filter {
+    name   = "uuid"
+    values = ["31.171.251.11"]
+  }
+}
+
+resource "cloudsigma_server" "web" {
+  cpu          = 2000              # 2GHz CPU
+  memory       = 512 * 1024 * 1024 # 512MB RAM
+  name         = "web"
+  vnc_password = "cloudsigma"
+
+  network {
+    ipv4_address = data.cloudsigma_ip.load_balancer.id
+    type = "static"
+  }
+}
+```
+
 
 ## Argument Reference
 
@@ -54,6 +77,10 @@ The following arguments are supported:
 * `vnc_password` - (Required) VNC Password to connect to server
 * `drive` - (Optional) Drive attached to the server on creation
     - uuid - (Required) The UUID of the drive
+* `network` - (Optional) Network interface card attached to the server
+    - ipv4_address - (Optional) The IP address reference. Only used with `static` type
+    - type - (Optional) Configuration type. Valid values: `dhcp`, `static`, `manual`
+    - vlan_uuid - (Optional) The UUID of the VLAN reference
 
 
 ## Attributes Reference

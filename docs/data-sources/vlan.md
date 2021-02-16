@@ -1,17 +1,17 @@
 --
-page_title: "CloudSigma: cloudsigma_library_vlan"
+page_title: "CloudSigma: cloudsigma_vlan"
 
 ---
 
-# cloudsigma_library_vlan
+# cloudsigma_vlan
 
-Gets information about a location.
+Gets information about a VLAN.
 
 
 ## Example Usage
 
 ```hcl
-data "cloudsigma_library_vlan" "my_vlan" {
+data "cloudsigma_vlan" "my_vlan" {
   filter = {
     name   = "uuid"
     values = ["10619300-edda-42ba-91e0-7e3df0689d00"]
