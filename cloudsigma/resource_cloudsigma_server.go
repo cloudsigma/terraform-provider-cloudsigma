@@ -61,6 +61,7 @@ func resourceCloudSigmaServer() *schema.Resource {
 			"network": {
 				Type:     schema.TypeList,
 				Optional: true,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ipv4_address": {
@@ -139,10 +140,15 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 				return diag.Errorf("cannot assign both network type and vlan")
 			}
 
-			if networkType != "" {
+			if networkType == "static" {
 				conf := &cloudsigma.ServerIPConfiguration{
 					Type:      networkType,
 					IPAddress: &cloudsigma.IP{UUID: networkAddress},
+				}
+				createRequest.Servers[0].NICs[i].IP4Configuration = conf
+			} else if networkType == "dhcp" {
+				conf := &cloudsigma.ServerIPConfiguration{
+					Type: networkType,
 				}
 				createRequest.Servers[0].NICs[i].IP4Configuration = conf
 			} else if networkVlan != "" {
@@ -232,6 +238,26 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 	_ = d.Set("resource_uri", server.ResourceURI)
 	_ = d.Set("vnc_password", server.VNCPassword)
 
+	if len(server.NICs) > 0 {
+		var networks []map[string]interface{}
+		for _, nws := range server.NICs {
+			nw := make(map[string]interface{})
+			if nws.IP4Configuration != nil {
+				nw["type"] = nws.IP4Configuration.Type
+				if nws.IP4Configuration.IPAddress != nil {
+					nw["ipv4_address"] = nws.IP4Configuration.IPAddress.UUID
+				}
+			}
+			if nws.VLAN != nil {
+				nw["vlan_uuid"] = nws.VLAN.UUID
+			}
+			networks = append(networks, nw)
+		}
+		if err := d.Set("network", networks); err != nil {
+			return diag.Errorf("error setting network: %v", err)
+		}
+	}
+
 	return nil
 }
 
@@ -271,15 +297,37 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 		networks := d.Get("network").([]interface{})
 		for _, n := range networks {
 			network := n.(map[string]interface{})
+			networkType := network["type"].(string)
+			networkAddress := network["ipv4_address"].(string)
+			networkVlan := network["vlan_uuid"].(string)
 
-			serverNICs = append(serverNICs, cloudsigma.ServerNIC{
-				BootOrder: len(serverNICs),
-				IP4Configuration: &cloudsigma.ServerIPConfiguration{
-					Type:      network["type"].(string),
-					IPAddress: &cloudsigma.IP{UUID: network["address"].(string)},
-				},
-				Model: "virtio",
-			})
+			if networkType == "static" && networkAddress == "" {
+				return diag.Errorf("network address cannot be empty if type is static")
+			}
+			if networkType != "" && networkVlan != "" {
+				return diag.Errorf("cannot assign both network type and vlan")
+			}
+
+			if networkType == "static" {
+				serverNICs = append(serverNICs, cloudsigma.ServerNIC{
+					IP4Configuration: &cloudsigma.ServerIPConfiguration{
+						Type:      networkType,
+						IPAddress: &cloudsigma.IP{UUID: networkAddress},
+					},
+				})
+			} else if networkType == "dhcp" {
+				serverNICs = append(serverNICs, cloudsigma.ServerNIC{
+					IP4Configuration: &cloudsigma.ServerIPConfiguration{
+						Type: networkType,
+					},
+				})
+			} else if networkVlan != "" {
+				serverNICs = append(serverNICs, cloudsigma.ServerNIC{
+					VLAN: &cloudsigma.VLAN{
+						UUID: networkVlan,
+					},
+				})
+			}
 		}
 
 		updateRequest.NICs = serverNICs
