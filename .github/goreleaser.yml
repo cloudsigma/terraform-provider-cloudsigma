@@ -20,6 +20,9 @@ builds:
       - linux
       - openbsd
       - windows
+    ignore:
+      - goos: darwin
+        goarch: arm64
     mod_timestamp: '{{ .CommitTimestamp }}'
 changelog:
   skip: true
