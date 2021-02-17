@@ -1,4 +1,20 @@
 
+<a name="v1.2.0"></a>
+## v1.2.0 (2021-02-17)
+
+### Documentation
+* **data-source/cloudsigma_vlan:** fix hcl example
+* **resource/cloudsigma_server:** document network field with example
+
+### Features
+* **resource/cloudsigma_server:** add vlan_uuid field
+* **resource/cloudsigma_server:** add network field
+
+### Maintaining
+* update terraform-plugin-sdk to v2.4.3
+* **github-actions:** upgrade Go version to 1.15
+
+
 <a name="v1.1.0"></a>
 ## v1.1.0 (2020-12-24)
 
