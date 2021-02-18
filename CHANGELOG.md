@@ -1,4 +1,14 @@
 
+<a name="v1.2.1"></a>
+## v1.2.1 (2021-02-18)
+
+### Bug Fixes
+* **resource/cloudsigma_server:** revert validate function with diagnostics for ssh_keys attribute
+
+### Documentation
+* **resource/cloudsigma_server:** add an example assigning private and public networks
+
+
 <a name="v1.2.0"></a>
 ## v1.2.0 (2021-02-17)
 
