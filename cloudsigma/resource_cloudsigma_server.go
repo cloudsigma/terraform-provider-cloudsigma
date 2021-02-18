@@ -85,8 +85,8 @@ func resourceCloudSigmaServer() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
-					Type:             schema.TypeString,
-					ValidateDiagFunc: validation.ToDiagFunc(validation.NoZeroValues),
+					Type:         schema.TypeString,
+					ValidateFunc: validation.NoZeroValues,
 				},
 			},
 
