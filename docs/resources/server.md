@@ -49,7 +49,7 @@ resource "cloudsigma_server" "web" {
 data "cloudsigma_ip" "load_balancer" {
   filter {
     name   = "uuid"
-    values = ["31.171.251.11"]
+    values = ["33.44.55.66"]
   }
 }
 
@@ -61,11 +61,29 @@ resource "cloudsigma_server" "web" {
 
   network {
     ipv4_address = data.cloudsigma_ip.load_balancer.id
-    type = "static"
+    type         = "static"
   }
 }
 ```
 
+### With static IP address and private VLAN
+
+```hcl
+resource "cloudsigma_server" "web" {
+  cpu          = 2000              # 2GHz CPU
+  memory       = 512 * 1024 * 1024 # 512MB RAM
+  name         = "web"
+  vnc_password = "cloudsigma"
+
+  network {
+    ipv4_address = "33.44.55.66"
+    type = "static"
+  }
+  network {
+    vlan_uuid = "10619300-edda-42ba-91e0-7e3df0689d00"
+  }
+}
+```
 
 ## Argument Reference
 
