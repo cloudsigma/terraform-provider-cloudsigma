@@ -81,6 +81,11 @@ func resourceCloudSigmaServer() *schema.Resource {
 				},
 			},
 
+			"resource_uri": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"ssh_keys": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -90,9 +95,14 @@ func resourceCloudSigmaServer() *schema.Resource {
 				},
 			},
 
-			"resource_uri": {
-				Type:     schema.TypeString,
+			"tags": {
+				Type:     schema.TypeSet,
+				Optional: true,
 				Computed: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.NoZeroValues,
+				},
 			},
 
 			"vnc_password": {
@@ -116,11 +126,6 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 				VNCPassword: d.Get("vnc_password").(string),
 			},
 		},
-	}
-
-	if v, ok := d.GetOk("ssh_keys"); ok {
-		sshKeys := expandSSHKeys(v.(*schema.Set).List())
-		createRequest.Servers[0].PublicKeys = sshKeys
 	}
 
 	if ns, ok := d.GetOk("network"); ok {
@@ -167,7 +172,15 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	log.Printf("[DEBUG] Server create configuration: %#v", *createRequest)
+	if v, ok := d.GetOk("ssh_keys"); ok {
+		createRequest.Servers[0].PublicKeys = expandSSHKeys(v.(*schema.Set).List())
+	}
+
+	if v, ok := d.GetOk("tags"); ok {
+		createRequest.Servers[0].Tags = expandTags(v.(*schema.Set).List())
+	}
+
+	log.Printf("[DEBUG] Server create configuration: %v", createRequest)
 	servers, _, err := client.Servers.Create(ctx, createRequest)
 	if err != nil {
 		return diag.FromErr(err)
@@ -202,7 +215,7 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 			Name:        server.Name,
 			VNCPassword: server.VNCPassword,
 		}
-		log.Printf("[DEBUG] Server attach drive configuration: %#v", *attachRequest)
+		log.Printf("[DEBUG] Server attach drive configuration: %v", attachRequest)
 		_, _, err := client.Servers.AttachDrive(ctx, d.Id(), attachRequest)
 		if err != nil {
 			return diag.FromErr(err)
@@ -256,6 +269,10 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 		if err := d.Set("network", networks); err != nil {
 			return diag.Errorf("error setting network: %v", err)
 		}
+	}
+
+	if err := d.Set("tags", flattenTags(server.Tags)); err != nil {
+		return diag.Errorf("error setting Server tags - error: %#v", err)
 	}
 
 	return nil
@@ -331,6 +348,10 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 
 		updateRequest.NICs = serverNICs
+	}
+
+	if v, ok := d.GetOk("tags"); ok {
+		updateRequest.Tags = expandTags(v.(*schema.Set).List())
 	}
 
 	err := stopServer(ctx, client, d.Id())
