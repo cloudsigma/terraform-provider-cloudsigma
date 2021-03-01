@@ -8,14 +8,29 @@ page_title: "CloudSigma: cloudsigma_drive
 Provides a CloudSigma Drive resource which can be attached to a Server.
 
 
-## Example Usage
+## Examples
+
+### Basic
 
 ```hcl
-# Create a new drive with name 'foobar'
 resource "cloudsigma_drive" "foobar" {
   media = "disk"
   name  = "foobar"
   size  = 5 * 1024 * 1024 * 1024 # 5GB
+}
+```
+
+### With additional tags
+```hcl
+resource "cloudsigma_drive" "foobar" {
+  media = "disk"
+  name  = "foobar"
+  size  = 5 * 1024 * 1024 * 1024 # 5GB
+
+  tags = [
+    "first-tag-uuid",
+    "second-tag-uuid",
+  ]
 }
 ```
 
@@ -28,6 +43,7 @@ The following arguments are supported:
 * `media` - (Required) Media representation type. It can be `cdrom` or `disk`
 * `name` - (Required) Human readable name of the drive
 * `size` - (Required) Size of the drive in bytes
+* `tags` - (Optional) A list of the tags UUIDs to be applied to the drive.
 
 
 ## Attributes Reference
