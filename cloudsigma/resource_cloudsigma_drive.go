@@ -97,6 +97,14 @@ func resourceCloudSigmaDrive() *schema.Resource {
 				Description: "UUID of the drive resource",
 			},
 		},
+
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
+			oldSize, newSize := diff.GetChange("size")
+			if newSize.(int) < oldSize.(int) {
+				return fmt.Errorf("drives `size` can only be expanded")
+			}
+			return nil
+		},
 	}
 }
 
