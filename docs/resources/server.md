@@ -19,6 +19,11 @@ resource "cloudsigma_server" "web" {
   memory       = 512 * 1024 * 1024 # 512MB RAM
   name         = "web"
   vnc_password = "cloudsigma"
+
+  tags = [
+    "first-tag-uuid",
+    "second-tag-uuid",
+  ]
 }
 ```
 
@@ -99,6 +104,7 @@ The following arguments are supported:
     - ipv4_address - (Optional) The IP address reference. Only used with `static` type
     - type - (Optional) Configuration type. Valid values: `dhcp`, `static`, `manual`
     - vlan_uuid - (Optional) The UUID of the VLAN reference
+* `tags` - (Optional) A list of the tags UUIDs to be applied to the server.
 
 
 ## Attributes Reference

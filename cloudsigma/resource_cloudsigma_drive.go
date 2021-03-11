@@ -81,11 +81,29 @@ func resourceCloudSigmaDrive() *schema.Resource {
 				Computed: true,
 			},
 
+			"tags": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.NoZeroValues,
+				},
+			},
+
 			"uuid": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "UUID of the drive resource",
 			},
+		},
+
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
+			oldSize, newSize := diff.GetChange("size")
+			if newSize.(int) < oldSize.(int) {
+				return fmt.Errorf("drives `size` can only be expanded")
+			}
+			return nil
 		},
 	}
 }
@@ -93,43 +111,53 @@ func resourceCloudSigmaDrive() *schema.Resource {
 func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
-	cloneDriveUUID := d.Get("clone_drive_id").(string)
-	if cloneDriveUUID != "" {
+	drive := &cloudsigma.Drive{
+		Media: d.Get("media").(string),
+		Name:  d.Get("name").(string),
+		Size:  d.Get("size").(int),
+	}
+
+	if v, ok := d.GetOk("tags"); ok {
+		drive.Tags = expandTags(v.(*schema.Set).List())
+	}
+
+	if v, ok := d.GetOk("clone_drive_id"); ok {
 		// Clone the Drive if 'clone_drive_id' is set
-		cloneRequest := &cloudsigma.DriveCloneRequest{
-			Drive: &cloudsigma.Drive{
-				Media: d.Get("media").(string),
-				Name:  d.Get("name").(string),
-				Size:  d.Get("size").(int),
-			},
-		}
-		log.Printf("[DEBUG] Drive clone configuration: %#+v", *cloneRequest)
-		drive, _, err := client.Drives.Clone(ctx, cloneDriveUUID, cloneRequest)
+		cloneDriveUUID := v.(string)
+		cloneRequest := &cloudsigma.DriveCloneRequest{Drive: drive}
+
+		log.Printf("[DEBUG] Drive clone configuration: %v", cloneRequest)
+		clonedDrive, _, err := client.Drives.Clone(ctx, cloneDriveUUID, cloneRequest)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		d.SetId(drive.UUID)
+		// tags have to be explicitly updated when cloning the drive
+		if v, ok := d.GetOk("tags"); ok {
+			drive.Tags = expandTags(v.(*schema.Set).List())
+			updateRequest := &cloudsigma.DriveUpdateRequest{Drive: drive}
+
+			log.Printf("[DEBUG] Drive update configuration (attaching tags): %v", updateRequest)
+			_, _, err := client.Drives.Update(ctx, clonedDrive.UUID, updateRequest)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		d.SetId(clonedDrive.UUID)
 		log.Printf("[INFO] Drive ID: %s", d.Id())
 	} else {
 		// Create the Drive because 'clone_drive_id' is not set
-		createRequest := &cloudsigma.DriveCreateRequest{
-			Drives: []cloudsigma.Drive{
-				{
-					Media: d.Get("media").(string),
-					Name:  d.Get("name").(string),
-					Size:  d.Get("size").(int),
-				},
-			},
-		}
-		log.Printf("[DEBUG] Drive create configuration: %#v", *createRequest)
+		createRequest := &cloudsigma.DriveCreateRequest{Drives: []cloudsigma.Drive{*drive}}
+
+		log.Printf("[DEBUG] Drive create configuration: %v", createRequest)
 		drives, _, err := client.Drives.Create(ctx, createRequest)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		drive := &drives[0]
+		createdDrive := &drives[0]
 
-		d.SetId(drive.UUID)
+		d.SetId(createdDrive.UUID)
 		log.Printf("[INFO] Drive ID: %s", d.Id())
 	}
 
@@ -174,6 +202,10 @@ func resourceCloudSigmaDriveRead(ctx context.Context, d *schema.ResourceData, me
 		return diag.Errorf("[DEBUG] Error setting Drive mounted_on - error: %#v", err)
 	}
 
+	if err := d.Set("tags", flattenTags(drive.Tags)); err != nil {
+		return diag.Errorf("[DEBUG] Error setting Drive tags - error: %#v", err)
+	}
+
 	return nil
 }
 
@@ -181,23 +213,19 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 	client := meta.(*cloudsigma.Client)
 
 	drive := &cloudsigma.Drive{
-		UUID: d.Id(),
+		Media: d.Get("media").(string),
+		Name:  d.Get("name").(string),
+		Size:  d.Get("size").(int),
 	}
 
-	if media, ok := d.GetOk("media"); ok {
-		drive.Media = media.(string)
-	}
-	if name, ok := d.GetOk("name"); ok {
-		drive.Name = name.(string)
-	}
-	if size, ok := d.GetOk("size"); ok {
-		drive.Size = size.(int)
+	if v, ok := d.GetOk("tags"); ok {
+		drive.Tags = expandTags(v.(*schema.Set).List())
 	}
 
 	updateRequest := &cloudsigma.DriveUpdateRequest{
 		Drive: drive,
 	}
-	log.Printf("[DEBUG] Drive update configuration: %#v", *updateRequest)
+	log.Printf("[DEBUG] Drive update configuration: %v", updateRequest)
 
 	_, _, err := client.Drives.Update(ctx, d.Id(), updateRequest)
 	if err != nil {

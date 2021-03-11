@@ -9,25 +9,17 @@ import (
 
 var testAccProvider *schema.Provider
 var testAccProviders map[string]*schema.Provider
-var testAccProviderFactories func(providers *[]*schema.Provider) map[string]func() (*schema.Provider, error)
+var testAccProviderFactories map[string]func() (*schema.Provider, error)
 
 func init() {
 	testAccProvider = Provider()
 	testAccProviders = map[string]*schema.Provider{
 		"cloudsigma": testAccProvider,
 	}
-	testAccProviderFactories = func(providers *[]*schema.Provider) map[string]func() (*schema.Provider, error) {
-		// SDK v2 compatible hack, the "factory" functions are singletons for the lifecycle of a resource.Test
-		var providerNames = []string{"cloudsigma"}
-		var factories = make(map[string]func() (*schema.Provider, error), len(providerNames))
-		for _, name := range providerNames {
-			p := Provider()
-			factories[name] = func() (*schema.Provider, error) {
-				return p, nil
-			}
-			*providers = append(*providers, p)
-		}
-		return factories
+	testAccProviderFactories = map[string]func() (*schema.Provider, error){
+		"cloudsigma": func() (*schema.Provider, error) {
+			return testAccProvider, nil
+		},
 	}
 }
 

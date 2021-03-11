@@ -40,6 +40,7 @@ func Provider() *schema.Provider {
 			"cloudsigma_location":      dataSourceCloudSigmaLocation(),
 			"cloudsigma_profile":       dataSourceCloudSigmaProfile(),
 			"cloudsigma_subscription":  dataSourceCloudSigmaSubscription(),
+			"cloudsigma_tag":           dataSourceCloudSigmaTag(),
 			"cloudsigma_vlan":          dataSourceCloudSigmaVLAN(),
 		},
 

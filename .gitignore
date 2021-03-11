@@ -5,6 +5,14 @@ build/
 dist/
 
 #################################
+# Terraform files               #
+#################################
+.terraform/
+.terraform.lock.hcl
+.terraform.tfstate.lock.info
+*.tfstate
+
+#################################
 # Golang files                  #
 #################################
 .bin/
