@@ -1,4 +1,16 @@
 
+<a name="v1.3.0"></a>
+## v1.3.0 (2021-03-11)
+
+### Features
+* **resource/cloudsigma_drive:** add validation for trying to shrink drives size
+* **resource/cloudsigma_drive:** add tags attribute
+* **resource/cloudsigma_server:** add tags attribute
+
+### Maintaining
+* update cloudsigma-sdk-go to v0.7.0
+
+
 <a name="v1.2.1"></a>
 ## v1.2.1 (2021-02-18)
 
