@@ -1,50 +1,193 @@
 package cloudsigma
 
 import (
+	"context"
 	"fmt"
 	"reflect"
-	"strconv"
+	"regexp"
 	"testing"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccResourceCloudSigmaServer_Basic(t *testing.T) {
-	var providers []*schema.Provider
-	serverCPU := 2000
-	serverMemory := 512 * 1024 * 1024
-	serverName := fmt.Sprintf("server-%s", acctest.RandString(10))
-	serverVNCPassword := fmt.Sprintf("vnc-%s", acctest.RandString(10))
-	config := fmt.Sprintf(testAccResourceCloudSigmaServerConfig, serverCPU, serverMemory, serverName, serverVNCPassword)
+func TestAccCloudSigmaServer_basic(t *testing.T) {
+	var server cloudsigma.Server
+	serverName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
+	tagName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories(&providers),
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: config,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("cloudsigma_server.foobar", "cpu", strconv.Itoa(serverCPU)),
-					resource.TestCheckResourceAttr("cloudsigma_server.foobar", "memory", strconv.Itoa(serverMemory)),
-					resource.TestCheckResourceAttr("cloudsigma_server.foobar", "name", serverName),
-					resource.TestCheckResourceAttr("cloudsigma_server.foobar", "vnc_password", serverVNCPassword),
+				Config: testAccCloudSigmaServerConfig_basic(serverName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaServerExists("cloudsigma_server.test", &server),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "cpu", "2000"),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "memory", "536870912"),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "name", serverName),
+					resource.TestCheckResourceAttrSet("cloudsigma_server.test", "resource_uri"),
+				),
+			},
+			{
+				Config: testAccCloudSigmaServerConfig_addTag(tagName, serverName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaServerExists("cloudsigma_server.test", &server),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "tags.#", "1"),
+				),
+			},
+			{
+				Config: testAccCloudSigmaServerConfig_noTag(serverName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaServerExists("cloudsigma_server.test", &server),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "tags.#", "0"),
 				),
 			},
 		},
 	})
 }
 
-const testAccResourceCloudSigmaServerConfig = `
-resource "cloudsigma_server" "foobar" {
-	cpu          = %d
-  memory       = %d
+func TestAccCloudSigmaServer_emptySSH(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCloudSigmaServerConfig_emptySSHKey(),
+				ExpectError: regexp.MustCompile("ssh_keys.* must not be empty, got"),
+			},
+		},
+	})
+}
+
+func TestAccCloudSigmaServer_emptyTag(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCloudSigmaServerConfig_emptyTag(),
+				ExpectError: regexp.MustCompile("tags.* must not be empty, got"),
+			},
+		},
+	})
+}
+
+func testAccCheckCloudSigmaServerDestroy(s *terraform.State) error {
+	client := testAccProvider.Meta().(*cloudsigma.Client)
+
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "cloudsigma_server" {
+			continue
+		}
+
+		server, _, err := client.Servers.Get(context.Background(), rs.Primary.ID)
+		if err == nil && server.UUID == rs.Primary.ID {
+			return fmt.Errorf("server (%s) still exists", rs.Primary.ID)
+		}
+	}
+
+	return nil
+}
+
+func testAccCheckCloudSigmaServerExists(n string, server *cloudsigma.Server) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no server ID is set")
+		}
+
+		client := testAccProvider.Meta().(*cloudsigma.Client)
+		retrievedServer, _, err := client.Servers.Get(context.Background(), rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
+		if retrievedServer.UUID != rs.Primary.ID {
+			return fmt.Errorf("server not found")
+		}
+
+		*server = *retrievedServer
+		return nil
+	}
+}
+
+func testAccCloudSigmaServerConfig_basic(serverName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
   name         = "%s"
-  vnc_password = "%s"
+  vnc_password = "cloudsigma"
+}
+`, serverName)
+}
+
+func testAccCloudSigmaServerConfig_addTag(tagName, serverName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_tag" "test" {
+  name = "%s"
+}
+
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
+  name         = "%s"
+  vnc_password = "cloudsigma"
+
+  tags = [cloudsigma_tag.test.id]
+}
+`, tagName, serverName)
+}
+
+func testAccCloudSigmaServerConfig_noTag(serverName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
+  name         = "%s"
+  vnc_password = "cloudsigma"
+
+  tags = []
+}
+`, serverName)
+}
+
+func testAccCloudSigmaServerConfig_emptySSHKey() string {
+	return `
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
+  name         = "server-with-invalid-empty-ssh-key-element"
+  vnc_password = "cloudsigma"
+
+  ssh_keys = [""]
 }
 `
+}
+
+func testAccCloudSigmaServerConfig_emptyTag() string {
+	return `
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
+  name         = "server-with-invalid-empty-tag-element"
+  vnc_password = "cloudsigma"
+
+  tags = [""]
+}
+`
+}
 
 func TestResourceCloudSigmaServer_findIPv4Address(t *testing.T) {
 	cases := []struct {
