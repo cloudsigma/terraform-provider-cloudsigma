@@ -1,0 +1,32 @@
+name: acceptance tests
+on:
+  schedule:
+    - cron: "0 6 * * 0,3"
+
+jobs:
+  acceptance_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+
+      - name: Set up cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/go/pkg/mod
+            .bin
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-
+
+      - name: Run acceptance tests
+        env:
+          CLOUDSIGMA_USERNAME: ${{ secrets.CLOUDSIGMA_USERNAME }}
+          CLOUDSIGMA_PASSWORD: ${{ secrets.CLOUDSIGMA_PASSWORD }}
+          CLOUDSIGMA_LOCATION: ${{ secrets.CLOUDSIGMA_LOCATION }}
+        run: make testacc

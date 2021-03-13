@@ -45,7 +45,8 @@ test:
 .PHONY: testacc
 testacc: lint
 	@echo "==> Running acceptance tests..."
-	TF_ACC=1 go test $(TEST) -count=1 -v -cover -coverprofile=$(BUILD_DIR)/coverage-with-acceptance.out -timeout 120m ./...
+	@mkdir -p $(BUILD_DIR)
+	TF_ACC=1 go test -count=1 -v -cover -coverprofile=$(BUILD_DIR)/coverage-with-acceptance.out -timeout 120m ./...
 
 
 ## build: Build binary for default local system's operating system and architecture.
