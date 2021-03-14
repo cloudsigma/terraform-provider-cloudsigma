@@ -20,6 +20,10 @@ func resourceCloudSigmaDrive() *schema.Resource {
 		UpdateContext: resourceCloudSigmaDriveUpdate,
 		DeleteContext: resourceCloudSigmaDriveDelete,
 
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(30 * time.Minute),
+		},
+
 		SchemaVersion: 0,
 
 		Schema: map[string]*schema.Schema{
@@ -117,12 +121,8 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		Size:  d.Get("size").(int),
 	}
 
-	if v, ok := d.GetOk("tags"); ok {
-		drive.Tags = expandTags(v.(*schema.Set).List())
-	}
-
+	// Clone or create drive depending on 'clone_drive_id'
 	if v, ok := d.GetOk("clone_drive_id"); ok {
-		// Clone the Drive if 'clone_drive_id' is set
 		cloneDriveUUID := v.(string)
 		cloneRequest := &cloudsigma.DriveCloneRequest{Drive: drive}
 
@@ -132,22 +132,9 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 			return diag.FromErr(err)
 		}
 
-		// tags have to be explicitly updated when cloning the drive
-		if v, ok := d.GetOk("tags"); ok {
-			drive.Tags = expandTags(v.(*schema.Set).List())
-			updateRequest := &cloudsigma.DriveUpdateRequest{Drive: drive}
-
-			log.Printf("[DEBUG] Drive update configuration (attaching tags): %v", updateRequest)
-			_, _, err := client.Drives.Update(ctx, clonedDrive.UUID, updateRequest)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-
 		d.SetId(clonedDrive.UUID)
 		log.Printf("[INFO] Drive ID: %s", d.Id())
 	} else {
-		// Create the Drive because 'clone_drive_id' is not set
 		createRequest := &cloudsigma.DriveCreateRequest{Drives: []cloudsigma.Drive{*drive}}
 
 		log.Printf("[DEBUG] Drive create configuration: %v", createRequest)
@@ -161,17 +148,32 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		log.Printf("[INFO] Drive ID: %s", d.Id())
 	}
 
-	stateConf := &resource.StateChangeConf{
+	createStateConf := &resource.StateChangeConf{
 		Pending:    []string{"cloning_dst", "creating"},
-		Target:     []string{"unmounted"},
+		Target:     []string{"mounted", "unmounted"},
 		Refresh:    driveStateRefreshFunc(ctx, client, d.Id()),
-		Timeout:    10 * time.Minute,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      5 * time.Second,
-		MinTimeout: 3 * time.Second,
+		MinTimeout: 5 * time.Second,
+	}
+	if _, err := createStateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf("error waiting for drive (%s) to be created: %s", d.Id(), err)
 	}
 
-	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
-		return diag.FromErr(err)
+	// Attach tags if needed
+	if v, ok := d.GetOk("tags"); ok {
+		drive, _, err := client.Drives.Get(ctx, d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		drive.Tags = expandTags(v.(*schema.Set).List())
+
+		updateRequest := &cloudsigma.DriveUpdateRequest{Drive: drive}
+		log.Printf("[DEBUG] Drive update configuration (attaching tags): %v", updateRequest)
+		_, _, err = client.Drives.Update(ctx, drive.UUID, updateRequest)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return resourceCloudSigmaDriveRead(ctx, d, meta)
@@ -266,7 +268,7 @@ func driveStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, uuid 
 	return func() (interface{}, string, error) {
 		drive, _, err := client.Drives.Get(ctx, uuid)
 		if err != nil {
-			return nil, "", fmt.Errorf("error retrieving drive with uuid %s: %s", uuid, err)
+			return nil, "", fmt.Errorf("error retrieving drive with UUID %s: %s", uuid, err)
 		}
 
 		return drive, drive.Status, nil
