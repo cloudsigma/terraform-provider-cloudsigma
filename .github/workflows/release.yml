@@ -20,6 +20,13 @@ jobs:
         with:
           go-version: 1.15
 
+      - name: Run acceptance tests
+        env:
+          CLOUDSIGMA_USERNAME: ${{ secrets.CLOUDSIGMA_USERNAME }}
+          CLOUDSIGMA_PASSWORD: ${{ secrets.CLOUDSIGMA_PASSWORD }}
+          CLOUDSIGMA_LOCATION: ${{ secrets.CLOUDSIGMA_LOCATION }}
+        run: make testacc
+
       - name: Import GPG key
         uses: paultyng/ghaction-import-gpg@v2.1.0
         id: import_gpg
