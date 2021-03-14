@@ -2,7 +2,6 @@ package cloudsigma
 
 import (
 	"context"
-	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -15,20 +14,19 @@ func Provider() *schema.Provider {
 			"username": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_USERNAME", os.Getenv("CLOUDSIGMA_USERNAME")),
+				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_USERNAME", nil),
 				Description: "The CloudSigma user email.",
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_PASSWORD", os.Getenv("CLOUDSIGMA_PASSWORD")),
+				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_PASSWORD", nil),
 				Description: "The CloudSigma password.",
 			},
 			"location": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_LOCATION", os.Getenv("CLOUDSIGMA_LOCATION")),
-				Default:     "zrh",
+				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_LOCATION", "zrh"),
 				Description: "The location endpoint for CloudSigma. Default is 'zrh'.",
 			},
 		},
