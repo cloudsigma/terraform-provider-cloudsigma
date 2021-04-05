@@ -79,6 +79,50 @@ func TestAccCloudSigmaServer_emptyTag(t *testing.T) {
 	})
 }
 
+func TestAccCloudSigmaServer_smp(t *testing.T) {
+	var server cloudsigma.Server
+	serverName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCloudSigmaServerConfig_basic(serverName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaServerExists("cloudsigma_server.test", &server),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "cpu", "2000"),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "memory", "536870912"),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "name", serverName),
+					resource.TestCheckResourceAttrSet("cloudsigma_server.test", "resource_uri"),
+				),
+			},
+			{
+				Config: testAccCloudSigmaServerConfig_addSMP(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaServerExists("cloudsigma_server.test", &server),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "smp", "2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCloudSigmaServer_invalidSMP(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCloudSigmaServerConfig_invalidSMP(),
+				ExpectError: regexp.MustCompile("the minimum amount of cpu per smp is .*"),
+			},
+		},
+	})
+}
+
 func testAccCheckCloudSigmaServerDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*cloudsigma.Client)
 
@@ -185,6 +229,30 @@ resource "cloudsigma_server" "test" {
   vnc_password = "cloudsigma"
 
   tags = [""]
+}
+`
+}
+
+func testAccCloudSigmaServerConfig_addSMP() string {
+	return `
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
+  name         = "server-with-invalid-empty-tag-element"
+  smp          = 2
+  vnc_password = "cloudsigma"
+}
+`
+}
+
+func testAccCloudSigmaServerConfig_invalidSMP() string {
+	return `
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
+  name         = "server-with-invalid-empty-tag-element"
+  smp          = 5
+  vnc_password = "cloudsigma"
 }
 `
 }
