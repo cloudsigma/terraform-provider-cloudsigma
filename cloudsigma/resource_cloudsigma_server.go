@@ -86,6 +86,12 @@ func resourceCloudSigmaServer() *schema.Resource {
 				Computed: true,
 			},
 
+			"smp": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Computed: true,
+			},
+
 			"ssh_keys": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -116,6 +122,11 @@ func resourceCloudSigmaServer() *schema.Resource {
 func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
+	err := validateSMP(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	// build create configuration
 	createRequest := &cloudsigma.ServerCreateRequest{
 		Servers: []cloudsigma.Server{
@@ -123,6 +134,7 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 				CPU:         d.Get("cpu").(int),
 				Memory:      d.Get("memory").(int),
 				Name:        d.Get("name").(string),
+				SMP:         d.Get("smp").(int),
 				VNCPassword: d.Get("vnc_password").(string),
 			},
 		},
@@ -249,6 +261,7 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 	_ = d.Set("memory", server.Memory)
 	_ = d.Set("name", server.Name)
 	_ = d.Set("resource_uri", server.ResourceURI)
+	_ = d.Set("smp", server.SMP)
 	_ = d.Set("vnc_password", server.VNCPassword)
 
 	if len(server.NICs) > 0 {
@@ -281,11 +294,17 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
 
+	err := validateSMP(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	updateRequest := &cloudsigma.ServerUpdateRequest{
 		Server: &cloudsigma.Server{
 			CPU:         d.Get("cpu").(int),
 			Memory:      d.Get("memory").(int),
 			Name:        d.Get("name").(string),
+			SMP:         d.Get("smp").(int),
 			VNCPassword: d.Get("vnc_password").(string),
 		},
 	}
@@ -354,7 +373,7 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 		updateRequest.Tags = expandTags(v.(*schema.Set).List())
 	}
 
-	err := stopServer(ctx, client, d.Id())
+	err = stopServer(ctx, client, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -426,6 +445,17 @@ func findIPv4Address(server *cloudsigma.Server, addrType string) string {
 		}
 	}
 	return ""
+}
+
+func validateSMP(d *schema.ResourceData) error {
+	if v, ok := d.GetOk("smp"); ok {
+		smp := v.(int)
+		cpu := d.Get("cpu").(int)
+		if cpu/smp < 1000 {
+			return fmt.Errorf("the minimum amount of cpu per smp is 1000 (currently is %v)", cpu/smp)
+		}
+	}
+	return nil
 }
 
 func serverStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, serverUUID string) resource.StateRefreshFunc {
