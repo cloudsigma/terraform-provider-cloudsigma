@@ -65,6 +65,37 @@ func TestAccCloudSigmaDrive_emptyTag(t *testing.T) {
 	})
 }
 
+func TestAccCloudSigmaDrive_changeSize(t *testing.T) {
+	var drive cloudsigma.Drive
+	driveName := fmt.Sprintf("tf-acc-test--%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCloudSigmaDriveDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCloudSigmaDriveConfig_basic(driveName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaDriveExists("cloudsigma_drive.test", &drive),
+					resource.TestCheckResourceAttr("cloudsigma_drive.test", "media", "disk"),
+					resource.TestCheckResourceAttr("cloudsigma_drive.test", "name", driveName),
+					resource.TestCheckResourceAttr("cloudsigma_drive.test", "size", "5368709120"),
+					resource.TestCheckResourceAttrSet("cloudsigma_drive.test", "resource_uri"),
+					resource.TestCheckResourceAttrSet("cloudsigma_drive.test", "uuid"),
+				),
+			},
+			{
+				Config: testAccCloudSigmaDriveConfig_changeSize(driveName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaDriveExists("cloudsigma_drive.test", &drive),
+					resource.TestCheckResourceAttr("cloudsigma_drive.test", "size", "16106127360"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckCloudSigmaDriveDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*cloudsigma.Client)
 
@@ -156,4 +187,14 @@ resource "cloudsigma_drive" "test" {
   tags = [""]
 }
 `
+}
+
+func testAccCloudSigmaDriveConfig_changeSize(driverName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_drive" "test" {
+  media = "disk"
+  name = "%s"
+  size = 15 * 1024 * 1024 * 1024
+}
+`, driverName)
 }
