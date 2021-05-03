@@ -22,6 +22,7 @@ func resourceCloudSigmaDrive() *schema.Resource {
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(30 * time.Minute),
+			Update: schema.DefaultTimeout(30 * time.Minute),
 		},
 
 		SchemaVersion: 0,
@@ -154,7 +155,7 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		Refresh:    driveStateRefreshFunc(ctx, client, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      5 * time.Second,
-		MinTimeout: 5 * time.Second,
+		MinTimeout: 3 * time.Second,
 	}
 	if _, err := createStateConf.WaitForStateContext(ctx); err != nil {
 		return diag.Errorf("error waiting for drive (%s) to be created: %s", d.Id(), err)
@@ -229,9 +230,53 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	log.Printf("[DEBUG] Drive update configuration: %v", updateRequest)
 
+	if d.HasChange("size") {
+		log.Printf("[DEBUG] Check if drive (%v) is mounted on any server", d.Id())
+		if v, ok := d.GetOk("mounted_on"); ok {
+			mountedOns, err := expandMountedOn(v.([]interface{}))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			for _, mountedOn := range mountedOns {
+				err := stopServer(ctx, client, mountedOn.UUID)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		}
+	}
+
 	_, _, err := client.Drives.Update(ctx, d.Id(), updateRequest)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// start servers if drive was mounted
+	if v, ok := d.GetOk("mounted_on"); ok {
+		mountedOns, err := expandMountedOn(v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		for _, mountedOn := range mountedOns {
+			err := startServer(ctx, client, mountedOn.UUID)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"cloning_dst", "creating", "resizing"},
+		Target:     []string{"mounted", "unmounted"},
+		Refresh:    driveStateRefreshFunc(ctx, client, d.Id()),
+		Timeout:    d.Timeout(schema.TimeoutUpdate),
+		Delay:      5 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.Errorf("error waiting for drive (%s) to be updated: %s", d.Id(), err)
 	}
 
 	return resourceCloudSigmaDriveRead(ctx, d, meta)

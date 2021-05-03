@@ -123,6 +123,44 @@ func TestAccCloudSigmaServer_invalidSMP(t *testing.T) {
 	})
 }
 
+func TestAccCloudSigmaServer_withDrive(t *testing.T) {
+	var server cloudsigma.Server
+	var drive cloudsigma.Drive
+	serverName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
+	driveName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCloudSigmaServerConfig_withDrive(serverName, driveName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaServerExists("cloudsigma_server.test", &server),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "cpu", "2000"),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "memory", "536870912"),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "name", serverName),
+					resource.TestCheckResourceAttrSet("cloudsigma_server.test", "resource_uri"),
+
+					testAccCheckCloudSigmaDriveExists("cloudsigma_drive.test", &drive),
+					resource.TestCheckResourceAttr("cloudsigma_drive.test", "name", driveName),
+					resource.TestCheckResourceAttr("cloudsigma_drive.test", "size", "5368709120"),
+				),
+			},
+			{
+				Config: testAccCloudSigmaServerConfig_changeDriveSize(serverName, driveName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaServerExists("cloudsigma_server.test", &server),
+
+					testAccCheckCloudSigmaDriveExists("cloudsigma_drive.test", &drive),
+					resource.TestCheckResourceAttr("cloudsigma_drive.test", "size", "16106127360"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckCloudSigmaServerDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*cloudsigma.Client)
 
@@ -255,6 +293,40 @@ resource "cloudsigma_server" "test" {
   vnc_password = "cloudsigma"
 }
 `
+}
+
+func testAccCloudSigmaServerConfig_withDrive(serverName, driveName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
+  name         = "%s"
+  vnc_password = "cloudsigma"
+}
+
+resource "cloudsigma_drive" "test" {
+  media = "disk"
+  name  = "%s"
+  size  = 5 * 1024 * 1024 * 1024
+}
+`, serverName, driveName)
+}
+
+func testAccCloudSigmaServerConfig_changeDriveSize(serverName, driveName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
+  name         = "%s"
+  vnc_password = "cloudsigma"
+}
+
+resource "cloudsigma_drive" "test" {
+  media = "disk"
+  name  = "%s"
+  size  = 15 * 1024 * 1024 * 1024
+}
+`, serverName, driveName)
 }
 
 func TestResourceCloudSigmaServer_findIPv4Address(t *testing.T) {
