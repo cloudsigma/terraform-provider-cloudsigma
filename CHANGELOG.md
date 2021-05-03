@@ -1,4 +1,18 @@
 
+<a name="v1.4.0"></a>
+## v1.4.0 (2021-05-03)
+
+### Bug Fixes
+* **resource/cloudsigma_drive:** change size correctly when drive is mounted
+* **resource/cloudsigma_drive:** allow to specify timeout for create operation
+
+### Features
+* **resource/cloudsigma_server:** add smp attribute
+
+### Maintaining
+* run acceptance tests by release workflow
+
+
 <a name="v1.3.0"></a>
 ## v1.3.0 (2021-03-11)
 

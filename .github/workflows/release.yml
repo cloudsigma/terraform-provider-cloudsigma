@@ -25,7 +25,7 @@ jobs:
           CLOUDSIGMA_USERNAME: ${{ secrets.CLOUDSIGMA_USERNAME }}
           CLOUDSIGMA_PASSWORD: ${{ secrets.CLOUDSIGMA_PASSWORD }}
           CLOUDSIGMA_LOCATION: ${{ secrets.CLOUDSIGMA_LOCATION }}
-        run: make testacc
+        run: make tools testacc
 
       - name: Import GPG key
         uses: paultyng/ghaction-import-gpg@v2.1.0
@@ -36,7 +36,7 @@ jobs:
 
       - name: Generate changelog
         run: |
-          mkdir .bin
+          mkdir -p .bin
           curl -L https://github.com/git-chglog/git-chglog/releases/download/0.9.1/git-chglog_linux_amd64 -o .bin/git-chglog
           chmod +x .bin/git-chglog
           .bin/git-chglog -c .github/changelog/config.yml -o .bin/DRAFT.md $(git describe --tags $(git rev-list --tags --max-count=1))
