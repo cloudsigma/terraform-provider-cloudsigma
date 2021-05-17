@@ -220,15 +220,12 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 			})
 		}
 
-		attachRequest := &cloudsigma.ServerAttachDriveRequest{
-			CPU:         server.CPU,
-			Drives:      serverDrives,
-			Memory:      server.Memory,
-			Name:        server.Name,
-			VNCPassword: server.VNCPassword,
+		server.Drives = serverDrives
+		updateRequest := &cloudsigma.ServerUpdateRequest{
+			Server: &server,
 		}
-		log.Printf("[DEBUG] Server attach drive configuration: %v", attachRequest)
-		_, _, err := client.Servers.AttachDrive(ctx, d.Id(), attachRequest)
+		log.Printf("[DEBUG] Server update configuration (attach drives): %v", updateRequest)
+		_, _, err := client.Servers.Update(ctx, d.Id(), updateRequest)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -378,7 +375,7 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] Server update configuration: %#v", *updateRequest)
+	log.Printf("[DEBUG] Server update configuration: %v", *updateRequest)
 	_, _, err = client.Servers.Update(ctx, d.Id(), updateRequest)
 	if err != nil {
 		return diag.FromErr(err)
