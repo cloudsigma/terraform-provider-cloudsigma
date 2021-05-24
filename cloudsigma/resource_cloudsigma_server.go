@@ -20,6 +20,11 @@ func resourceCloudSigmaServer() *schema.Resource {
 		UpdateContext: resourceCloudSigmaServerUpdate,
 		DeleteContext: resourceCloudSigmaServerDelete,
 
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(30 * time.Minute),
+			Update: schema.DefaultTimeout(30 * time.Minute),
+		},
+
 		SchemaVersion: 0,
 
 		Schema: map[string]*schema.Schema{
