@@ -1,4 +1,11 @@
 
+<a name="v1.4.2"></a>
+## v1.4.2 (2021-05-24)
+
+### Maintaining
+* update CloudSigma SDK library to version v0.9.0
+
+
 <a name="v1.4.1"></a>
 ## v1.4.1 (2021-05-17)
 
