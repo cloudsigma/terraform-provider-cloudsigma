@@ -21,7 +21,7 @@ type Config struct {
 
 // Client returns a new client for accessing CloudSigma.
 func (c *Config) Client() *cloudsigma.Client {
-	client := cloudsigma.NewBasicAuthClient(c.Username, c.Password)
+	client := cloudsigma.NewBasicAuthClient(c.Username, c.Password, nil)
 	client.SetLocation(c.Location)
 	client.SetUserAgent(c.userAgent)
 
