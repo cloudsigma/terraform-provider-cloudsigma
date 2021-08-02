@@ -1,4 +1,11 @@
 
+<a name="v1.5.1"></a>
+## v1.5.1 (2021-08-03)
+
+### Maintaining
+* update terraform-plugin-sdk to v2.7.0
+
+
 <a name="v1.5.0"></a>
 ## v1.5.0 (2021-08-03)
 
