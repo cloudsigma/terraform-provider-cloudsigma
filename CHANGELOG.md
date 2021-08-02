@@ -1,4 +1,12 @@
 
+<a name="v1.5.0"></a>
+## v1.5.0 (2021-08-03)
+
+### Maintaining
+* update go version to 1.16 in github worklflows
+* add support for darwin_arm64 systems
+
+
 <a name="v1.4.2"></a>
 ## v1.4.2 (2021-05-24)
 
