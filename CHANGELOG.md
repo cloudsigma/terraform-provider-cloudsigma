@@ -1,4 +1,11 @@
 
+<a name="v1.6.0"></a>
+## v1.6.0 (2021-09-07)
+
+### Features
+* **data-source/cloudsigma_drive:** add new data source for drives
+
+
 <a name="v1.5.1"></a>
 ## v1.5.1 (2021-08-03)
 
