@@ -1,6 +1,19 @@
 
+<a name="v1.7.0"></a>
+## v1.7.0 (2022-01-17)
+
+### Documentation
+* **resource/cloudsigma_server:** add missing documentation for ssh keys attribute
+
+### Features
+* add client authorization via bearer token
+
+### Maintaining
+* update terraform-plugin-sdk to v2.9.0
+
+
 <a name="v1.6.0"></a>
-## v1.6.0 (2021-09-07)
+## v1.6.0 (2021-09-09)
 
 ### Features
 * **data-source/cloudsigma_drive:** add new data source for drives
