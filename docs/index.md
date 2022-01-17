@@ -64,8 +64,8 @@ provider "cloudsigma" {
 
 ### Environment variables
 
-You can provide your credentials via the `CLOUDSIGMA_USERNAME`, `CLOUDSIGMA_PASSWORD`
-environment variables.
+You can provide your credentials via the `CLOUDSIGMA_TOKEN`, `CLOUDSIGMA_USERNAME`,
+`CLOUDSIGMA_PASSWORD` environment variables.
 
 ```hcl
 provider "cloudsigma" {}
@@ -84,9 +84,11 @@ $ terraform plan
 
 The following arguments are supported:
 
-* `username` - (Required) Your Cloudsigma email address. Alternatively, this can
+* `token` - (required) Your CloudSigma access token. Alternatively, this can also
+  be specified using an environment variable called `CLOUDSIGMA_TOKEN`.
+* `username` - (Required) Your CloudSigma email address. Alternatively, this can
   also be specified using an environment variable called `CLOUDSIGMA_USERNAME`.
-* `password` - (Required) Your Cloudsigma password. Alternatively, this can
+* `password` - (Required) Your CloudSigma password. Alternatively, this can
   also be specified using an environment variable called `CLOUDSIGMA_PASSWORD`.
 * `location` - (Optional) This can be used to override the location for
   CloudSigma API requests (Defaults to the value of the `CLOUDSIGMA_LOCATION`
