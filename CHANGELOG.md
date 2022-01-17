@@ -1,13 +1,13 @@
 
+<a name="v1.7.2"></a>
+## v1.7.2 (2022-01-17)
+
+### Documentation
+* update registry documentation for token based authentication
+
+
 <a name="v1.7.1"></a>
 ## v1.7.1 (2022-01-17)
-
-### Maintaining
-* update go version to 1.17 in github worklflows
-
-
-<a name="v1.7.0"></a>
-## v1.7.0 (2022-01-17)
 
 ### Documentation
 * **resource/cloudsigma_server:** add missing documentation for ssh keys attribute
@@ -16,6 +16,7 @@
 * add client authorization via bearer token
 
 ### Maintaining
+* update go version to 1.17 in github worklflows
 * update terraform-plugin-sdk to v2.9.0
 
 
