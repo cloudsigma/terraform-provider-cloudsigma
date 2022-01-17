@@ -11,6 +11,7 @@ import (
 // Config represents the configuration structure used to instantiate
 // the Cloudsigma provider.
 type Config struct {
+	Token    string
 	Username string
 	Password string
 	Location string
@@ -21,11 +22,17 @@ type Config struct {
 
 // Client returns a new client for accessing CloudSigma.
 func (c *Config) Client() *cloudsigma.Client {
-	client := cloudsigma.NewBasicAuthClient(c.Username, c.Password, nil)
+	var client *cloudsigma.Client
+	if len(c.Token) > 0 {
+		client = cloudsigma.NewTokenClient(c.Token, nil)
+		log.Printf("[INFO] CloudSigma Client configured using access token, location: %s", c.Location)
+	} else {
+		client = cloudsigma.NewBasicAuthClient(c.Username, c.Password, nil)
+		log.Printf("[INFO] CloudSigma Client configured for user: %s, location: %s", c.Username, c.Location)
+	}
 	client.SetLocation(c.Location)
 	client.SetUserAgent(c.userAgent)
 
-	log.Printf("[INFO] CloudSigma Client configured for user: %s, location: %s", c.Username, c.Location)
 	return client
 }
 

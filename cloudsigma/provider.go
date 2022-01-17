@@ -11,17 +11,26 @@ import (
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
+			"token": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				DefaultFunc:   schema.EnvDefaultFunc("CLOUDSIGMA_TOKEN", nil),
+				Description:   "The CloudSigma access token.",
+				ConflictsWith: []string{"username", "password"},
+			},
 			"username": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_USERNAME", nil),
-				Description: "The CloudSigma user email.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				DefaultFunc:   schema.EnvDefaultFunc("CLOUDSIGMA_USERNAME", nil),
+				Description:   "The CloudSigma user email.",
+				ConflictsWith: []string{"token"},
 			},
 			"password": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_PASSWORD", nil),
-				Description: "The CloudSigma password.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				DefaultFunc:   schema.EnvDefaultFunc("CLOUDSIGMA_PASSWORD", nil),
+				Description:   "The CloudSigma password.",
+				ConflictsWith: []string{"token"},
 			},
 			"location": {
 				Type:        schema.TypeString,
@@ -63,6 +72,7 @@ func Provider() *schema.Provider {
 func providerConfigure(provider *schema.Provider) schema.ConfigureContextFunc {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		config := &Config{
+			Token:    d.Get("token").(string),
 			Username: d.Get("username").(string),
 			Password: d.Get("password").(string),
 			Location: d.Get("location").(string),
