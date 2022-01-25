@@ -1,4 +1,11 @@
 
+<a name="v1.8.1"></a>
+## v1.8.1 (2022-01-25)
+
+### Bug Fixes
+* propagate missing base_url option
+
+
 <a name="v1.8.0"></a>
 ## v1.8.0 (2022-01-25)
 
