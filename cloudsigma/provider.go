@@ -82,6 +82,7 @@ func providerConfigure(provider *schema.Provider) schema.ConfigureContextFunc {
 			Username: d.Get("username").(string),
 			Password: d.Get("password").(string),
 			Location: d.Get("location").(string),
+			BaseURL:  d.Get("base_url").(string),
 		}
 
 		config.loadAndValidate(ctx, provider.TerraformVersion)
