@@ -92,4 +92,7 @@ The following arguments are supported:
   also be specified using an environment variable called `CLOUDSIGMA_PASSWORD`.
 * `location` - (Optional) This can be used to override the location for
   CloudSigma API requests (Defaults to the value of the `CLOUDSIGMA_LOCATION`
-  environment variable or `https://zrh.cloudsigma.com/api/2.0/` if unset).
+  environment variable or `zrh` if unset).
+* `base_url` - (Optional) This is the base URL for for CloudSigma API requests.
+  (Defaults to the value of the `CLOUDSIGMA_BASE_URL` environment variable or
+  `cloudsigma.com/api/2.0/` if unset). The value must end with a slash.

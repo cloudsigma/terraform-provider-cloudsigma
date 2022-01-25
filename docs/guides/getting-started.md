@@ -30,8 +30,9 @@ provider "cloudsigma" {
 * The `username` field should be your user email.
 * The `password` field is your password.
 * The `location` field is optional (default value is `zrh`). If you want to try
-another location, check [avalaible locations](https://cloudsigma-docs.readthedocs.io/en/2.14.1/general.html#api-endpoint)
+another location, check [available locations](https://docs.cloudsigma.com/en/latest/general.html#api-endpoint)
 and use the location code as value.
+* The `base_url` field is optional (default value is `cloudsigma.com/api/2.0/`).
 
 ## Creating a Server
 Add the following to your config file:

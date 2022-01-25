@@ -38,6 +38,12 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_LOCATION", "zrh"),
 				Description: "The location endpoint for CloudSigma. Default is 'zrh'.",
 			},
+			"base_url": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_BASE_URL", "cloudsigma.com/api/2.0/"),
+				Description: "The base URL endpoint for CloudSigma. Default is 'cloudsigma.com/api/2.0/'.",
+			},
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
