@@ -1,4 +1,14 @@
 
+<a name="v1.8.0"></a>
+## v1.8.0 (2022-01-25)
+
+### Features
+* add base_url configuration option
+
+### Maintaining
+* update cloudsigma-sdk-go to v0.11.0
+
+
 <a name="v1.7.2"></a>
 ## v1.7.2 (2022-01-17)
 
