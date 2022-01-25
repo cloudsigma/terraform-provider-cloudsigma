@@ -15,6 +15,7 @@ type Config struct {
 	Username string
 	Password string
 	Location string
+	BaseURL  string
 
 	context   context.Context
 	userAgent string
@@ -30,7 +31,7 @@ func (c *Config) Client() *cloudsigma.Client {
 		client = cloudsigma.NewBasicAuthClient(c.Username, c.Password, nil)
 		log.Printf("[INFO] CloudSigma Client configured for user: %s, location: %s", c.Username, c.Location)
 	}
-	client.SetLocation(c.Location)
+	client.SetAPIEndpoint(c.Location, c.BaseURL)
 	client.SetUserAgent(c.userAgent)
 
 	return client
