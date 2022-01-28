@@ -1,4 +1,14 @@
 
+<a name="v1.9.0"></a>
+## v1.9.0 (2022-01-28)
+
+### Features
+* **server/cloudsigma_server:** add enclave_page_caches attribute
+
+### Maintaining
+* update cloudsigma-sdk-go to v0.12.0
+
+
 <a name="v1.8.1"></a>
 ## v1.8.1 (2022-01-25)
 
