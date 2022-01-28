@@ -47,6 +47,14 @@ func resourceCloudSigmaServer() *schema.Resource {
 				},
 			},
 
+			"enclave_page_caches": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
 			"ipv4_address": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -143,6 +151,10 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 				VNCPassword: d.Get("vnc_password").(string),
 			},
 		},
+	}
+
+	if v, ok := d.GetOk("enclave_page_caches"); ok {
+		createRequest.Servers[0].EnclavePageCaches = expandEnclavePageCaches(v.([]interface{}))
 	}
 
 	if ns, ok := d.GetOk("network"); ok {
@@ -286,6 +298,10 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 		}
 	}
 
+	if err := d.Set("enclave_page_caches", flattenEnclavePageCaches(server.EnclavePageCaches)); err != nil {
+		return diag.Errorf("error setting Server EPC - error: %#v", err)
+	}
+
 	if err := d.Set("tags", flattenTags(server.Tags)); err != nil {
 		return diag.Errorf("error setting Server tags - error: %#v", err)
 	}
@@ -309,6 +325,10 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 			SMP:         d.Get("smp").(int),
 			VNCPassword: d.Get("vnc_password").(string),
 		},
+	}
+
+	if v, ok := d.GetOk("enclave_page_caches"); ok {
+		updateRequest.EnclavePageCaches = expandEnclavePageCaches(v.([]interface{}))
 	}
 
 	if d.HasChange("drive") {
