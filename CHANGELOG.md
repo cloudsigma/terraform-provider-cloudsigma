@@ -1,4 +1,14 @@
 
+<a name="v1.9.1"></a>
+## v1.9.1 (2022-02-06)
+
+### Bug Fixes
+* **server/cloudsigma_server:** change enclave_page_caches attribute type to int
+
+### Maintaining
+* update cloudsigma-sdk-go to v0.13.0
+
+
 <a name="v1.9.0"></a>
 ## v1.9.0 (2022-01-28)
 
