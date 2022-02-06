@@ -7,7 +7,7 @@ func expandEnclavePageCaches(caches []interface{}) []cloudsigma.EnclavePageCache
 
 	for _, cache := range caches {
 		c := &cloudsigma.EnclavePageCache{
-			Size: cache.(string),
+			Size: cache.(int),
 		}
 		expandedCaches = append(expandedCaches, *c)
 	}
