@@ -16,15 +16,15 @@ func TestStructureServer_expandEnclavePageCaches(t *testing.T) {
 		{"Nil", nil, []cloudsigma.EnclavePageCache{}},
 		{
 			"SingleEPC",
-			[]interface{}{"100M"},
-			[]cloudsigma.EnclavePageCache{{Size: "100M"}},
+			[]interface{}{1024},
+			[]cloudsigma.EnclavePageCache{{Size: 1024}},
 		},
 		{
 			"MultipleEPCs",
-			[]interface{}{"100M", "200M"},
+			[]interface{}{1024, 2048},
 			[]cloudsigma.EnclavePageCache{
-				{Size: "100M"},
-				{Size: "200M"},
+				{Size: 1024},
+				{Size: 2048},
 			},
 		},
 	}
@@ -51,16 +51,16 @@ func TestStructureServer_flattenEnclavePageCaches(t *testing.T) {
 		{"Nil", nil, []interface{}{}},
 		{
 			"SingleEPC",
-			[]cloudsigma.EnclavePageCache{{Size: "100M"}},
-			[]interface{}{"100M"},
+			[]cloudsigma.EnclavePageCache{{Size: 1024}},
+			[]interface{}{1024},
 		},
 		{
 			"MultipleEPCs",
 			[]cloudsigma.EnclavePageCache{
-				{Size: "100M"},
-				{Size: "200M"},
+				{Size: 1024},
+				{Size: 2048},
 			},
-			[]interface{}{"100M", "200M"},
+			[]interface{}{1024, 2048},
 		},
 	}
 
