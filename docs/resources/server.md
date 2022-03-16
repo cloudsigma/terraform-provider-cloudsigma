@@ -8,7 +8,6 @@ page_title: "CloudSigma: cloudsigma_server
 Provides a CloudSigma Server resource. This can be used to create, modify,
 and delete Servers.
 
-
 ## Examples
 
 ### Basic
@@ -95,25 +94,26 @@ resource "cloudsigma_server" "web" {
 
 The following arguments are supported:
 
-* `cpu` - (Required) Server's CPU Clock speed measured in MHz
-* `memory` - (Required) Server's RAM measured in bytes
-* `name` - (Required) Human readable name of server
-* `vnc_password` - (Required) VNC Password to connect to server
-* `drive` - (Optional) Drive attached to the server on creation
-    - uuid - (Required) The UUID of the drive
-* `network` - (Optional) Network interface card attached to the server
-    - ipv4_address - (Optional) The IP address reference. Only used with `static` type
-    - type - (Optional) Configuration type. Valid values: `dhcp`, `static`, `manual`
-    - vlan_uuid - (Optional) The UUID of the VLAN reference
-* `ssh_keys` - (Optional) A list of the SSH key UUIDs to be applied to the server
-* `tags` - (Optional) A list of the tags UUIDs to be applied to the server
-
+- `cpu` - (Required) Server's CPU Clock speed measured in MHz
+- `memory` - (Required) Server's RAM measured in bytes
+- `name` - (Required) Human readable name of server
+- `vnc_password` - (Required) VNC Password to connect to server
+- `drive` - (Optional) Drive attached to the server on creation
+  - uuid - (Required) The UUID of the drive
+- `network` - (Optional) Network interface card attached to the server
+  - ipv4_address - (Optional) The IP address reference. Only used with `static` type
+  - type - (Optional) Configuration type. Valid values: `dhcp`, `static`, `manual`
+  - vlan_uuid - (Optional) The UUID of the VLAN reference
+- `ssh_keys` - (Optional) A list of the SSH key UUIDs to be applied to the server
+- `tags` - (Optional) A list of the tags UUIDs to be applied to the server
+- `smp` - (Optional) Symmetric Multiprocessing (SMP) i.e. number of CPU cores
+- `meta` - (Optional) The field can be used to store arbitrary information in key-value form.
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-* `cpu` - Server's CPU Clock speed measured in MHz
-* `memory` - Server's RAM measured in bytes
-* `name` - Human readable name of server
-* `vnc_password` - VNC Password to connect to server
+- `cpu` - Server's CPU Clock speed measured in MHz
+- `memory` - Server's RAM measured in bytes
+- `name` - Human readable name of server
+- `vnc_password` - VNC Password to connect to server

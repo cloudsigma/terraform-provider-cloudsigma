@@ -128,6 +128,11 @@ func resourceCloudSigmaServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+
+			"meta": {
+				Type:     schema.TypeString,
+				Required: false,
+			},
 		},
 	}
 }
