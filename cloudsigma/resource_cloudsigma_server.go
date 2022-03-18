@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"time"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
@@ -64,6 +65,18 @@ func resourceCloudSigmaServer() *schema.Resource {
 				Type:             schema.TypeInt,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(268435456, 137438953472)), // 256MB - 128GB
+			},
+
+			"meta": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:     schema.TypeString,
+					Required: true,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringDoesNotMatch(regexp.MustCompile("^ssh_public_key$"),
+						"Do not specify ssh_public_key in the meta. Use ssh_keys property instead.")),
+				},
+				ValidateDiagFunc: validation.MapKeyLenBetween(0, 32),
 			},
 
 			"name": {
@@ -127,11 +140,6 @@ func resourceCloudSigmaServer() *schema.Resource {
 			"vnc_password": {
 				Type:     schema.TypeString,
 				Required: true,
-			},
-
-			"meta": {
-				Type:     schema.TypeString,
-				Required: false,
 			},
 		},
 	}
@@ -214,6 +222,17 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 		createRequest.Servers[0].Tags = expandTags(v.(*schema.Set).List())
 	}
 
+	if v, ok := d.GetOk("meta"); ok {
+		m := v.(map[string]interface{})
+		if createRequest.Servers[0].Meta == nil {
+			createRequest.Servers[0].Meta = make(map[string]interface{})
+		}
+
+		for k, val := range m {
+			createRequest.Servers[0].Meta[k] = val
+		}
+	}
+
 	log.Printf("[DEBUG] Server create configuration: %v", createRequest)
 	servers, _, err := client.Servers.Create(ctx, createRequest)
 	if err != nil {
@@ -283,6 +302,23 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 	_ = d.Set("smp", server.SMP)
 	_ = d.Set("vnc_password", server.VNCPassword)
 
+	if server.PublicKeys != nil {
+		_ = d.Set("ssh_keys", extractSSHKeys(server.PublicKeys))
+	}
+
+	if server.Meta != nil {
+		meta := make(map[string]interface{})
+		for k, val := range server.Meta {
+			// Ignore ssh_public key as it is managed by ssh_keys property
+			if k != "ssh_public_key" {
+				meta[k] = val.(string)
+			}
+		}
+		if len(meta) > 0 {
+			_ = d.Set("meta", meta)
+		}
+	}
+
 	if len(server.NICs) > 0 {
 		var networks []map[string]interface{}
 		for _, nws := range server.NICs {
@@ -316,6 +352,10 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 
 func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudsigma.Client)
+
+	// Note that if a server is running, only name, meta, and tags fields can be changed
+	// and all other changes to the definition of a running server will be ignored.
+	needRestart := d.HasChangesExcept("name", "meta", "tags")
 
 	err := validateSMP(d)
 	if err != nil {
@@ -400,9 +440,12 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 		updateRequest.Tags = expandTags(v.(*schema.Set).List())
 	}
 
-	err = stopServer(ctx, client, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
+	if needRestart {
+		log.Printf("[DEBUG] Server is going to restart")
+		err = stopServer(ctx, client, d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	log.Printf("[DEBUG] Server update configuration: %v", *updateRequest)
@@ -411,9 +454,11 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	err = startServer(ctx, client, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
+	if needRestart {
+		err = startServer(ctx, client, d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return resourceCloudSigmaServerRead(ctx, d, meta)
@@ -459,6 +504,15 @@ func expandSSHKeys(sshKeys []interface{}) []cloudsigma.Keypair {
 	}
 
 	return expandedSshKeys
+}
+
+func extractSSHKeys(serverSSHKeys []cloudsigma.Keypair) []interface{} {
+	extractedSshKeys := make([]interface{}, len(serverSSHKeys))
+	for i, v := range serverSSHKeys {
+		extractedSshKeys[i] = v.UUID
+	}
+
+	return extractedSshKeys
 }
 
 func findIPv4Address(server *cloudsigma.Server, addrType string) string {
