@@ -441,7 +441,7 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if needRestart {
-		log.Printf("[DEBUG] Server is going to restart")
+		log.Printf("[DEBUG] Stopping the server")
 		err = stopServer(ctx, client, d.Id())
 		if err != nil {
 			return diag.FromErr(err)
@@ -455,6 +455,7 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if needRestart {
+		log.Printf("[DEBUG] Starting the server")
 		err = startServer(ctx, client, d.Id())
 		if err != nil {
 			return diag.FromErr(err)
