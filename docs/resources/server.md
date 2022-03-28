@@ -8,7 +8,6 @@ page_title: "CloudSigma: cloudsigma_server
 Provides a CloudSigma Server resource. This can be used to create, modify,
 and delete Servers.
 
-
 ## Examples
 
 ### Basic
@@ -107,7 +106,8 @@ The following arguments are supported:
     - vlan_uuid - (Optional) The UUID of the VLAN reference
 * `ssh_keys` - (Optional) A list of the SSH key UUIDs to be applied to the server
 * `tags` - (Optional) A list of the tags UUIDs to be applied to the server
-
+* `smp` - (Optional) Symmetric Multiprocessing (SMP) i.e. number of CPU cores
+* `meta` - (Optional) The field can be used to store arbitrary information in key-value form.
 
 ## Attributes Reference
 
