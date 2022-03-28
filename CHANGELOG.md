@@ -1,4 +1,11 @@
 
+<a name="v1.10.0"></a>
+## v1.10.0 (2022-03-28)
+
+### Features
+* **resource/cloudsigma_server:** add meta attribute
+
+
 <a name="v1.9.1"></a>
 ## v1.9.1 (2022-02-06)
 
