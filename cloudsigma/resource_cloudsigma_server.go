@@ -394,6 +394,17 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 		updateRequest.Drives = serverDrives
 	}
 
+	if v, ok := d.GetOk("meta"); ok {
+		m := v.(map[string]interface{})
+		if updateRequest.Meta == nil {
+			updateRequest.Meta = make(map[string]interface{})
+		}
+
+		for k, val := range m {
+			updateRequest.Meta[k] = val
+		}
+	}
+
 	if d.HasChange("network") {
 		serverNICs := make([]cloudsigma.ServerNIC, 0)
 
