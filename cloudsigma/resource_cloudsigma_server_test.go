@@ -161,6 +161,35 @@ func TestAccCloudSigmaServer_withDrive(t *testing.T) {
 	})
 }
 
+func TestAccCloudSigmaServer_withMeta(t *testing.T) {
+	var server cloudsigma.Server
+	serverName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCloudSigmaServerConfig_withMeta(serverName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaServerExists("cloudsigma_server.test", &server),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "meta.%", "2"),
+				),
+			},
+			{
+				Config: testAccCloudSigmaServerConfig_changeMeta(serverName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaServerExists("cloudsigma_server.test", &server),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "meta.%", "3"),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "meta.base64_fields", "cloudinit-user-data"),
+					resource.TestCheckResourceAttr("cloudsigma_server.test", "meta.random-key", "random-value"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckCloudSigmaServerDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*cloudsigma.Client)
 
@@ -327,6 +356,39 @@ resource "cloudsigma_drive" "test" {
   size  = 15 * 1024 * 1024 * 1024
 }
 `, serverName, driveName)
+}
+
+func testAccCloudSigmaServerConfig_withMeta(serverName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
+  name         = "%s"
+  vnc_password = "cloudsigma"
+
+  meta = {
+    base64_fields = "cloudinit-user-data"
+    cloudinit-user-data = "I2Nsb3VkLWNvbmZpZw=="
+  }
+}
+`, serverName)
+}
+
+func testAccCloudSigmaServerConfig_changeMeta(serverName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_server" "test" {
+  cpu          = 2000
+  memory       = 536870912
+  name         = "%s"
+  vnc_password = "cloudsigma"
+
+  meta = {
+    base64_fields = "cloudinit-user-data"
+    cloudinit-user-data = "I2Nsb3VkLWNvbmZpZw=="
+    random-key = "random-value"
+  }
+}
+`, serverName)
 }
 
 func TestResourceCloudSigmaServer_findIPv4Address(t *testing.T) {
