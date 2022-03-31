@@ -1,4 +1,11 @@
 
+<a name="v1.10.1"></a>
+## v1.10.1 (2022-03-31)
+
+### Bug Fixes
+* **resource/cloudsigma_server:** ensure that meta attribute will be updated when changing
+
+
 <a name="v1.10.0"></a>
 ## v1.10.0 (2022-03-28)
 
