@@ -1,25 +1,23 @@
-# CloudSigma Provider for Terraform
 <a href="https://terraform.io">
-  <img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" alt="Terraform logo" align="right" title="Terraform" height="50"/>
+    <img src=".github/terraform_logo.svg" alt="Terraform logo" title="Terraform" align="right" height="50" />
 </a>
+
+# CloudSigma Terraform Provider
 
 [![Release](https://img.shields.io/github/v/tag/cloudsigma/terraform-provider-cloudsigma?label=release)](https://github.com/cloudsigma/terraform-provider-cloudsigma/releases)
 [![License](https://img.shields.io/github/license/cloudsigma/terraform-provider-cloudsigma.svg)](https://github.com/cloudsigma/terraform-provider-cloudsigma/blob/master/LICENSE)
 [![Unit Tests](https://github.com/cloudsigma/terraform-provider-cloudsigma/workflows/unit%20tests/badge.svg)](https://github.com/cloudsigma/terraform-provider-cloudsigma/actions)
 
-* [Getting Started & Documentation](https://registry.terraform.io/providers/cloudsigma/cloudsigma/latest/docs)
-* Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
+Available in the [Terraform Registry](https://registry.terraform.io/providers/cloudsigma/cloudsigma/latest).
 
-This is the repository for [CloudSigma](https://www.cloudsigma.com) Provider
-for Terraform, which one can use with Terraform to work with CloudSigma cloud
-environment.
+The CloudSigma Terraform Provider is a plugin for Terraform that allows for the
+full lifecycle management of [CloudSigma](https://www.cloudsigma.com) resources.
 
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) 0.12+
-- [Go](https://golang.org/doc/install) 1.15 (to build the provider plugin)
-
+- [Terraform](https://www.terraform.io/downloads.html) >= 0.12+
+- [Go](https://golang.org/doc/install) 1.18 (to build the provider plugin)
 
 ## Using the provider
 
