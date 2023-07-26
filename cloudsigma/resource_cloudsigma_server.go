@@ -7,11 +7,12 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 )
 
 func resourceCloudSigmaServer() *schema.Resource {
@@ -62,9 +63,8 @@ func resourceCloudSigmaServer() *schema.Resource {
 			},
 
 			"memory": {
-				Type:             schema.TypeInt,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(268435456, 137438953472)), // 256MB - 128GB
+				Type:     schema.TypeInt,
+				Required: true,
 			},
 
 			"meta": {
