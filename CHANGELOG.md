@@ -1,4 +1,20 @@
 
+<a name="v1.10.2"></a>
+## v1.10.2 (2023-07-26)
+
+### Bug Fixes
+* **resource/cloudsigma_server:** remove validation on memory attribute
+
+### Documentation
+* fix missing terraform logo image
+
+### Maintaining
+* specify permissions for release workflow
+* remove deprecated golangci lint rules
+* update go version to 1.20 in go.mod file
+* use tools-as-dependency pattern for dev dependencies
+
+
 <a name="v1.10.1"></a>
 ## v1.10.1 (2022-03-31)
 
