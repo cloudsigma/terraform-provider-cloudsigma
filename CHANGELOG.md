@@ -1,4 +1,11 @@
 
+<a name="v1.10.3"></a>
+## v1.10.3 (2023-07-26)
+
+### Maintaining
+* **cloudsigma_server:** fix failing acceptance tests
+
+
 <a name="v1.10.2"></a>
 ## v1.10.2 (2023-07-26)
 

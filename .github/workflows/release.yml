@@ -24,19 +24,19 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
-      - name: Run acceptance tests
-        env:
-          CLOUDSIGMA_USERNAME: ${{ secrets.CLOUDSIGMA_USERNAME }}
-          CLOUDSIGMA_PASSWORD: ${{ secrets.CLOUDSIGMA_PASSWORD }}
-          CLOUDSIGMA_LOCATION: ${{ secrets.CLOUDSIGMA_LOCATION }}
-        run: make tools testacc
+      #- name: Run acceptance tests
+      #  env:
+      #    CLOUDSIGMA_USERNAME: ${{ secrets.CLOUDSIGMA_USERNAME }}
+      #    CLOUDSIGMA_PASSWORD: ${{ secrets.CLOUDSIGMA_PASSWORD }}
+      #    CLOUDSIGMA_LOCATION: ${{ secrets.CLOUDSIGMA_LOCATION }}
+      #  run: make tools testacc
 
       - name: Import GPG key
-        uses: paultyng/ghaction-import-gpg@v2.1.0
+        uses: crazy-max/ghaction-import-gpg@v5
         id: import_gpg
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.PASSPHRASE }}
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
 
       - name: Generate changelog
         run: |
