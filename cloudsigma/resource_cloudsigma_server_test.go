@@ -7,10 +7,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
+	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 )
 
 func TestAccCloudSigmaServer_basic(t *testing.T) {
@@ -239,7 +240,7 @@ resource "cloudsigma_server" "test" {
   cpu          = 2000
   memory       = 536870912
   name         = "%s"
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 }
 `, serverName)
 }
@@ -254,7 +255,7 @@ resource "cloudsigma_server" "test" {
   cpu          = 2000
   memory       = 536870912
   name         = "%s"
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 
   tags = [cloudsigma_tag.test.id]
 }
@@ -267,7 +268,7 @@ resource "cloudsigma_server" "test" {
   cpu          = 2000
   memory       = 536870912
   name         = "%s"
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 
   tags = []
 }
@@ -280,7 +281,7 @@ resource "cloudsigma_server" "test" {
   cpu          = 2000
   memory       = 536870912
   name         = "server-with-invalid-empty-ssh-key-element"
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 
   ssh_keys = [""]
 }
@@ -293,7 +294,7 @@ resource "cloudsigma_server" "test" {
   cpu          = 2000
   memory       = 536870912
   name         = "server-with-invalid-empty-tag-element"
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 
   tags = [""]
 }
@@ -307,7 +308,7 @@ resource "cloudsigma_server" "test" {
   memory       = 536870912
   name         = "server-with-invalid-empty-tag-element"
   smp          = 2
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 }
 `
 }
@@ -319,7 +320,7 @@ resource "cloudsigma_server" "test" {
   memory       = 536870912
   name         = "server-with-invalid-empty-tag-element"
   smp          = 5
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 }
 `
 }
@@ -330,7 +331,7 @@ resource "cloudsigma_server" "test" {
   cpu          = 2000
   memory       = 536870912
   name         = "%s"
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 }
 
 resource "cloudsigma_drive" "test" {
@@ -347,7 +348,7 @@ resource "cloudsigma_server" "test" {
   cpu          = 2000
   memory       = 536870912
   name         = "%s"
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 }
 
 resource "cloudsigma_drive" "test" {
@@ -364,7 +365,7 @@ resource "cloudsigma_server" "test" {
   cpu          = 2000
   memory       = 536870912
   name         = "%s"
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 
   meta = {
     base64_fields = "cloudinit-user-data"
@@ -380,7 +381,7 @@ resource "cloudsigma_server" "test" {
   cpu          = 2000
   memory       = 536870912
   name         = "%s"
-  vnc_password = "cloudsigma"
+  vnc_password = "VnC!Pa33w0rd"
 
   meta = {
     base64_fields = "cloudinit-user-data"
