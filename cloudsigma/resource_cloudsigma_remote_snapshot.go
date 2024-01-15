@@ -106,7 +106,7 @@ func resourceCloudSigmaRemoteSnapshotUpdate(ctx context.Context, d *schema.Resou
 	updateRequest := &cloudsigma.RemoteSnapshotUpdateRequest{
 		RemoteSnapshot: remoteSnapshot,
 	}
-	log.Printf("[DEBUG] Remote snapshot update configuraion: %#v", *updateRequest)
+	log.Printf("[DEBUG] Remote snapshot update configuration: %#v", *updateRequest)
 	_, _, err := client.RemoteSnapshots.Update(ctx, remoteSnapshot.UUID, updateRequest)
 	if err != nil {
 		return diag.FromErr(err)

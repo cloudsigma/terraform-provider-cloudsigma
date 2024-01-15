@@ -37,5 +37,5 @@ The following attributes are exported:
 
 * `id` - The unique ID of the ACL.
 * `name` - The name of the ACL.
-* `onwer` - The ownership of the ACL.
+* `owner` - The ownership of the ACL.
 * `resource_uri` - The resource URI of the ACL.
