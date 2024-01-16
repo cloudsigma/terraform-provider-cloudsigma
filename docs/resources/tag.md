@@ -34,5 +34,5 @@ The following attributes are exported:
 
 * `id` - The unique ID of the tag.
 * `name` - The name of the tag.
-* `onwer` - The ownership of the tag.
+* `owner` - The ownership of the tag.
 * `resource_uri` - The resource URI of the tag.

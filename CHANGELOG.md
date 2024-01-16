@@ -127,7 +127,7 @@
 ## v1.4.1 (2021-05-17)
 
 ### Bug Fixes
-* **resource/cloudsigma_server:** fix tags overiding when attaching drives to servers
+* **resource/cloudsigma_server:** fix tags overriding when attaching drives to servers
 
 
 <a name="v1.4.0"></a>
