@@ -2,6 +2,7 @@ linters:
   disable-all: true
   enable:
     - errcheck
+    - gocritic
     - gofmt
     - goimports
     - gosimple
