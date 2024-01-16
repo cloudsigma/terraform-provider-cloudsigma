@@ -47,6 +47,10 @@ func TestAccCloudSigmaDrive_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("cloudsigma_drive.test", "tags.#", "0"),
 				),
 			},
+			{
+				Config:      testAccCloudSigmaDriveConfig_storageType(driveName),
+				ExpectError: regexp.MustCompile("drives `storage_type` cannot be changed after creation.*"),
+			},
 		},
 	})
 }
@@ -145,6 +149,17 @@ resource "cloudsigma_drive" "test" {
   media = "disk"
   name  = "%s"
   size  = 5 * 1024 * 1024 * 1024
+}
+`, driveName)
+}
+
+func testAccCloudSigmaDriveConfig_storageType(driveName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_drive" "test" {
+  media = "disk"
+  name  = "%s"
+  size  = 5 * 1024 * 1024 * 1024
+  storage_type = "dssd"
 }
 `, driveName)
 }
