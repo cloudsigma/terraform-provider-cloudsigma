@@ -7,7 +7,7 @@ import (
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -54,7 +54,7 @@ func resourceCloudSigmaSnapshotCreate(ctx context.Context, d *schema.ResourceDat
 
 	// check if drive status is mounted or unmounted
 	driveUUID := d.Get("drive").(string)
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"cloning_dst", "creating"},
 		Target:     []string{"mounted", "unmounted"},
 		Refresh:    driveStateRefreshFunc(ctx, client, driveUUID),
