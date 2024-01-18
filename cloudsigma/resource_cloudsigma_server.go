@@ -262,8 +262,8 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 			drive := dr.(map[string]interface{})
 
 			serverDrives = append(serverDrives, cloudsigma.ServerDrive{
-				BootOrder:  len(serverDrives),
-				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)),
+				BootOrder:  len(serverDrives) + 1,
+				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)+1),
 				Device:     drive["device"].(string),
 				Drive:      &cloudsigma.Drive{UUID: drive["uuid"].(string)},
 			})
@@ -392,8 +392,8 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 			drive := dr.(map[string]interface{})
 
 			serverDrives = append(serverDrives, cloudsigma.ServerDrive{
-				BootOrder:  len(serverDrives),
-				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)),
+				BootOrder:  len(serverDrives) + 1,
+				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)+1),
 				Device:     drive["device"].(string),
 				Drive:      &cloudsigma.Drive{UUID: drive["uuid"].(string)},
 			})
