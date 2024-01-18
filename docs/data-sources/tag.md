@@ -12,7 +12,7 @@ Gets information about a Tag.
 
 ```hcl
 data "cloudsigma_tag" "my_production_tag" {
-  filter = {
+  filter {
     name   = "name"
     values = ["production"]
   }

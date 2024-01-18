@@ -12,7 +12,7 @@ Gets information about a library drive.
 
 ```hcl
 data "cloudsigma_library_drive" "debian" {
-  filter = {
+  filter {
     name   = "name"
     values = ["Debian 9.13 Server"]
   }

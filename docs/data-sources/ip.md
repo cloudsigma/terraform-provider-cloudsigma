@@ -12,7 +12,7 @@ Gets information about an IP.
 
 ```hcl
 data "cloudsigma_ip" "my_ip" {
-  filter = {
+  filter {
     name   = "uuid"
     values = ["0.0.0.0"]
   }
