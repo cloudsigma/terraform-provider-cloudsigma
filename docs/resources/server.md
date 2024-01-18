@@ -99,6 +99,7 @@ The following arguments are supported:
 * `name` - (Required) Human readable name of server
 * `vnc_password` - (Required) VNC Password to connect to server
 * `drive` - (Optional) Drive attached to the server on creation
+    - device - (Optional) Device emulation type. Valid values: `ide`, `virtio`(default), `scsi`
     - uuid - (Required) The UUID of the drive
 * `network` - (Optional) Network interface card attached to the server
     - ipv4_address - (Optional) The IP address reference. Only used with `static` type
