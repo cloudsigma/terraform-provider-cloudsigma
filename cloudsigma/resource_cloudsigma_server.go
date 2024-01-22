@@ -579,7 +579,7 @@ func startServer(ctx context.Context, client *cloudsigma.Client, serverUUID stri
 		return fmt.Errorf("error starting server: %s", err)
 	}
 	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"stopped", "starting"},
+		Pending:    []string{"stopped", "starting", "unavailable"},
 		Target:     []string{"running"},
 		Refresh:    serverStateRefreshFunc(ctx, client, server.UUID),
 		Timeout:    10 * time.Minute,
@@ -615,7 +615,7 @@ func stopServer(ctx context.Context, client *cloudsigma.Client, serverUUID strin
 		return fmt.Errorf("error stopping server: %s", err)
 	}
 	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"running", "stopping"},
+		Pending:    []string{"running", "stopping", "unavailable"},
 		Target:     []string{"stopped"},
 		Refresh:    serverStateRefreshFunc(ctx, client, server.UUID),
 		Timeout:    10 * time.Minute,
