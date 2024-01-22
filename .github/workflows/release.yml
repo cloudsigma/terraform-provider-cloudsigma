@@ -46,10 +46,10 @@ jobs:
           .bin/git-chglog -c .github/changelog/config.yml -o .bin/DRAFT.md $(git describe --tags $(git rev-list --tags --max-count=1))
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release -f .github/goreleaser.yml --rm-dist --release-notes=.bin/DRAFT.md
+          args: release -f .github/goreleaser.yml --clean --release-notes=.bin/DRAFT.md
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
