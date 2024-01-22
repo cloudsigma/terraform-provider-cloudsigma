@@ -14,12 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version-file: "go.mod"
           cache: true
@@ -40,10 +40,8 @@ jobs:
 
       - name: Generate changelog
         run: |
-          mkdir -p .bin
-          curl -L https://github.com/git-chglog/git-chglog/releases/download/0.9.1/git-chglog_linux_amd64 -o .bin/git-chglog
-          chmod +x .bin/git-chglog
-          .bin/git-chglog -c .github/changelog/config.yml -o .bin/DRAFT.md $(git describe --tags $(git rev-list --tags --max-count=1))
+          go install github.com/git-chglog/git-chglog/cmd/git-chglog@v0.15.4
+          git-chglog -c .github/changelog/config.yml -o .bin/DRAFT.md $(git describe --tags $(git rev-list --tags --max-count=1))
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
