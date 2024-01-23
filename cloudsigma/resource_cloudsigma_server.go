@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -42,8 +42,16 @@ func resourceCloudSigmaServer() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"uuid": {
-							Type:     schema.TypeString,
-							Required: true,
+							Description: "Drive UUID",
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+						"device": {
+							Default:          "virtio",
+							Description:      "Device emulation type",
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ide", "virtio", "scsi"}, false)),
 						},
 					},
 				},
@@ -254,9 +262,9 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 			drive := dr.(map[string]interface{})
 
 			serverDrives = append(serverDrives, cloudsigma.ServerDrive{
-				BootOrder:  1 + len(serverDrives),
-				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)),
-				Device:     "virtio",
+				BootOrder:  len(serverDrives) + 1,
+				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)+1),
+				Device:     drive["device"].(string),
 				Drive:      &cloudsigma.Drive{UUID: drive["uuid"].(string)},
 			})
 		}
@@ -384,9 +392,9 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 			drive := dr.(map[string]interface{})
 
 			serverDrives = append(serverDrives, cloudsigma.ServerDrive{
-				BootOrder:  1 + len(serverDrives),
-				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)),
-				Device:     "virtio",
+				BootOrder:  len(serverDrives) + 1,
+				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)+1),
+				Device:     drive["device"].(string),
 				Drive:      &cloudsigma.Drive{UUID: drive["uuid"].(string)},
 			})
 		}
@@ -549,7 +557,7 @@ func validateSMP(d *schema.ResourceData) error {
 	return nil
 }
 
-func serverStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, serverUUID string) resource.StateRefreshFunc {
+func serverStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, serverUUID string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		server, _, err := client.Servers.Get(ctx, serverUUID)
 		if err != nil {
@@ -578,7 +586,7 @@ func startServer(ctx context.Context, client *cloudsigma.Client, serverUUID stri
 	if err != nil {
 		return fmt.Errorf("error starting server: %s", err)
 	}
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"stopped", "starting", "unavailable"},
 		Target:     []string{"running"},
 		Refresh:    serverStateRefreshFunc(ctx, client, server.UUID),
@@ -614,7 +622,7 @@ func stopServer(ctx context.Context, client *cloudsigma.Client, serverUUID strin
 	if err != nil {
 		return fmt.Errorf("error stopping server: %s", err)
 	}
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"running", "stopping", "unavailable"},
 		Target:     []string{"stopped"},
 		Refresh:    serverStateRefreshFunc(ctx, client, server.UUID),

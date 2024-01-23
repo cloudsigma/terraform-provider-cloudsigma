@@ -8,7 +8,7 @@ import (
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -108,6 +108,12 @@ func resourceCloudSigmaDrive() *schema.Resource {
 			if newSize.(int) < oldSize.(int) {
 				return fmt.Errorf("drives `size` can only be expanded")
 			}
+
+			oldStorageType, newStorageType := diff.GetChange("storage_type")
+			if oldStorageType.(string) != "" && (newStorageType.(string) != oldStorageType.(string)) {
+				return fmt.Errorf("drives `storage_type` cannot be changed after creation. "+
+					"new: %s != current: %s", newStorageType.(string), oldStorageType.(string))
+			}
 			return nil
 		},
 	}
@@ -117,9 +123,10 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 	client := meta.(*cloudsigma.Client)
 
 	drive := &cloudsigma.Drive{
-		Media: d.Get("media").(string),
-		Name:  d.Get("name").(string),
-		Size:  d.Get("size").(int),
+		Media:       d.Get("media").(string),
+		Name:        d.Get("name").(string),
+		Size:        d.Get("size").(int),
+		StorageType: d.Get("storage_type").(string),
 	}
 
 	// Clone or create drive depending on 'clone_drive_id'
@@ -149,7 +156,7 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		log.Printf("[INFO] Drive ID: %s", d.Id())
 	}
 
-	createStateConf := &resource.StateChangeConf{
+	createStateConf := &retry.StateChangeConf{
 		Pending:    []string{"cloning_dst", "creating"},
 		Target:     []string{"mounted", "unmounted"},
 		Refresh:    driveStateRefreshFunc(ctx, client, d.Id()),
@@ -216,9 +223,10 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 	client := meta.(*cloudsigma.Client)
 
 	drive := &cloudsigma.Drive{
-		Media: d.Get("media").(string),
-		Name:  d.Get("name").(string),
-		Size:  d.Get("size").(int),
+		Media:       d.Get("media").(string),
+		Name:        d.Get("name").(string),
+		Size:        d.Get("size").(int),
+		StorageType: d.Get("storage_type").(string),
 	}
 
 	if v, ok := d.GetOk("tags"); ok {
@@ -267,7 +275,7 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"cloning_dst", "creating", "resizing"},
 		Target:     []string{"mounted", "unmounted"},
 		Refresh:    driveStateRefreshFunc(ctx, client, d.Id()),
@@ -309,7 +317,7 @@ func resourceCloudSigmaDriveDelete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func driveStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, uuid string) resource.StateRefreshFunc {
+func driveStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, uuid string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		drive, _, err := client.Drives.Get(ctx, uuid)
 		if err != nil {
