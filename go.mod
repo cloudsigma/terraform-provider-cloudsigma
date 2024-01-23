@@ -1,6 +1,6 @@
 module github.com/cloudsigma/terraform-provider-cloudsigma
 
-go 1.20
+go 1.21
 
 require (
 	github.com/cloudsigma/cloudsigma-sdk-go v0.13.0
