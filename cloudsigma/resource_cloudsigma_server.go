@@ -187,18 +187,19 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 				return diag.Errorf("cannot assign both network type and vlan")
 			}
 
-			if networkType == "static" {
+			switch {
+			case networkType == "static":
 				conf := &cloudsigma.ServerIPConfiguration{
 					Type:      networkType,
 					IPAddress: &cloudsigma.IP{UUID: networkAddress},
 				}
 				createRequest.Servers[0].NICs[i].IP4Configuration = conf
-			} else if networkType == "dhcp" {
+			case networkType == "dhcp":
 				conf := &cloudsigma.ServerIPConfiguration{
 					Type: networkType,
 				}
 				createRequest.Servers[0].NICs[i].IP4Configuration = conf
-			} else if networkVlan != "" {
+			case networkVlan != "":
 				vlan := &cloudsigma.VLAN{
 					UUID: networkVlan,
 				}
@@ -422,20 +423,21 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 				return diag.Errorf("cannot assign both network type and vlan")
 			}
 
-			if networkType == "static" {
+			switch {
+			case networkType == "static":
 				serverNICs = append(serverNICs, cloudsigma.ServerNIC{
 					IP4Configuration: &cloudsigma.ServerIPConfiguration{
 						Type:      networkType,
 						IPAddress: &cloudsigma.IP{UUID: networkAddress},
 					},
 				})
-			} else if networkType == "dhcp" {
+			case networkType == "dhcp":
 				serverNICs = append(serverNICs, cloudsigma.ServerNIC{
 					IP4Configuration: &cloudsigma.ServerIPConfiguration{
 						Type: networkType,
 					},
 				})
-			} else if networkVlan != "" {
+			case networkVlan != "":
 				serverNICs = append(serverNICs, cloudsigma.ServerNIC{
 					VLAN: &cloudsigma.VLAN{
 						UUID: networkVlan,
