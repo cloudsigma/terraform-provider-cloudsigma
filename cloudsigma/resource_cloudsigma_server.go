@@ -254,7 +254,7 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 			drive := dr.(map[string]interface{})
 
 			serverDrives = append(serverDrives, cloudsigma.ServerDrive{
-				BootOrder:  len(serverDrives),
+				BootOrder:  1 + len(serverDrives),
 				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)),
 				Device:     "virtio",
 				Drive:      &cloudsigma.Drive{UUID: drive["uuid"].(string)},
@@ -384,7 +384,7 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 			drive := dr.(map[string]interface{})
 
 			serverDrives = append(serverDrives, cloudsigma.ServerDrive{
-				BootOrder:  len(serverDrives),
+				BootOrder:  1 + len(serverDrives),
 				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)),
 				Device:     "virtio",
 				Drive:      &cloudsigma.Drive{UUID: drive["uuid"].(string)},
@@ -578,8 +578,8 @@ func startServer(ctx context.Context, client *cloudsigma.Client, serverUUID stri
 	if err != nil {
 		return fmt.Errorf("error starting server: %s", err)
 	}
-	stateConf := &retry.StateChangeConf{
-		Pending:    []string{"stopped", "starting"},
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"stopped", "starting", "unavailable"},
 		Target:     []string{"running"},
 		Refresh:    serverStateRefreshFunc(ctx, client, server.UUID),
 		Timeout:    10 * time.Minute,
@@ -614,8 +614,8 @@ func stopServer(ctx context.Context, client *cloudsigma.Client, serverUUID strin
 	if err != nil {
 		return fmt.Errorf("error stopping server: %s", err)
 	}
-	stateConf := &retry.StateChangeConf{
-		Pending:    []string{"running", "stopping"},
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"running", "stopping", "unavailable"},
 		Target:     []string{"stopped"},
 		Refresh:    serverStateRefreshFunc(ctx, client, server.UUID),
 		Timeout:    10 * time.Minute,
