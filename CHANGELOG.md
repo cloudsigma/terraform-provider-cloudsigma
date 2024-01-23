@@ -1,4 +1,20 @@
 
+<a name="v1.11.0"></a>
+## v1.11.0 (2024-01-23)
+
+### Bug Fixes
+* **resource/cloudsigma_drive:** remove validation func for storage_type
+* **resource/cloudsigma_server:** handle server "unavailable" state
+* **server/cloudsigma_server:** solves `boot_order` issue [#40](https://github.com/cloudsigma/terraform-provider-cloudsigma/issues/40), and document its behaviour
+
+### Features
+* **resource/cloudsigma_drive:** add optional storage_type field
+* **server/cloudsigma_server:** add drive device type and make it optionally configurable
+
+### Maintaining
+* update github.com/hashicorp/terraform-plugin-sdk to the latest version
+
+
 <a name="v1.10.4"></a>
 ## v1.10.4 (2024-01-22)
 
