@@ -81,9 +81,10 @@ func resourceCloudSigmaDrive() *schema.Resource {
 			},
 
 			"storage_type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          "nvme",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"dssd", "nvme", "zadara"}, false)),
 			},
 
 			"tags": {
@@ -108,6 +109,11 @@ func resourceCloudSigmaDrive() *schema.Resource {
 			if newSize.(int) < oldSize.(int) {
 				return fmt.Errorf("drives `size` can only be expanded")
 			}
+			oldStorageType, newStorageType := diff.GetChange("storage_type")
+			if oldStorageType.(string) != "" && (newStorageType.(string) != oldStorageType.(string)) {
+				return fmt.Errorf("drives `storage_type` cannot be changed after creation. "+
+					"new: %s != current: %s", newStorageType.(string), oldStorageType.(string))
+			}
 			return nil
 		},
 	}
@@ -117,9 +123,10 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 	client := meta.(*cloudsigma.Client)
 
 	drive := &cloudsigma.Drive{
-		Media: d.Get("media").(string),
-		Name:  d.Get("name").(string),
-		Size:  d.Get("size").(int),
+		Media:       d.Get("media").(string),
+		Name:        d.Get("name").(string),
+		Size:        d.Get("size").(int),
+		StorageType: d.Get("storage_type").(string),
 	}
 
 	// Clone or create drive depending on 'clone_drive_id'
@@ -216,9 +223,10 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 	client := meta.(*cloudsigma.Client)
 
 	drive := &cloudsigma.Drive{
-		Media: d.Get("media").(string),
-		Name:  d.Get("name").(string),
-		Size:  d.Get("size").(int),
+		Media:       d.Get("media").(string),
+		Name:        d.Get("name").(string),
+		Size:        d.Get("size").(int),
+		StorageType: d.Get("storage_type").(string),
 	}
 
 	if v, ok := d.GetOk("tags"); ok {
