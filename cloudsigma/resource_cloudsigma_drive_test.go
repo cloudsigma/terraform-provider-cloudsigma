@@ -113,7 +113,7 @@ func TestAccCloudSigmaDrive_changeStorageType(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCloudSigmaDriveConfig_changeStorageType(driveName),
+				Config:      testAccCloudSigmaDriveConfig_changeStorageType(driveName),
 				ExpectError: regexp.MustCompile("drives `storage_type` cannot be changed after creation.*"),
 			},
 		},
