@@ -2,6 +2,7 @@ package cloudsigma
 
 import (
 	"encoding/json"
+	"log"
 	"strconv"
 	"strings"
 
@@ -64,18 +65,32 @@ func structToMap(data interface{}) (map[string]interface{}, error) {
 }
 
 func filterLoop(f []filter, m map[string]interface{}) bool {
-	for _, filter := range f {
-		if !valuesLoop(filter.values, m[filter.name]) {
+	for idx := range f {
+		if !valuesLoop(f[idx].values, m[f[idx].name]) {
 			return false
 		}
 	}
 	return true
 }
 
+// valuesLoop search for a matching value for the defined "name".
+// Depending on the defined key, it could be a simple string or a JSON object
+// The function will search for any matching value.
 func valuesLoop(values []string, i interface{}) bool {
-	for _, v := range values {
-		if v == i {
-			return true
+	for idx := range values {
+		switch intCast := i.(type) {
+		case string:
+			if values[idx] == i {
+				return true
+			}
+		case map[string]interface{}:
+			for idx2 := range intCast {
+				if values[idx] == intCast[idx2] {
+					return true
+				}
+			}
+		default:
+			log.Printf("filter [valuesLoop] wrong type %T", intCast)
 		}
 	}
 	return false

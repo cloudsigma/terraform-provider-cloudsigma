@@ -39,15 +39,15 @@ func dataSourceCloudSigmaVLANRead(ctx context.Context, d *schema.ResourceData, m
 
 	vlanList := make([]cloudsigma.VLAN, 0)
 
-	f := buildCloudSigmaDataSourceFilter(filters.(*schema.Set))
-	for _, vlan := range vlans {
-		sm, err := structToMap(vlan)
+	filter := buildCloudSigmaDataSourceFilter(filters.(*schema.Set))
+	for idx := range vlans {
+		sm, err := structToMap(vlans[idx])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		if filterLoop(f, sm) {
-			vlanList = append(vlanList, vlan)
+		if filterLoop(filter, sm) {
+			vlanList = append(vlanList, vlans[idx])
 		}
 	}
 
@@ -59,6 +59,7 @@ func dataSourceCloudSigmaVLANRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	d.SetId(vlanList[0].UUID)
+	_ = d.Set("meta", vlanList[0].Meta)
 	_ = d.Set("resource_uri", vlanList[0].ResourceURI)
 
 	return nil

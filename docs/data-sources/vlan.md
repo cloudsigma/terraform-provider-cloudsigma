@@ -19,6 +19,16 @@ data "cloudsigma_vlan" "my_vlan" {
 }
 ```
 
+## Example Usage, filter by VLAN name
+
+```hcl
+data "cloudsigma_vlan" "my_vlan" {
+  filter {
+    name   = "meta"
+    values = ["My VLAN Name"]
+  }
+}
+```
 
 ## Argument Reference
 
@@ -31,4 +41,6 @@ The following arguments are supported:
 
 In addition to all above arguments, the following attributes are exported:
 
-* `resource_uri`
+* `meta` - User defined meta information, for example the `name` field
+* `resource_uri` - VLAN API URI
+* `uuid` - VLAN UUID
