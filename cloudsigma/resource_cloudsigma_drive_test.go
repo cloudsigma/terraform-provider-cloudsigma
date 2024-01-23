@@ -47,10 +47,6 @@ func TestAccCloudSigmaDrive_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("cloudsigma_drive.test", "tags.#", "0"),
 				),
 			},
-			{
-				Config:      testAccCloudSigmaDriveConfig_storageType(driveName),
-				ExpectError: regexp.MustCompile("drives `storage_type` cannot be changed after creation.*"),
-			},
 		},
 	})
 }
@@ -95,6 +91,30 @@ func TestAccCloudSigmaDrive_changeSize(t *testing.T) {
 					testAccCheckCloudSigmaDriveExists("cloudsigma_drive.test", &drive),
 					resource.TestCheckResourceAttr("cloudsigma_drive.test", "size", "16106127360"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccCloudSigmaDrive_changeStorageType(t *testing.T) {
+	var drive cloudsigma.Drive
+	driveName := fmt.Sprintf("tf-acc-test--%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCloudSigmaDriveDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCloudSigmaDriveConfig_storageType(driveName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckCloudSigmaDriveExists("cloudsigma_drive.test", &drive),
+					resource.TestCheckResourceAttr("cloudsigma_drive.test", "storage_type", "dssd"),
+				),
+			},
+			{
+				Config: testAccCloudSigmaDriveConfig_changeStorageType(driveName),
+				ExpectError: regexp.MustCompile("drives `storage_type` cannot be changed after creation.*"),
 			},
 		},
 	})
@@ -153,17 +173,6 @@ resource "cloudsigma_drive" "test" {
 `, driveName)
 }
 
-func testAccCloudSigmaDriveConfig_storageType(driveName string) string {
-	return fmt.Sprintf(`
-resource "cloudsigma_drive" "test" {
-  media = "disk"
-  name  = "%s"
-  size  = 5 * 1024 * 1024 * 1024
-  storage_type = "dssd"
-}
-`, driveName)
-}
-
 func testAccCloudSigmaDriveConfig_addTag(tagName, driveName string) string {
 	return fmt.Sprintf(`
 resource "cloudsigma_tag" "test" {
@@ -212,4 +221,26 @@ resource "cloudsigma_drive" "test" {
   size = 15 * 1024 * 1024 * 1024
 }
 `, driverName)
+}
+
+func testAccCloudSigmaDriveConfig_storageType(driveName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_drive" "test" {
+  media = "disk"
+  name  = "%s"
+  size  = 5 * 1024 * 1024 * 1024
+  storage_type = "dssd"
+}
+`, driveName)
+}
+
+func testAccCloudSigmaDriveConfig_changeStorageType(driveName string) string {
+	return fmt.Sprintf(`
+resource "cloudsigma_drive" "test" {
+  media = "disk"
+  name  = "%s"
+  size  = 5 * 1024 * 1024 * 1024
+  storage_type = "zadara"
+}
+`, driveName)
 }
