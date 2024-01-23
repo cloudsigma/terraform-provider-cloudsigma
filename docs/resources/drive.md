@@ -54,7 +54,7 @@ The following arguments are supported:
 * `media` - (Required) Media representation type. It can be `cdrom` or `disk`
 * `name` - (Required) Human readable name of the drive
 * `size` - (Required) Size of the drive in bytes
-* `storage_type` - (Optional) Drive storage type, cannot be changed after drive creation. Valid values are `dssd`, `zadara`, or `nvme`(default).
+* `storage_type` - (Optional) Drive storage type, cannot be changed after drive creation
 * `tags` - (Optional) A list of the tags UUIDs to be applied to the drive.
 
 

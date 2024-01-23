@@ -81,10 +81,9 @@ func resourceCloudSigmaDrive() *schema.Resource {
 			},
 
 			"storage_type": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				Default:          "nvme",
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"dssd", "nvme", "zadara"}, false)),
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
 			},
 
 			"tags": {
@@ -109,6 +108,7 @@ func resourceCloudSigmaDrive() *schema.Resource {
 			if newSize.(int) < oldSize.(int) {
 				return fmt.Errorf("drives `size` can only be expanded")
 			}
+
 			oldStorageType, newStorageType := diff.GetChange("storage_type")
 			if oldStorageType.(string) != "" && (newStorageType.(string) != oldStorageType.(string)) {
 				return fmt.Errorf("drives `storage_type` cannot be changed after creation. "+
