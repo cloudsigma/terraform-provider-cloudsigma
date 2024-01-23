@@ -42,8 +42,16 @@ func resourceCloudSigmaServer() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"uuid": {
-							Type:     schema.TypeString,
-							Required: true,
+							Description: "Drive UUID",
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+						"device": {
+							Default:          "virtio",
+							Description:      "Device emulation type",
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ide", "virtio", "scsi"}, false)),
 						},
 					},
 				},
@@ -254,9 +262,9 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 			drive := dr.(map[string]interface{})
 
 			serverDrives = append(serverDrives, cloudsigma.ServerDrive{
-				BootOrder:  1 + len(serverDrives),
-				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)),
-				Device:     "virtio",
+				BootOrder:  len(serverDrives) + 1,
+				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)+1),
+				Device:     drive["device"].(string),
 				Drive:      &cloudsigma.Drive{UUID: drive["uuid"].(string)},
 			})
 		}
@@ -384,9 +392,9 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 			drive := dr.(map[string]interface{})
 
 			serverDrives = append(serverDrives, cloudsigma.ServerDrive{
-				BootOrder:  1 + len(serverDrives),
-				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)),
-				Device:     "virtio",
+				BootOrder:  len(serverDrives) + 1,
+				DevChannel: fmt.Sprintf("0:%d", len(serverDrives)+1),
+				Device:     drive["device"].(string),
 				Drive:      &cloudsigma.Drive{UUID: drive["uuid"].(string)},
 			})
 		}
