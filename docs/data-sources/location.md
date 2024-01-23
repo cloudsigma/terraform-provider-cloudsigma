@@ -12,7 +12,7 @@ Gets information about a location.
 
 ```hcl
 data "cloudsigma_library_location" "frankfurt" {
-  filter = {
+  filter {
     name   = "id"
     values = ["FRA"]
   }
