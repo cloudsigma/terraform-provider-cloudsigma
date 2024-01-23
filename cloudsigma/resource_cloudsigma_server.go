@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -549,7 +549,7 @@ func validateSMP(d *schema.ResourceData) error {
 	return nil
 }
 
-func serverStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, serverUUID string) resource.StateRefreshFunc {
+func serverStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, serverUUID string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		server, _, err := client.Servers.Get(ctx, serverUUID)
 		if err != nil {
