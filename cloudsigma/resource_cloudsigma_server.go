@@ -183,6 +183,9 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 		createRequest.Servers[0].NICs = make([]cloudsigma.ServerNIC, len(networks))
 
 		for i, n := range networks {
+			if n == nil {
+				return diag.Errorf("defined network argument is empty")
+			}
 			network := n.(map[string]interface{})
 			networkType := network["type"].(string)
 			networkAddress := network["ipv4_address"].(string)
