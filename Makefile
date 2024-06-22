@@ -19,6 +19,7 @@ endif
 .PHONY: tools
 tools:
 	@echo "==> Installing required tooling..."
+	@cd ${TOOLS_DIR} && GOBIN=${TOOLS_BIN_DIR} go install github.com/git-chglog/git-chglog/cmd/git-chglog
 	@cd ${TOOLS_DIR} && GOBIN=${TOOLS_BIN_DIR} go install github.com/golangci/golangci-lint/cmd/golangci-lint
 
 ## clean: Delete the build directory.
