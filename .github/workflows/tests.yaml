@@ -45,6 +45,10 @@ jobs:
         with:
           go-version-file: "go.mod"
 
+      - name: Fix permissions for cache directories
+        run: |
+          chmod -R 0755 ~/.cache/go-build ~/go/pkg/mod || true
+
       - name: Set up cache
         uses: actions/cache@v4
         with:
@@ -94,6 +98,10 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
+
+      - name: Fix permissions for cache directories
+        run: |
+          chmod -R 0755 ~/.cache/go-build ~/go/pkg/mod || true
 
       - name: Set up cache
         uses: actions/cache@v4

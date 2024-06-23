@@ -43,7 +43,7 @@ test:
 
 ## testacc: Run all acceptance tests.
 .PHONY: testacc
-testacc: lint
+testacc:
 	@echo "==> Running acceptance tests..."
 	@mkdir -p $(BUILD_DIR)
 	TF_ACC=1 go test -count=1 -v -cover -coverprofile=$(BUILD_DIR)/coverage-with-acceptance.out -timeout 120m ./...
