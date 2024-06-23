@@ -3,12 +3,12 @@ archives:
       - LICENSE
       - README.md
     format: zip
-    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 before:
   hooks:
     - go mod tidy
 builds:
-  - binary: '{{ .ProjectName }}_v{{ .Version }}'
+  - binary: "{{ .ProjectName }}_v{{ .Version }}"
     flags:
       - -trimpath
     goarch:
@@ -20,17 +20,17 @@ builds:
       - linux
       - openbsd
       - windows
-    mod_timestamp: '{{ .CommitTimestamp }}'
-changelog:
-  skip: true
+    mod_timestamp: "{{ .CommitTimestamp }}"
 checksum:
-  name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
+  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
 dist: build
 env:
   - CGO_ENABLED=0
+metadata:
+  mod_timestamp: "{{ .CommitTimestamp }}"
 release:
-  draft: true
+  draft: false
 signs:
   - artifacts: checksum
     args:
