@@ -1,4 +1,22 @@
 
+<a name="v2.0.0"></a>
+## v2.0.0 (2024-06-23)
+
+### Bug Fixes
+* **gh-actions:** fix permissions issue for cache directories
+* **gh-actions:** run acceptance tests as part of test workflow
+
+### Features
+* multiplex framework and sdk provider together
+* upgrade protocol version from 5 to 6
+* **provider:** deprecate base_url attribute
+
+### Maintaining
+* **gh-actions:** update github actions to latest stable versions
+* **tools:** install git-chglog via tools approach
+* **tools:** update golangci-lint to v1.59.1
+
+
 <a name="v1.11.0"></a>
 ## v1.11.0 (2024-01-23)
 
