@@ -14,6 +14,7 @@ func Provider() *schema.Provider {
 			"token": {
 				Type:          schema.TypeString,
 				Optional:      true,
+				Sensitive:     true,
 				DefaultFunc:   schema.EnvDefaultFunc("CLOUDSIGMA_TOKEN", nil),
 				Description:   "The CloudSigma access token.",
 				ConflictsWith: []string{"username", "password"},
@@ -28,6 +29,7 @@ func Provider() *schema.Provider {
 			"password": {
 				Type:          schema.TypeString,
 				Optional:      true,
+				Sensitive:     true,
 				DefaultFunc:   schema.EnvDefaultFunc("CLOUDSIGMA_PASSWORD", nil),
 				Description:   "The CloudSigma password.",
 				ConflictsWith: []string{"token"},
@@ -43,6 +45,8 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("CLOUDSIGMA_BASE_URL", "cloudsigma.com/api/2.0/"),
 				Description: "The base URL endpoint for CloudSigma. Default is 'cloudsigma.com/api/2.0/'.",
+				Deprecated: `This "base_url" attribute is unused and will be removed in a future version of the provider. ` +
+					"Please use location to specify CloudSigma API endpoint if needed: https://docs.cloudsigma.com/en/latest/general.html#api-endpoint.",
 			},
 		},
 

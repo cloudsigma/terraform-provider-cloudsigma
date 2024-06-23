@@ -5,12 +5,12 @@ linters:
     - gofmt
     - goimports
     - gosimple
+    - govet
     - ineffassign
     - misspell
     - staticcheck
     - unconvert
     - unused
-    - vet
 
 linters-settings:
   goimports:
@@ -19,7 +19,9 @@ linters-settings:
       github.com/cloudsigma/terraform-provider-cloudsigma
 
 output:
-  format: tab
+  formats:
+    - format: tab
+  show-stats: true
 
 run:
-  deadline: 10m
+  timeout: 10m
