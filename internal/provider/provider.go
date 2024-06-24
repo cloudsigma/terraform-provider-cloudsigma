@@ -157,24 +157,27 @@ func (p *cloudSigmaProvider) Configure(ctx context.Context, request provider.Con
 	}
 
 	// build cloudsigma sdk client
-	var client *cloudsigma.Client
+	var creds cloudsigma.CredentialsProvider
 	if token != "" {
-		client = cloudsigma.NewTokenClient(token, nil)
-		tflog.Info(ctx, "Configured CloudSigma SDK client", map[string]interface{}{
+		creds = cloudsigma.NewTokenCredentialsProvider(token)
+		tflog.Info(ctx, "Configuring CloudSigma SDK client", map[string]interface{}{
 			"credentials_provider": "token",
 			"location":             location,
 			"terraform_version":    request.TerraformVersion,
 		})
 	} else {
-		client = cloudsigma.NewBasicAuthClient(username, password, nil)
-		tflog.Info(ctx, "Configured CloudSigma SDK client", map[string]interface{}{
+		creds = cloudsigma.NewUsernamePasswordCredentialsProvider(username, password)
+		tflog.Info(ctx, "Configuring CloudSigma SDK client", map[string]interface{}{
 			"credentials_provider": "username_and_password",
 			"location":             location,
 			"terraform_version":    request.TerraformVersion,
 			"username":             username,
 		})
 	}
-	client.SetUserAgent(p.userAgent())
+	client := cloudsigma.NewClient(
+		creds,
+		cloudsigma.WithLocation(location), cloudsigma.WithUserAgent(p.userAgent()),
+	)
 
 	response.DataSourceData = client
 	response.ResourceData = client

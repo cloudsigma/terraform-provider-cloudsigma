@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Config represents the configuration structure used to instantiate
@@ -23,16 +24,24 @@ type Config struct {
 
 // Client returns a new client for accessing CloudSigma.
 func (c *Config) Client() *cloudsigma.Client {
-	var client *cloudsigma.Client
+	var creds cloudsigma.CredentialsProvider
 	if len(c.Token) > 0 {
-		client = cloudsigma.NewTokenClient(c.Token, nil)
-		log.Printf("[INFO] CloudSigma Client configured using access token, location: %s", c.Location)
+		creds = cloudsigma.NewTokenCredentialsProvider(c.Token)
+		tflog.Info(c.context, "CloudSigma Client configured using access token", map[string]interface{}{
+			"location": c.Location,
+		})
 	} else {
-		client = cloudsigma.NewBasicAuthClient(c.Username, c.Password, nil)
+		creds = cloudsigma.NewUsernamePasswordCredentialsProvider(c.Username, c.Password)
+		tflog.Info(c.context, "CloudSigma Client configured for user", map[string]interface{}{
+			"location": c.Location,
+			"username": c.Username,
+		})
 		log.Printf("[INFO] CloudSigma Client configured for user: %s, location: %s", c.Username, c.Location)
 	}
-	client.SetAPIEndpoint(c.Location, c.BaseURL)
-	client.SetUserAgent(c.userAgent)
+	client := cloudsigma.NewClient(
+		creds,
+		cloudsigma.WithLocation(c.Location), cloudsigma.WithUserAgent(c.userAgent),
+	)
 
 	return client
 }
