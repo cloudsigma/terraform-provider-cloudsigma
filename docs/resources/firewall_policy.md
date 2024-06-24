@@ -1,6 +1,5 @@
 ---
 page_title: "CloudSigma: cloudsigma_firewall_policy"
-
 ---
 
 # cloudsigma_firewall_policy

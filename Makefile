@@ -21,6 +21,7 @@ tools:
 	@echo "==> Installing required tooling..."
 	@cd ${TOOLS_DIR} && GOBIN=${TOOLS_BIN_DIR} go install github.com/git-chglog/git-chglog/cmd/git-chglog
 	@cd ${TOOLS_DIR} && GOBIN=${TOOLS_BIN_DIR} go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	@cd ${TOOLS_DIR} && GOBIN=${TOOLS_BIN_DIR} go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
 ## clean: Delete the build directory.
 .PHONY: clean
@@ -54,6 +55,14 @@ build:
 	@echo "==> Building binary..."
 	@echo "    running go build for GOOS=$(DEV_GOOS) GOARCH=$(DEV_GOARCH)"
 	@go build -o $(BUILD_DIR)/$(PROJECT_NAME)$(EXE) main.go
+
+## docs: Generate and validate provider documentation with tfplugindocs.
+.PHONY: docs
+docs:
+	@echo "==> Generating and validate provider documentation..."
+	#@rm -f docs/index.md
+	#@${TOOLS_BIN_DIR}/tfplugindocs generate
+	@${TOOLS_BIN_DIR}/tfplugindocs validate
 
 
 help: Makefile

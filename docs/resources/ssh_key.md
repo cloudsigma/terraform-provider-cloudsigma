@@ -1,6 +1,5 @@
 ---
-page_title: "CloudSigma: cloudsigma_ssh_key
-
+page_title: "CloudSigma: cloudsigma_ssh_key"
 ---
 
 # Resource: cloudsigma_ssh_key

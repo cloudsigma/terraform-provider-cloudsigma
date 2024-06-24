@@ -1,6 +1,5 @@
 ---
 page_title: "CloudSigma: cloudsigma_tag"
-
 ---
 
 # Resource: cloudsigma_tag

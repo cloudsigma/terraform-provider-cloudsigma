@@ -1,6 +1,5 @@
 ---
 page_title: "CloudSigma: cloudsigma_remote_snapshot"
-
 ---
 
 # cloudsigma_remote_snapshot

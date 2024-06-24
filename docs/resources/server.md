@@ -1,6 +1,5 @@
 ---
-page_title: "CloudSigma: cloudsigma_server
-
+page_title: "CloudSigma: cloudsigma_server"
 ---
 
 # Resource: cloudsigma_server

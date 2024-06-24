@@ -1,6 +1,5 @@
 ---
-page_title: "CloudSigma: cloudsigma_drive
-
+page_title: "CloudSigma: cloudsigma_drive"
 ---
 
 # Resource: cloudsigma_drive

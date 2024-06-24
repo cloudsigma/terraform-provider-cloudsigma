@@ -1,6 +1,5 @@
 ---
 page_title: "CloudSigma: cloudsigma_acl"
-
 ---
 
 # Resource: cloudsigma_acl

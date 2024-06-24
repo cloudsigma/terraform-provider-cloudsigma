@@ -1,6 +1,5 @@
 ---
 page_title: "CloudSigma: cloudsigma_snapshot"
-
 ---
 
 # cloudsigma_snapshot
