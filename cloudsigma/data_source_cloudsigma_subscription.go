@@ -11,6 +11,10 @@ import (
 
 func dataSourceCloudSigmaSubscription() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The subscription data source provides information about an existing CloudSigma subscriptions.
+`,
+
 		ReadContext: dataSourceCloudSigmaSubscriptionRead,
 
 		Schema: map[string]*schema.Schema{

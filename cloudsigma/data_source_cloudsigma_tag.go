@@ -11,24 +11,31 @@ import (
 
 func dataSourceCloudSigmaTag() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The tag data source provides information about an existing CloudSigma tag.
+`,
+
 		ReadContext: dataSourceCloudSigmaTagRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
 
 			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The tag name.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"resource_uri": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The unique resource identifier of the tag.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"uuid": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The UUID of the tag.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

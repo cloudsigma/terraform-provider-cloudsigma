@@ -11,6 +11,14 @@ import (
 
 func resourceCloudSigmaTag() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The tag resource allows you to manage CloudSigma tags.
+
+A tag is a label that can be applied to a CloudSigma resource in order to better organize or
+facilitate the lookups and actions on it. Tags created with this resource can be referenced
+in your configurations via their IDs.
+`,
+
 		CreateContext: resourceCloudSigmaTagCreate,
 		ReadContext:   resourceCloudSigmaTagRead,
 		UpdateContext: resourceCloudSigmaTagUpdate,
@@ -23,34 +31,15 @@ func resourceCloudSigmaTag() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "The tag name.",
+				Required:    true,
+				Type:        schema.TypeString,
 			},
 
-			// "owner": {
-			// 	Type:     schema.TypeList,
-			// 	Optional: true,
-			// 	Computed: true,
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"resource_uri": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				Computed: true,
-			// 			},
-			//
-			// 			"uuid": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				Computed: true,
-			// 			},
-			// 		},
-			// 	},
-			// },
-
 			"resource_uri": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The unique resource identifier of the tag.",
+				Computed:    true,
+				Type:        schema.TypeString,
 			},
 		},
 	}

@@ -11,6 +11,10 @@ import (
 
 func dataSourceCloudSigmaLicense() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The license data source provides information about an existing CloudSigma licenses.
+`,
+
 		ReadContext: dataSourceCloudSigmaLicenseRead,
 
 		Schema: map[string]*schema.Schema{

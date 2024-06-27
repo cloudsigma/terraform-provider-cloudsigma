@@ -11,22 +11,29 @@ import (
 
 func dataSourceCloudSigmaIP() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The ip data source provides information about an existing CloudSigma IP addresses.
+`,
+
 		ReadContext: dataSourceCloudSigmaIPRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
 
 			"gateway": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Default gateway for the IP address.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"netmask": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: " Netmask value in CIDR notation.",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 			"resource_uri": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The unique resource identifier of the IP address.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}
