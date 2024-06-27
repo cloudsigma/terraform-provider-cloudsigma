@@ -11,26 +11,34 @@ import (
 
 func dataSourceCloudSigmaLocation() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The location data source provides information about an existing CloudSigma location.
+`,
+
 		ReadContext: dataSourceCloudSigmaLocationRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
 
 			"api_endpoint": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The API endpoint of the location.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"country_code": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The location country code.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"display_name": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Human readable location name.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The location ID.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

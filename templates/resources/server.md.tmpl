@@ -1,0 +1,32 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+
+## Example Usage
+
+### Default settings
+
+{{ tffile "examples/resources/cloudsigma_server/resource_default.tf" }}
+
+### Using additional drives
+
+{{ tffile "examples/resources/cloudsigma_server/resource_with_additional_drives.tf" }}
+
+### Using static IP address
+
+{{ tffile "examples/resources/cloudsigma_server/resource_with_static_ip_address.tf" }}
+
+### Using static IP address and private LAN
+
+{{ tffile "examples/resources/cloudsigma_server/resource_with_static_ip_address_and_vlan.tf" }}
+
+
+{{ .SchemaMarkdown | trimspace }}

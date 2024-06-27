@@ -13,6 +13,10 @@ import (
 
 func resourceCloudSigmaSnapshot() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The snapshot resource allows you to manage CloudSigma snapshots.
+`,
+
 		CreateContext: resourceCloudSigmaSnapshotCreate,
 		ReadContext:   resourceCloudSigmaSnapshotRead,
 		UpdateContext: resourceCloudSigmaSnapshotUpdate,
@@ -22,28 +26,33 @@ func resourceCloudSigmaSnapshot() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"drive": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "The UUID of the drive.",
+				Required:    true,
+				Type:        schema.TypeString,
 			},
 
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "The snapshot name.",
+				Required:    true,
+				Type:        schema.TypeString,
 			},
 
 			"resource_uri": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The unique resource identifier of the snapshot.",
+				Computed:    true,
+				Type:        schema.TypeString,
 			},
 
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The snapshot status.",
+				Computed:    true,
+				Type:        schema.TypeString,
 			},
 
 			"timestamp": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The timestamp of the snapshot creation.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

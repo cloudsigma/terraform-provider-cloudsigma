@@ -17,6 +17,10 @@ import (
 
 func resourceCloudSigmaServer() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The server resource allows you to manage CloudSigma servers.
+`,
+
 		CreateContext: resourceCloudSigmaServerCreate,
 		ReadContext:   resourceCloudSigmaServerRead,
 		UpdateContext: resourceCloudSigmaServerUpdate,
@@ -31,24 +35,27 @@ func resourceCloudSigmaServer() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"cpu": {
+				Description:      "Server's CPU Clock speed measured in MHz.",
 				Type:             schema.TypeInt,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(250, 124000)), // 250MHz - 100GHz
 			},
 
 			"drive": {
+				Description: "Drive attached to the server on creation." +
+					"The server will boot from the first defined drive in this resource, which get `boot_order = 1`.",
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"uuid": {
-							Description: "Drive UUID",
+							Description: "The UUID of the drive.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
 						"device": {
 							Default:          "virtio",
-							Description:      "Device emulation type",
+							Description:      "Device emulation type. Valid values: `ide`, `virtio`(default), `scsi`.",
 							Type:             schema.TypeString,
 							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ide", "virtio", "scsi"}, false)),
@@ -58,26 +65,30 @@ func resourceCloudSigmaServer() *schema.Resource {
 			},
 
 			"enclave_page_caches": {
-				Type:     schema.TypeList,
-				Optional: true,
+				Description: "SGX enclaves defined with its size in bytes.",
+				Type:        schema.TypeList,
+				Optional:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeInt,
 				},
 			},
 
 			"ipv4_address": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The IPv4 address.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"memory": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Description: "Server's RAM measured in bytes.",
+				Type:        schema.TypeInt,
+				Required:    true,
 			},
 
 			"meta": {
-				Type:     schema.TypeMap,
-				Optional: true,
+				Description: "The field can be used to store arbitrary information in key-value form.",
+				Type:        schema.TypeMap,
+				Optional:    true,
 				Elem: &schema.Schema{
 					Type:     schema.TypeString,
 					Required: true,
@@ -88,47 +99,55 @@ func resourceCloudSigmaServer() *schema.Resource {
 			},
 
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "Human readable name of server.",
+				Type:        schema.TypeString,
+				Required:    true,
 			},
 
 			"network": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
+				Description: "Network interface card attached to the server.",
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ipv4_address": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Description: "The IP address reference. Only used with `static` type.",
+							Type:        schema.TypeString,
+							Optional:    true,
 						},
 						"type": {
+							Description:      "Configuration type. Valid values: `dhcp`, `static`, `manual`.",
 							Type:             schema.TypeString,
 							Optional:         true,
 							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"dhcp", "static"}, false)),
 						},
 						"vlan_uuid": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Description: "The UUID of the VLAN reference.",
+							Type:        schema.TypeString,
+							Optional:    true,
 						},
 					},
 				},
 			},
 
 			"resource_uri": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The unique resource identifier of the server.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"smp": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Computed: true,
+				Description: "Symmetric Multiprocessing (SMP) i.e. number of CPU cores.",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"ssh_keys": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Description: "A list of the SSH key UUIDs to be applied to the server.",
+				Type:        schema.TypeSet,
+				Optional:    true,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
 					ValidateFunc: validation.NoZeroValues,
@@ -136,9 +155,10 @@ func resourceCloudSigmaServer() *schema.Resource {
 			},
 
 			"tags": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Computed: true,
+				Description: "A list of the tags UUIDs to be applied to the server.",
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
 					ValidateFunc: validation.NoZeroValues,
@@ -146,8 +166,9 @@ func resourceCloudSigmaServer() *schema.Resource {
 			},
 
 			"vnc_password": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "VNC Password to connect to server.",
+				Type:        schema.TypeString,
+				Required:    true,
 			},
 		},
 	}

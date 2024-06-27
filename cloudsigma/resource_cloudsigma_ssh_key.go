@@ -12,6 +12,13 @@ import (
 
 func resourceCloudSigmaSSHKey() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The SSH key resource allows you to manage CloudSigma SSH keys.
+
+Keys created with this resource can be referenced in your server
+configuration via their IDs.
+`,
+
 		CreateContext: resourceCloudSigmaSSHKeyCreate,
 		ReadContext:   resourceCloudSigmaSSHKeyRead,
 		UpdateContext: resourceCloudSigmaSSHKeyUpdate,
@@ -23,21 +30,21 @@ func resourceCloudSigmaSSHKey() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the SSH key",
+				Description: "The SSH key name.",
 			},
 
 			"private_key": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "The private SSH key",
+				Description: "The private SSH key material.",
 			},
 
 			"public_key": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "The public SSH key",
+				Description: "The public SSH key material.",
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 					return strings.Trim(old, "\n") == strings.Trim(new, "\n")
 				},
@@ -46,7 +53,7 @@ func resourceCloudSigmaSSHKey() *schema.Resource {
 			"uuid": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "UUID of the SSH key resource",
+				Description: "The SSH key UUID.",
 			},
 		},
 	}

@@ -11,14 +11,19 @@ import (
 
 func dataSourceCloudSigmaVLAN() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The vlan data source provides information about an existing CloudSigma VLAN.
+`,
+
 		ReadContext: dataSourceCloudSigmaVLANRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
 
 			"resource_uri": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The unique resource identifier of the VLAN.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

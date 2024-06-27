@@ -11,30 +11,39 @@ import (
 
 func dataSourceCloudSigmaDrive() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The drive data source provides information about an existing CloudSigma drive.
+`,
+
 		ReadContext: dataSourceCloudSigmaDriveRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
 
 			"uuid": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The UUID of the drive.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Human readable name of the drive.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"size": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: "Size of the drive in bytes.",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The drive status.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"storage_type": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Drive storage type.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

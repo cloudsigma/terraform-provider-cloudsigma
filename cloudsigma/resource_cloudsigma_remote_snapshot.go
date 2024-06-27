@@ -11,6 +11,13 @@ import (
 
 func resourceCloudSigmaRemoteSnapshot() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The remote snapshot resource allows you to manage CloudSigma remote snapshots.
+
+Remote snapshots are point-in-time versions of a drive. They can be cloned to
+a full drive, which makes it possible to restore an older version of a VM image.
+`,
+
 		CreateContext: resourceCloudSigmaRemoteSnapshotCreate,
 		ReadContext:   resourceCloudSigmaRemoteSnapshotRead,
 		UpdateContext: resourceCloudSigmaRemoteSnapshotUpdate,
@@ -20,28 +27,33 @@ func resourceCloudSigmaRemoteSnapshot() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"drive": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "The UUID of the drive.",
+				Type:        schema.TypeString,
+				Required:    true,
 			},
 
 			"location": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "The location of the remote snapshot.",
+				Required:    true,
+				Type:        schema.TypeString,
 			},
 
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "The remote snapshot name.",
+				Required:    true,
+				Type:        schema.TypeString,
 			},
 
 			"resource_uri": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The unique resource identifier of the remote snapshot.",
+				Computed:    true,
+				Type:        schema.TypeString,
 			},
 
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The remote snapshot status.",
+				Computed:    true,
+				Type:        schema.TypeString,
 			},
 		},
 	}

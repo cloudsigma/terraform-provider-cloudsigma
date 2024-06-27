@@ -1,0 +1,32 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+
+## Example Usage
+
+### Default settings
+
+{{ tffile "examples/resources/cloudsigma_drive/resource_default.tf" }}
+
+### Using library drive
+
+{{ tffile "examples/resources/cloudsigma_drive/resource_with_cloned_drive.tf" }}
+
+### Using storage type
+
+{{ tffile "examples/resources/cloudsigma_drive/resource_with_storage_type.tf" }}
+
+### Using additional tags
+
+{{ tffile "examples/resources/cloudsigma_drive/resource_with_tags.tf" }}
+
+
+{{ .SchemaMarkdown | trimspace }}

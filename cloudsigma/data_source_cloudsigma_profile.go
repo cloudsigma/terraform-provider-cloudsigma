@@ -10,6 +10,10 @@ import (
 
 func dataSourceCloudSigmaProfile() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The profile data source provides information about an existing CloudSigma user profile.
+`,
+
 		ReadContext: dataSourceCloudSigmaProfileRead,
 
 		Schema: map[string]*schema.Schema{

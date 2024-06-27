@@ -15,6 +15,13 @@ import (
 
 func resourceCloudSigmaDrive() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The drive resource allows you to manage CloudSigma drives.
+
+Drives can be created via cloning library drives with already installed OS.
+Use "cloudsigma_library_drive" data source to find UUID of the library drive.
+`,
+
 		CreateContext: resourceCloudSigmaDriveCreate,
 		ReadContext:   resourceCloudSigmaDriveRead,
 		UpdateContext: resourceCloudSigmaDriveUpdate,
@@ -29,67 +36,78 @@ func resourceCloudSigmaDrive() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"clone_drive_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Description: "The UUID of the drive that will be cloned.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 			},
 
 			"media": {
+				Description:      "Media representation type. It can be `cdrom` or `disk`.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"cdrom", "disk"}, false)),
 			},
 
 			"mounted_on": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Description: "Servers on which this drive is mounted on.",
+				Type:        schema.TypeList,
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"resource_uri": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Description: "The unique resource identifier of the server on which this drive is mounted on.",
+							Type:        schema.TypeString,
+							Computed:    true,
 						},
 
 						"uuid": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Description: "The UUID of the server on which the drive is mounted on.",
+							Type:        schema.TypeString,
+							Computed:    true,
 						},
 					},
 				},
 			},
 
 			"name": {
+				Description:      "Human readable name of the drive.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.NoZeroValues),
 			},
 
 			"resource_uri": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The unique resource identifier of the drive.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"size": {
+				Description:      "Size of the drive in bytes.",
 				Type:             schema.TypeInt,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(536870912)), // 536870912 = 512MB
 			},
 
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The drive status.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"storage_type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "Drive storage type, cannot be changed after drive creation.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"tags": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Computed: true,
+				Description: "A list of the tags UUIDs to be applied to the drive.",
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
 					ValidateFunc: validation.NoZeroValues,
@@ -97,9 +115,9 @@ func resourceCloudSigmaDrive() *schema.Resource {
 			},
 
 			"uuid": {
+				Description: "The UUID of the drive.",
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "UUID of the drive resource",
 			},
 		},
 

@@ -59,9 +59,12 @@ build:
 ## docs: Generate and validate provider documentation with tfplugindocs.
 .PHONY: docs
 docs:
-	@echo "==> Generating and validate provider documentation..."
-	#@rm -f docs/index.md
-	#@${TOOLS_BIN_DIR}/tfplugindocs generate
+	@echo "==> Generating and validating provider documentation..."
+	@rm -f docs/data-sources/*.md
+	@rm -f docs/guides/*.md
+	@rm -f docs/resources/*.md
+	@rm -f docs/index.md
+	@${TOOLS_BIN_DIR}/tfplugindocs generate
 	@${TOOLS_BIN_DIR}/tfplugindocs validate
 
 

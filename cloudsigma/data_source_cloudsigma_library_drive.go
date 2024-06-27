@@ -11,46 +11,59 @@ import (
 
 func dataSourceCloudSigmaLibraryDrive() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The library drive data source provides information about an existing CloudSigma library drive.
+`,
+
 		ReadContext: dataSourceCloudSigmaLibraryDriveRead,
 
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
 
 			"arch": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The library drive operating system bit architecture.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The library drive image description.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"image_type": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Type of drive image.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"media": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Media representation type. It can be `cdrom` or `disk`.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Human readable name of the library drive.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"os": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Operating system of the drive.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"size": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: "Size of the library drive in bytes.",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The library drive status.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"storage_type": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Library drive storage type.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

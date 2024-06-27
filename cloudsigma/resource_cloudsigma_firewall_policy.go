@@ -11,6 +11,10 @@ import (
 
 func resourceCloudSigmaFirewallPolicy() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The firewall policy resource allows you to manage CloudSigma firewall policies.
+`,
+
 		CreateContext: resourceCloudSigmaFirewallPolicyCreate,
 		ReadContext:   resourceCloudSigmaFirewallPolicyRead,
 		UpdateContext: resourceCloudSigmaFirewallPolicyUpdate,
@@ -20,91 +24,16 @@ func resourceCloudSigmaFirewallPolicy() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "The firewall policy name.",
+				Required:    true,
+				Type:        schema.TypeString,
 			},
-
-			// "owner": {
-			// 	Type:     schema.TypeList,
-			// 	Optional: true,
-			// 	Computed: true,
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"resource_uri": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				Computed: true,
-			// 			},
-			//
-			// 			"uuid": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				Computed: true,
-			// 			},
-			// 		},
-			// 	},
-			// },
 
 			"resource_uri": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The unique resource identifier of the firewall policy.",
+				Computed:    true,
+				Type:        schema.TypeString,
 			},
-
-			// "rule": {
-			// 	Type:     schema.TypeSet,
-			// 	Optional: true,
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"action": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ValidateFunc: validation.StringInSlice([]string{
-			// 					"accept",
-			// 					"drop",
-			// 				}, false),
-			// 			},
-			// 			"comment": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 			},
-			// 			"direction": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ValidateFunc: validation.StringInSlice([]string{
-			// 					"in",
-			// 					"out",
-			// 					"both",
-			// 				}, false),
-			// 			},
-			// 			"destination_address": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 			},
-			// 			"destination_port_range": {
-			// 				Type:         schema.TypeInt,
-			// 				Optional:     true,
-			// 				ValidateFunc: validation.NoZeroValues,
-			// 			},
-			// 			"protocol": {
-			// 				Type:     schema.TypeString,
-			// 				Required: true,
-			// 				ValidateFunc: validation.StringInSlice([]string{
-			// 					"tcp",
-			// 					"udp",
-			// 				}, false),
-			// 			},
-			// 			"source_address": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 			},
-			// 			"source_port_range": {
-			// 				Type:         schema.TypeInt,
-			// 				Optional:     true,
-			// 				ValidateFunc: validation.NoZeroValues,
-			// 			},
-			// 		},
-			// 	},
-			// },
 		},
 	}
 }
@@ -145,14 +74,6 @@ func resourceCloudSigmaFirewallPolicyRead(ctx context.Context, d *schema.Resourc
 
 	_ = d.Set("name", firewallPolicy.Name)
 	_ = d.Set("resource_uri", firewallPolicy.ResourceURI)
-
-	// owner := []map[string]interface{}{
-	// 	{
-	// 		"resource_uri": firewallPolicy.Owner.ResourceURI,
-	// 		"uuid":         firewallPolicy.Owner.UUID,
-	// 	},
-	// }
-	// _ = d.Set("owner", owner)
 
 	return nil
 }

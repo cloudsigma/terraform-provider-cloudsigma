@@ -11,6 +11,10 @@ import (
 
 func resourceCloudSigmaACL() *schema.Resource {
 	return &schema.Resource{
+		Description: `
+The acl resource allows you to manage CloudSigma ACLs (Access Control Lists).
+`,
+
 		CreateContext: resourceCloudSigmaACLCreate,
 		ReadContext:   resourceCloudSigmaACLRead,
 		UpdateContext: resourceCloudSigmaACLUpdate,
@@ -20,52 +24,16 @@ func resourceCloudSigmaACL() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "The ACL name.",
+				Type:        schema.TypeString,
+				Required:    true,
 			},
 
-			// "owner": {
-			// 	Type:     schema.TypeList,
-			// 	Optional: true,
-			// 	Computed: true,
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"resource_uri": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				Computed: true,
-			// 			},
-			//
-			// 			"uuid": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				Computed: true,
-			// 			},
-			// 		},
-			// 	},
-			// },
-
-			// "permissions": {
-			// 	Type: schema.TypeSet,
-			// 	Elem: &schema.Schema{
-			// 		Type: schema.TypeString,
-			// 		ValidateFunc: validation.StringInSlice([]string{
-			// 			"ATTACH",
-			// 			"CLONE",
-			// 			"EDIT",
-			// 			"LIST",
-			// 			"OPEN_VNC",
-			// 			"START",
-			// 			"STOP",
-			// 		}, false),
-			// 	},
-			// 	Optional: true,
-			// },
-
 			"resource_uri": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "The unique resource identifier of the ACL.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 		},
 	}
