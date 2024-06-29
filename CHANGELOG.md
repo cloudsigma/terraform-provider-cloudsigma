@@ -1,4 +1,20 @@
 
+<a name="v2.1.0"></a>
+## v2.1.0 (2024-06-28)
+
+### Bug Fixes
+* **deps:** upgrade cloudsigma-sdk-go to v0.15.1
+
+### Features
+* **datasource/cloudsigma_profile:** migrate profile data source to framework
+* **tools:** validate docs as part of test workflow
+* **tools:** build documenation with tfplugindocs
+* **tools:** use tfplugindocs for docs validation
+
+### Maintaining
+* **gh-actions:** update checkout action to v4
+
+
 <a name="v2.0.0"></a>
 ## v2.0.0 (2024-06-23)
 
