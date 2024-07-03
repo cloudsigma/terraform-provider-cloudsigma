@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 )
@@ -20,9 +20,9 @@ func TestAccCloudSigmaServer_basic(t *testing.T) {
 	tagName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCloudSigmaServerConfig_basic(serverName),
@@ -54,9 +54,9 @@ func TestAccCloudSigmaServer_basic(t *testing.T) {
 
 func TestAccCloudSigmaServer_emptySSH(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCloudSigmaServerConfig_emptySSHKey(),
@@ -68,9 +68,9 @@ func TestAccCloudSigmaServer_emptySSH(t *testing.T) {
 
 func TestAccCloudSigmaServer_emptyTag(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCloudSigmaServerConfig_emptyTag(),
@@ -85,9 +85,9 @@ func TestAccCloudSigmaServer_smp(t *testing.T) {
 	serverName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCloudSigmaServerConfig_basic(serverName),
@@ -112,9 +112,9 @@ func TestAccCloudSigmaServer_smp(t *testing.T) {
 
 func TestAccCloudSigmaServer_invalidSMP(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCloudSigmaServerConfig_invalidSMP(),
@@ -131,9 +131,9 @@ func TestAccCloudSigmaServer_withDrive(t *testing.T) {
 	driveName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCloudSigmaServerConfig_withDrive(serverName, driveName),
@@ -167,9 +167,9 @@ func TestAccCloudSigmaServer_withMeta(t *testing.T) {
 	serverName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaServerDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCloudSigmaServerConfig_withMeta(serverName),
@@ -192,7 +192,10 @@ func TestAccCloudSigmaServer_withMeta(t *testing.T) {
 }
 
 func testAccCheckCloudSigmaServerDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*cloudsigma.Client)
+	client, err := sharedClient()
+	if err != nil {
+		return err
+	}
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "cloudsigma_server" {
@@ -219,7 +222,10 @@ func testAccCheckCloudSigmaServerExists(n string, server *cloudsigma.Server) res
 			return fmt.Errorf("no server ID is set")
 		}
 
-		client := testAccProvider.Meta().(*cloudsigma.Client)
+		client, err := sharedClient()
+		if err != nil {
+			return err
+		}
 		retrievedServer, _, err := client.Servers.Get(context.Background(), rs.Primary.ID)
 		if err != nil {
 			return err
