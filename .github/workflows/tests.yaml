@@ -118,6 +118,40 @@ jobs:
       - name: Run acceptance tests
         run: make testacc
 
+  sweeper:
+    name: sweeper cleanup
+    runs-on: ubuntu-latest
+    needs: acceptance-tests
+    timeout-minutes: 15
+    env:
+      CLOUDSIGMA_USERNAME: ${{ secrets.CLOUDSIGMA_USERNAME }}
+      CLOUDSIGMA_PASSWORD: ${{ secrets.CLOUDSIGMA_PASSWORD }}
+      CLOUDSIGMA_LOCATION: ${{ secrets.CLOUDSIGMA_LOCATION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - name: Fix permissions for cache directories
+        run: |
+          chmod -R 0755 ~/.cache/go-build ~/go/pkg/mod || true
+
+      - name: Set up cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum', 'tools/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-
+
+      - name: Run sweeper cleanup
+        run: make sweep
+
   docs:
     name: documentation
     runs-on: ubuntu-latest

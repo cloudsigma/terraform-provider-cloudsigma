@@ -34,5 +34,5 @@ resource "cloudsigma_tag" "production" {
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the tag.
 - `resource_uri` (String) The unique resource identifier of the tag.

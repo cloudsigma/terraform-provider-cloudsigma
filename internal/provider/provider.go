@@ -190,12 +190,14 @@ func (p *cloudSigmaProvider) DataSources(_ context.Context) []func() datasource.
 }
 
 func (p *cloudSigmaProvider) Resources(_ context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewTagResource,
+	}
 }
 
 func (p *cloudSigmaProvider) userAgent() string {
 	name := "terraform-provider-cloudsigma"
 	comment := "https://registry.terraform.io/providers/cloudsigma/cloudsigma"
 
-	return fmt.Sprintf("%s/%s (%s)", name, p.version, comment)
+	return fmt.Sprintf("%s/%s (+%s)", name, p.version, comment)
 }

@@ -6,10 +6,11 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
+
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccCloudSigmaDrive_basic(t *testing.T) {
@@ -18,9 +19,9 @@ func TestAccCloudSigmaDrive_basic(t *testing.T) {
 	tagName := fmt.Sprintf("tf-acc-test-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaDriveDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaDriveDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCloudSigmaDriveConfig_basic(driveName),
@@ -53,9 +54,9 @@ func TestAccCloudSigmaDrive_basic(t *testing.T) {
 
 func TestAccCloudSigmaDrive_emptyTag(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaDriveDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaDriveDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCloudSigmaDriveConfig_emptyTag(),
@@ -70,13 +71,13 @@ func TestAccCloudSigmaDrive_changeSize(t *testing.T) {
 	driveName := fmt.Sprintf("tf-acc-test--%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaDriveDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaDriveDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCloudSigmaDriveConfig_basic(driveName),
-				Check: resource.ComposeAggregateTestCheckFunc(
+				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCloudSigmaDriveExists("cloudsigma_drive.test", &drive),
 					resource.TestCheckResourceAttr("cloudsigma_drive.test", "media", "disk"),
 					resource.TestCheckResourceAttr("cloudsigma_drive.test", "name", driveName),
@@ -87,7 +88,7 @@ func TestAccCloudSigmaDrive_changeSize(t *testing.T) {
 			},
 			{
 				Config: testAccCloudSigmaDriveConfig_changeSize(driveName),
-				Check: resource.ComposeAggregateTestCheckFunc(
+				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCloudSigmaDriveExists("cloudsigma_drive.test", &drive),
 					resource.TestCheckResourceAttr("cloudsigma_drive.test", "size", "16106127360"),
 				),
@@ -101,13 +102,13 @@ func TestAccCloudSigmaDrive_changeStorageType(t *testing.T) {
 	driveName := fmt.Sprintf("tf-acc-test--%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckCloudSigmaDriveDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProto6ProviderFactories,
+		CheckDestroy:             testAccCheckCloudSigmaDriveDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCloudSigmaDriveConfig_storageType(driveName),
-				Check: resource.ComposeAggregateTestCheckFunc(
+				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCloudSigmaDriveExists("cloudsigma_drive.test", &drive),
 					resource.TestCheckResourceAttr("cloudsigma_drive.test", "storage_type", "dssd"),
 				),
@@ -121,7 +122,10 @@ func TestAccCloudSigmaDrive_changeStorageType(t *testing.T) {
 }
 
 func testAccCheckCloudSigmaDriveDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*cloudsigma.Client)
+	client, err := sharedClient()
+	if err != nil {
+		return err
+	}
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "cloudsigma_drive" {
@@ -148,7 +152,10 @@ func testAccCheckCloudSigmaDriveExists(n string, drive *cloudsigma.Drive) resour
 			return fmt.Errorf("no drive ID is set")
 		}
 
-		client := testAccProvider.Meta().(*cloudsigma.Client)
+		client, err := sharedClient()
+		if err != nil {
+			return err
+		}
 		retrievedDrive, _, err := client.Drives.Get(context.Background(), rs.Primary.ID)
 		if err != nil {
 			return err
