@@ -1,6 +1,19 @@
 
+<a name="v2.2.0"></a>
+## v2.2.0 (2024-07-03)
+
+### Code Refactoring
+* use mux provider for sdk acceptance tests
+
+### Features
+* **resource/cloudsigma_tag:** migrate tag resource to framework
+
+### Maintaining
+* **tools:** run sweepers in gh-actions after acceptance tests
+
+
 <a name="v2.1.0"></a>
-## v2.1.0 (2024-06-28)
+## v2.1.0 (2024-06-29)
 
 ### Bug Fixes
 * **deps:** upgrade cloudsigma-sdk-go to v0.15.1
