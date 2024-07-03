@@ -49,6 +49,14 @@ testacc:
 	@mkdir -p $(BUILD_DIR)
 	TF_ACC=1 go test -count=1 -v -cover -coverprofile=$(BUILD_DIR)/coverage-with-acceptance.out -timeout 120m ./...
 
+## sweep: Run sweepers to cleanup leftover infrastructure after acceptance tests.
+.PHONY: sweep
+sweep:
+	@echo "==> Running sweepers to cleanup leftover infrastructure..."
+	@echo "    WARNING: This will destroy infrastructure. Use only in development accounts."
+	@echo ""
+	@go test -count=1 -v ./internal/provider -sweep=testacc
+
 ## build: Build binary for default local system's operating system and architecture.
 .PHONY: build
 build:
