@@ -19,6 +19,22 @@ var testAccProviderFactories = map[string]func() (tfprotov6.ProviderServer, erro
 }
 
 func TestProviderConfigure_invalidCredentials(t *testing.T) {
+	location := os.Getenv("CLOUDSIGMA_LOCATION")
+	_ = os.Unsetenv("CLOUDSIGMA_LOCATION")
+	defer func() { _ = os.Setenv("CLOUDSIGMA_LOCATION", location) }()
+
+	password := os.Getenv("CLOUDSIGMA_PASSWORD")
+	_ = os.Unsetenv("CLOUDSIGMA_PASSWORD")
+	defer func() { _ = os.Setenv("CLOUDSIGMA_PASSWORD", password) }()
+
+	token := os.Getenv("CLOUDSIGMA_TOKEN")
+	_ = os.Unsetenv("CLOUDSIGMA_TOKEN")
+	defer func() { _ = os.Setenv("CLOUDSIGMA_TOKEN", token) }()
+
+	username := os.Getenv("CLOUDSIGMA_USERNAME")
+	_ = os.Unsetenv("CLOUDSIGMA_USERNAME")
+	defer func() { _ = os.Setenv("CLOUDSIGMA_USERNAME", username) }()
+
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProviderFactories,
 
