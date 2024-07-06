@@ -1,14 +1,22 @@
 linters:
   disable-all: true
   enable:
+    - durationcheck
     - errcheck
+    - exportloopref
+    #- forcetypeassert (disable for now)
+    - godot
     - gofmt
     - goimports
     - gosimple
     - govet
     - ineffassign
+    - makezero
     - misspell
+    - nilerr
+    - predeclared
     - staticcheck
+    - tenv
     - unconvert
     - unused
 
