@@ -33,10 +33,10 @@ resource "cloudsigma_ssh_key" "admin" {
 
 ### Optional
 
-- `private_key` (String) The private SSH key material.
+- `private_key` (String, Sensitive) The private SSH key material.
 - `public_key` (String) The public SSH key material.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `uuid` (String) The SSH key UUID.
+- `id` (String) The ID of the SSH key.
+- `uuid` (String) The unique universal identifier of the SSH key, equal to ID.
