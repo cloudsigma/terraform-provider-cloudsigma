@@ -68,7 +68,6 @@ func Provider() *schema.Provider {
 			"cloudsigma_remote_snapshot": resourceCloudSigmaRemoteSnapshot(),
 			"cloudsigma_server":          resourceCloudSigmaServer(),
 			"cloudsigma_snapshot":        resourceCloudSigmaSnapshot(),
-			"cloudsigma_ssh_key":         resourceCloudSigmaSSHKey(),
 		},
 	}
 
