@@ -1,4 +1,14 @@
 
+<a name="v2.3.0"></a>
+## v2.3.0 (2024-07-06)
+
+### Features
+* **resource/cloudsigma_ssh_key:** migrate ssh key resource to framework
+
+### Maintaining
+* **gh-actions:** update terraform-version matrix for acceptance tests
+
+
 <a name="v2.2.0"></a>
 ## v2.2.0 (2024-07-03)
 
