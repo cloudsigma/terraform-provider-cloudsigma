@@ -156,6 +156,67 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 		data.Name = types.StringValue(getVLANName(vlan))
 		data.ResourceURI = types.StringValue(vlan.ResourceURI)
 		data.UUID = types.StringValue(vlan.UUID)
+	} else {
+		vlanUUID := data.UUID.ValueString()
+		vlanName := data.Name.ValueString()
+
+		if vlanUUID == "" && vlanName == "" {
+			response.Diagnostics.AddError(
+				"Missing required attributes",
+				`The attribute "name" or "uuid" must be defined.`,
+			)
+			return
+		}
+
+		if vlanUUID != "" {
+			tflog.Trace(ctx, "Getting VLAN using UUID", map[string]interface{}{"vlan_uuid": vlanUUID})
+			vlan, _, err := d.client.VLANs.Get(ctx, vlanUUID)
+			if err != nil {
+				response.Diagnostics.AddError("Unable to get VLAN", err.Error())
+				return
+			}
+			tflog.Trace(ctx, "Got VLAN", map[string]interface{}{"data": vlan})
+
+			// if name is defined check that it's equal
+			if vlanName != "" && vlanName != getVLANName(*vlan) {
+				response.Diagnostics.AddError(
+					"Ambiguous search result",
+					fmt.Sprintf("Specified and actual VLAN name are different. Expected '%s', got '%s'", vlanName, getVLANName(*vlan)),
+				)
+				return
+			}
+
+			data.ID = types.StringValue(vlan.UUID)
+			data.Name = types.StringValue(getVLANName(*vlan))
+			data.ResourceURI = types.StringValue(vlan.ResourceURI)
+			data.UUID = types.StringValue(vlan.UUID)
+		} else {
+			tflog.Trace(ctx, "Getting VLANs for later filtering", map[string]interface{}{"vlan_name": vlanName})
+			vlans, _, err := d.client.VLANs.List(ctx)
+			if err != nil {
+				response.Diagnostics.AddError("Unable to get VLANs", err.Error())
+				return
+			}
+			tflog.Trace(ctx, "Got VLANs", map[string]interface{}{"data": vlans})
+
+			vlanFound := false
+			for _, vlan := range vlans {
+				if vlanName == getVLANName(vlan) {
+					data.ID = types.StringValue(vlan.UUID)
+					data.Name = types.StringValue(getVLANName(vlan))
+					data.ResourceURI = types.StringValue(vlan.ResourceURI)
+					data.UUID = types.StringValue(vlan.UUID)
+
+					vlanFound = true
+					break
+				}
+			}
+
+			if !vlanFound {
+				response.Diagnostics.AddError("No search results", "Please refine your search.")
+				return
+			}
+		}
 	}
 
 	diags = response.State.Set(ctx, &data)
