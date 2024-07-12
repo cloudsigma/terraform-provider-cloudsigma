@@ -58,7 +58,6 @@ func Provider() *schema.Provider {
 			"cloudsigma_location":      dataSourceCloudSigmaLocation(),
 			"cloudsigma_subscription":  dataSourceCloudSigmaSubscription(),
 			"cloudsigma_tag":           dataSourceCloudSigmaTag(),
-			"cloudsigma_vlan":          dataSourceCloudSigmaVLAN(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
