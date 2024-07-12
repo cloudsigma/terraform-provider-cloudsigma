@@ -1,4 +1,18 @@
 
+<a name="v2.4.0"></a>
+## v2.4.0 (2024-07-12)
+
+### Documentation
+* **datasource/cloudsigma_vlan:** update documentation and examples
+
+### Features
+* **datasource/cloudsigma_vlan:** allow filtering by uuid or name attributes
+* **datasource/cloudsigma_vlan:** migrate vlan data source to framework
+
+### Maintaining
+* sync golangci-lint configuration with scaffolding repo
+
+
 <a name="v2.3.0"></a>
 ## v2.3.0 (2024-07-06)
 
