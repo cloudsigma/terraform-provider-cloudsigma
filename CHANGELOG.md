@@ -1,4 +1,11 @@
 
+<a name="v2.4.1"></a>
+## v2.4.1 (2024-07-13)
+
+### Bug Fixes
+* **resource/cloudsigma_server:** handle empty network definition
+
+
 <a name="v2.4.0"></a>
 ## v2.4.0 (2024-07-12)
 
