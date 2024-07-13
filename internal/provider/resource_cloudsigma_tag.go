@@ -28,8 +28,8 @@ type tagResource struct {
 
 // tagResourceModel maps the tag resource schema data.
 type tagResourceModel struct {
-	Name        types.String `tfsdk:"name"`
 	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
 	ResourceURI types.String `tfsdk:"resource_uri"`
 }
 
@@ -52,16 +52,16 @@ in your configurations via their IDs.
 `,
 		Version: 0,
 		Attributes: map[string]schema.Attribute{
-			"name": schema.StringAttribute{
-				MarkdownDescription: "The tag name.",
-				Required:            true,
-			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The ID of the tag.",
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+			},
+			"name": schema.StringAttribute{
+				MarkdownDescription: "The tag name.",
+				Required:            true,
 			},
 			"resource_uri": schema.StringAttribute{
 				MarkdownDescription: "The unique resource identifier of the tag.",
@@ -106,8 +106,8 @@ func (r *tagResource) Create(ctx context.Context, request resource.CreateRequest
 	tflog.Trace(ctx, "Created tag", map[string]interface{}{"data": tag})
 
 	// map response body to attributes
-	data.Name = types.StringValue(tag.Name)
 	data.ID = types.StringValue(tag.UUID)
+	data.Name = types.StringValue(tag.Name)
 	data.ResourceURI = types.StringValue(tag.ResourceURI)
 
 	diags = response.State.Set(ctx, &data)
@@ -139,8 +139,8 @@ func (r *tagResource) Read(ctx context.Context, request resource.ReadRequest, re
 	tflog.Trace(ctx, "Got tag", map[string]interface{}{"data": tag})
 
 	// map response body to attributes
-	data.Name = types.StringValue(tag.Name)
 	data.ID = types.StringValue(tag.UUID)
+	data.Name = types.StringValue(tag.Name)
 	data.ResourceURI = types.StringValue(tag.ResourceURI)
 
 	diags = response.State.Set(ctx, &data)
@@ -175,8 +175,8 @@ func (r *tagResource) Update(ctx context.Context, request resource.UpdateRequest
 	tflog.Trace(ctx, "Updated tag", map[string]interface{}{"data": tag})
 
 	// map response body to attributes
-	data.Name = types.StringValue(tag.Name)
 	data.ID = types.StringValue(tag.UUID)
+	data.Name = types.StringValue(tag.Name)
 	data.ResourceURI = types.StringValue(tag.ResourceURI)
 
 	diags = response.State.Set(ctx, &data)

@@ -127,10 +127,7 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 		tflog.Trace(ctx, "Got VLANs", map[string]interface{}{"vlans_count": len(vlans)})
 
 		tflog.Debug(ctx, "Converting VLANs for filtering")
-		vlansForFilters := make([]any, len(vlans))
-		for i, vlan := range vlans {
-			vlansForFilters[i] = vlan
-		}
+		vlansForFilters := migration.ToAnySlice(vlans)
 		tflog.Debug(ctx, "Converted VLANs", map[string]interface{}{"vlans": vlansForFilters})
 		filteredVLANs, diags := migration.ApplyFilter(data.Filters, vlansForFilters)
 		if diags != nil {
@@ -191,7 +188,7 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 			data.ResourceURI = types.StringValue(vlan.ResourceURI)
 			data.UUID = types.StringValue(vlan.UUID)
 		} else {
-			tflog.Trace(ctx, "Getting VLANs for later filtering", map[string]interface{}{"vlan_name": vlanName})
+			tflog.Trace(ctx, "Getting VLANs for filtering", map[string]interface{}{"vlan_name": vlanName})
 			vlans, _, err := d.client.VLANs.List(ctx)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get VLANs", err.Error())
