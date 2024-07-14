@@ -185,6 +185,7 @@ func (p *cloudSigmaProvider) Configure(ctx context.Context, request provider.Con
 
 func (p *cloudSigmaProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewIPDataSource,
 		NewProfileDataSource,
 		NewTagDataSource,
 		NewVLANDataSource,

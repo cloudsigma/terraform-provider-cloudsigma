@@ -51,7 +51,6 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"cloudsigma_ip":            dataSourceCloudSigmaIP(),
 			"cloudsigma_library_drive": dataSourceCloudSigmaLibraryDrive(),
 			"cloudsigma_drive":         dataSourceCloudSigmaDrive(),
 			"cloudsigma_license":       dataSourceCloudSigmaLicense(),
