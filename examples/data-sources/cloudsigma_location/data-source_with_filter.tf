@@ -1,4 +1,4 @@
-data "cloudsigma_library_location" "frankfurt" {
+data "cloudsigma_location" "frankfurt" {
   filter {
     name   = "id"
     values = ["FRA"]
