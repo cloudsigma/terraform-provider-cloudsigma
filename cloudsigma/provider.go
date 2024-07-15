@@ -54,7 +54,6 @@ func Provider() *schema.Provider {
 			"cloudsigma_library_drive": dataSourceCloudSigmaLibraryDrive(),
 			"cloudsigma_drive":         dataSourceCloudSigmaDrive(),
 			"cloudsigma_license":       dataSourceCloudSigmaLicense(),
-			"cloudsigma_location":      dataSourceCloudSigmaLocation(),
 			"cloudsigma_subscription":  dataSourceCloudSigmaSubscription(),
 		},
 
