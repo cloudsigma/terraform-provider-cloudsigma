@@ -1,4 +1,21 @@
 
+<a name="v2.5.0"></a>
+## v2.5.0 (2024-07-14)
+
+### Bug Fixes
+* **datasource/cloudsigma_profile:** add acceptance tests
+
+### Documentation
+* **datasource/cloudsigma_ip:** update documentation and examples
+* **datasource/cloudsigma_tag:** update documentation and examples
+
+### Features
+* **datasource/cloudsigma_ip:** migrate ip data source to framework
+* **datasource/cloudsigma_tag:** migrate tag data source to framework
+* **resource/cloudsigma_acl:** remove unused resource
+* **resource/cloudsigma_firewall_policy:** remove unused resource
+
+
 <a name="v2.4.1"></a>
 ## v2.4.1 (2024-07-13)
 
