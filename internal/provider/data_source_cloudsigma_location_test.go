@@ -9,7 +9,6 @@ import (
 )
 
 func TestAccDataSourceCloudSigmaLocation_basic(t *testing.T) {
-
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProviderFactories,
