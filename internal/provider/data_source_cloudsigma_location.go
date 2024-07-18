@@ -23,6 +23,7 @@ type locationDataSource struct {
 	client *cloudsigma.Client
 }
 
+// locationDataSourceModel maps the location data source schema data.
 type locationDataSourceModel struct {
 	APIEndpoint types.String            `tfsdk:"api_endpoint"`
 	CountryCode types.String            `tfsdk:"country_code"`
