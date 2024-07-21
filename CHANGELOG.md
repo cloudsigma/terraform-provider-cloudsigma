@@ -1,6 +1,26 @@
 
+<a name="v2.6.0"></a>
+## v2.6.0 (2024-07-21)
+
+### Bug Fixes
+* **datasource/cloudsigma_tag:** add acceptance tests
+
+### Documentation
+* **datasource/cloudsigma_drive:** update documentation and examples
+* **datasource/cloudsigma_library_drive:** update documentation and examples
+* **datasource/cloudsigma_location:** update documentation and examples
+
+### Features
+* **datasource/cloudsigma_drive:** migrate data data source to framework
+* **datasource/cloudsigma_library_drive:** migrate library drive data source to framework
+* **datasource/cloudsigma_location:** migrate location data source to framework
+
+### Maintaining
+* **deps:** upgrade framework and testing dependencies
+
+
 <a name="v2.5.0"></a>
-## v2.5.0 (2024-07-14)
+## v2.5.0 (2024-07-15)
 
 ### Bug Fixes
 * **datasource/cloudsigma_profile:** add acceptance tests
