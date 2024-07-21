@@ -195,7 +195,7 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 		}
 		tflog.Trace(ctx, "Got licenses", map[string]interface{}{"data": licenses})
 
-		licensesFound := false
+		licenseFound := false
 		for _, license := range licenses {
 			if licenseName == license.Name {
 				data.Burstable = types.BoolValue(license.Burstable)
@@ -207,12 +207,12 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 				data.UserMetric = types.StringValue(license.UserMetric)
 				data.UUID = types.StringValue(license.Name)
 
-				licensesFound = true
+				licenseFound = true
 				break
 			}
 		}
 
-		if !licensesFound {
+		if !licenseFound {
 			response.Diagnostics.AddError("No search results", "Please refine your search.")
 			return
 		}
