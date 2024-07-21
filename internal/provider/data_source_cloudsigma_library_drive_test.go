@@ -11,7 +11,6 @@ func TestAccDataSourceCloudSigmaLibraryDrive_expectError(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProviderFactories,
-		CheckDestroy:             testAccCheckTagDestroy,
 
 		Steps: []resource.TestStep{
 			{
