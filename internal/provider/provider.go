@@ -187,6 +187,7 @@ func (p *cloudSigmaProvider) DataSources(_ context.Context) []func() datasource.
 	return []func() datasource.DataSource{
 		NewDriveDataSource,
 		NewIPDataSource,
+		NewLibraryDriveDataSource,
 		NewLocationDataSource,
 		NewProfileDataSource,
 		NewTagDataSource,
