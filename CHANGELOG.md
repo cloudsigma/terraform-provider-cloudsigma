@@ -1,4 +1,15 @@
 
+<a name="v2.8.0"></a>
+## v2.8.0 (2024-07-22)
+
+### Features
+* **resource/cloudsigma_remote_snapshot:** remove unused resource
+
+### BREAKING CHANGE
+
+resource 'cloudsigma_remote_snapshot' does not implement create functionality correctly
+
+
 <a name="v2.7.0"></a>
 ## v2.7.0 (2024-07-22)
 
