@@ -1,4 +1,16 @@
 
+<a name="v2.7.0"></a>
+## v2.7.0 (2024-07-22)
+
+### Documentation
+* **datasource/cloudsigma_license:** update documentation and examples
+* **datasource/cloudsigma_subscription:** update documentation and examples
+
+### Features
+* **datasource/cloudsigma_license:** migrate license data source to framework
+* **datasource/cloudsigma_subscription:** migrate subscription data source to framework
+
+
 <a name="v2.6.0"></a>
 ## v2.6.0 (2024-07-21)
 
