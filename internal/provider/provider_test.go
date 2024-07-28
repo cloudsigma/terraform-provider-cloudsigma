@@ -1,21 +1,43 @@
 package provider
 
 import (
+	"context"
 	"os"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/cloudsigma/terraform-provider-cloudsigma/cloudsigma"
 )
 
 const accTestPrefix = "tf-acc-test"
 
 var testAccProvider = New("testacc")()
 var testAccProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"cloudsigma": providerserver.NewProtocol6WithError(testAccProvider),
+	"cloudsigma": func() (tfprotov6.ProviderServer, error) {
+		ctx := context.Background()
+
+		upgradedSDKProvider, err := tf5to6server.UpgradeServer(ctx, cloudsigma.Provider().GRPCProvider)
+		if err != nil {
+			return nil, err
+		}
+		providers := []func() tfprotov6.ProviderServer{
+			providerserver.NewProtocol6(testAccProvider),
+			func() tfprotov6.ProviderServer { return upgradedSDKProvider },
+		}
+		muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
+		if err != nil {
+			return nil, err
+		}
+
+		return muxServer.ProviderServer(), nil
+	},
 }
 
 func TestProviderConfigure_invalidCredentials(t *testing.T) {
@@ -36,7 +58,9 @@ func TestProviderConfigure_invalidCredentials(t *testing.T) {
 	defer func() { _ = os.Setenv("CLOUDSIGMA_USERNAME", username) }()
 
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProviderFactories,
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"cloudsigma": providerserver.NewProtocol6WithError(testAccProvider),
+		},
 
 		Steps: []resource.TestStep{
 			{

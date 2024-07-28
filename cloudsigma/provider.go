@@ -53,9 +53,8 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"cloudsigma_drive":    resourceCloudSigmaDrive(),
-			"cloudsigma_server":   resourceCloudSigmaServer(),
-			"cloudsigma_snapshot": resourceCloudSigmaSnapshot(),
+			"cloudsigma_drive":  resourceCloudSigmaDrive(),
+			"cloudsigma_server": resourceCloudSigmaServer(),
 		},
 	}
 
