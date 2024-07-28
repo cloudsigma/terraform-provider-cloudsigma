@@ -23,7 +23,7 @@ func TestAccDataSourceCloudSigmaLicense_expectError(t *testing.T) {
 
 func testAccCloudSigmaLicenseDataSourceWithoutName() string {
 	return `
-data "cloudsigma_license" "ds_foobar_without_name" {
+data "cloudsigma_license" "ds_foobar_basic" {
   name = ""
 }
 `
