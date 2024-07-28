@@ -4,11 +4,16 @@ page_title: "cloudsigma_snapshot Resource - terraform-provider-cloudsigma"
 subcategory: ""
 description: |-
   The snapshot resource allows you to manage CloudSigma snapshots.
+  Snapshots are point-in-time versions of a drive. They can be cloned to a full drive,
+  which makes it possible to restore an older version of a VM image.
 ---
 
 # cloudsigma_snapshot (Resource)
 
 The snapshot resource allows you to manage CloudSigma snapshots.
+
+Snapshots are point-in-time versions of a drive. They can be cloned to a full drive,
+which makes it possible to restore an older version of a VM image.
 
 ## Example Usage
 
@@ -25,11 +30,12 @@ resource "cloudsigma_snapshot" "snapshot" {
 ### Required
 
 - `drive` (String) The UUID of the drive.
-- `name` (String) The snapshot name.
+- `name` (String) The name of the snapshot.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the snapshot.
 - `resource_uri` (String) The unique resource identifier of the snapshot.
-- `status` (String) The snapshot status.
+- `status` (String) The status of the snapshot.
 - `timestamp` (String) The timestamp of the snapshot creation.
+- `uuid` (String) The unique universal identifier of the snapshot, equal to ID.
