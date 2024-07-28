@@ -1,4 +1,14 @@
 
+<a name="v2.9.0"></a>
+## v2.9.0 (2024-07-28)
+
+### Documentation
+* **resource/cloudsigma_snapshot:** update documentation and examples
+
+### Features
+* **resource/cloudsigma_snapshot:** migrate snapshot resource to framework
+
+
 <a name="v2.8.0"></a>
 ## v2.8.0 (2024-07-22)
 
