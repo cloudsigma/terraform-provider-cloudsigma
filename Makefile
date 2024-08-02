@@ -47,7 +47,7 @@ test:
 testacc:
 	@echo "==> Running acceptance tests..."
 	@mkdir -p $(BUILD_DIR)
-	TF_ACC=1 go test -count=1 -v -cover -coverprofile=$(BUILD_DIR)/coverage-with-acceptance.out -timeout 120m ./...
+	TF_ACC=1 go test -count=1 -parallel=4 -v -cover -coverprofile=$(BUILD_DIR)/coverage-with-acceptance.out -timeout 120m ./...
 
 ## sweep: Run sweepers to cleanup leftover infrastructure after acceptance tests.
 .PHONY: sweep
