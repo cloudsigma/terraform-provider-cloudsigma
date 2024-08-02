@@ -72,10 +72,10 @@ func TestAccDataSourceCloudSigmaTag_filter(t *testing.T) {
 				Config: testAccCloudSigmaTagDataSourceWithFilter(tagName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTagExists("cloudsigma_tag.ds_foobar_filter", &tag),
+					resource.TestCheckResourceAttr("data.cloudsigma_tag.ds_foobar_filter", "name", tagName),
 					resource.TestCheckResourceAttrSet("data.cloudsigma_tag.ds_foobar_filter", "id"),
 					resource.TestCheckResourceAttrSet("data.cloudsigma_tag.ds_foobar_filter", "resource_uri"),
 					resource.TestCheckResourceAttrSet("data.cloudsigma_tag.ds_foobar_filter", "uuid"),
-					resource.TestCheckResourceAttr("data.cloudsigma_tag.ds_foobar_filter", "name", tagName),
 				),
 			},
 		},
