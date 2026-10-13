@@ -4,17 +4,19 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"io"
+	"net/http"
+	"strings"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	tfpath "github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflogtest"
-	"io"
-	"net/http"
-	"strings"
-	"testing"
+
+	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 )
 
 type fixtureRT func(*http.Request) (*http.Response, error)

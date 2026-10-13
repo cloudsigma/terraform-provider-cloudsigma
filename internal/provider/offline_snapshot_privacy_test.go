@@ -3,15 +3,17 @@ package provider
 import (
 	"bytes"
 	"context"
-	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflogtest"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflogtest"
+
+	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 )
 
 // Every operation dispatches only to an in-memory transport. No snapshot exists.
