@@ -1,0 +1,14 @@
+import pathlib,subprocess,os,json,hashlib
+repo=pathlib.Path(__file__).resolve().parent.parent
+p=repo/'build/offline';p.mkdir(parents=True,exist_ok=True)
+env={k:v for k,v in os.environ.items() if not k.startswith(('CLOUDSIGMA','TF_'))}
+env.update(GOPROXY='off',GOSUMDB='off',CGO_ENABLED='0')
+groups={'cloudsigma':['TestOfflineRefresh','TestOfflineCloneEmptyGuard','TestOfflinePrivacyFixed','TestResourceCloudSigmaServer_findIPv4Address','TestStructureDrive_expandTags','TestStructureDrive_flattenTags','TestStructureServer_expandEnclavePageCaches','TestStructureServer_flattenEnclavePageCaches'],'internal/provider':['TestOfflineConfiguredReadonly','TestOfflineConfigurePrivacy','TestOfflineDatasourceReads','TestOfflineRegisteredSchemas','TestOfflineSnapshotPrivacy','TestOfflineDestroyStatus','TestOfflineSnapshotDependencyCleanup'],'readonly':['TestFence']}
+records=[]
+for pkg,names in groups.items():
+ tag=pkg.replace('/','-');guard=p/(tag+'_guard_test.go');guard.write_text((repo/'scripts/guard.template').read_text().replace('PACKAGE',pkg.split('/')[-1]));overlay=p/(tag+'-overlay.json');overlay.write_text(json.dumps({'Replace':{str(repo/pkg/'zz_isolation_guard_test.go'):str(guard)}}));binary=p/(tag+'.test')
+ commands=[['go','test','-vet=off','-overlay',str(overlay),'-c','-o',str(binary),'./'+pkg],[str(binary),'-test.run','^TestIsolationCanaries$','-test.v'],[str(binary),'-test.run','^('+'|'.join(names)+')$','-test.v','-test.count=1']]
+ for stage,cmd in zip(['build','canary','suite'],commands):
+  r=subprocess.run(cmd,cwd=repo,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=90);(p/(tag+'-'+stage+'.log')).write_bytes(r.stdout);records.append({'package':pkg,'stage':stage,'argv':cmd,'exit':r.returncode});(p/'execution.json').write_text(json.dumps(records,indent=2));
+  if r.returncode:raise SystemExit('failed '+tag+' '+stage)
+(p/'binaries.json').write_text(json.dumps({f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in p.glob('*.test')},indent=2))

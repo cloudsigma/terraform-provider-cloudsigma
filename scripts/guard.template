@@ -1,0 +1,18 @@
+package PACKAGE
+import("os";"syscall";"unsafe";"testing";"fmt")
+func init(){
+ // x86_64 only. TSYNC applies the irreversible filter to every runtime thread.
+ f:=[]syscall.SockFilter{{Code:0x20,K:4},{Code:0x15,Jt:1,K:0xc000003e},{Code:0x06,K:0x80000000},{Code:0x20,K:0}}
+ // socket/socketpair/connect/bind/listen/accept/accept4; execve/execveat;
+ // fork/vfork; io_uring entrypoints (no alternate async socket path).
+ for _,n:=range []uint32{41,53,42,49,50,43,288,59,322,57,58,425,426,427}{f=append(f,syscall.SockFilter{Code:0x15,Jf:1,K:n},syscall.SockFilter{Code:0x06,K:0x50001})}
+ // Reject x32 syscall ABI rather than permit alternate syscall numbers.
+ f=append(f,syscall.SockFilter{Code:0x45,Jf:1,K:0x40000000},syscall.SockFilter{Code:0x06,K:0x50001},syscall.SockFilter{Code:0x06,K:0x7fff0000})
+ _,_,e:=syscall.RawSyscall6(syscall.SYS_PRCTL,38,1,0,0,0,0);if e!=0{fmt.Fprintln(os.Stderr,"no_new_privs failed",e);os.Exit(90)}
+ p:=syscall.SockFprog{Len:uint16(len(f)),Filter:&f[0]};r,_,e:=syscall.RawSyscall(317,1,1,uintptr(unsafe.Pointer(&p)));if e!=0||r!=0{fmt.Fprintln(os.Stderr,"TSYNC failed",r,e);os.Exit(91)}
+}
+func TestIsolationCanaries(t *testing.T){
+ for _,domain:=range []int{syscall.AF_INET,syscall.AF_INET6,syscall.AF_UNIX}{fd,e:=syscall.Socket(domain,syscall.SOCK_STREAM,0);if e!=syscall.EPERM{if fd>=0{syscall.Close(fd)};t.Fatalf("socket not denied: %v",e)}}
+ path,_:=syscall.BytePtrFromString("/bin/false");argv:=[]*byte{path,nil};env:=[]*byte{nil};_,_,e:=syscall.RawSyscall(syscall.SYS_EXECVE,uintptr(unsafe.Pointer(path)),uintptr(unsafe.Pointer(&argv[0])),uintptr(unsafe.Pointer(&env[0])));if e!=syscall.EPERM{t.Fatalf("exec not denied: %v",e)}
+ t.Log("AF_INET/AF_INET6/AF_UNIX socket and execve denied EPERM by exact TSYNC filter")
+}

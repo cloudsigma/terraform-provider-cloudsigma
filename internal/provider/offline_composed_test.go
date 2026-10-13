@@ -3,16 +3,18 @@ package provider
 import (
 	"bytes"
 	"context"
-	ro "github.com/cloudsigma/terraform-provider-cloudsigma/readonly"
+	"io"
+	"net/http"
+	"strings"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflogtest"
-	"io"
-	"net/http"
-	"strings"
-	"testing"
+
+	ro "github.com/cloudsigma/terraform-provider-cloudsigma/readonly"
 )
 
 func TestOfflineConfiguredReadonly(t *testing.T) {

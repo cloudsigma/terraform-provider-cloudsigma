@@ -3,12 +3,14 @@ package cloudsigma
 import (
 	"context"
 	"fmt"
-	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 )
 
 type fakeRT func(*http.Request) (*http.Response, error)

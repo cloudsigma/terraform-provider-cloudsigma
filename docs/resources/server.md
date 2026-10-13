@@ -1,5 +1,5 @@
 ---
-page_title: "cloudsigma_server Resource - terraform-provider-cloudsigma"
+page_title: "cloudsigma_server Resource - cloudsigma"
 subcategory: ""
 description: |-
   The server resource allows you to manage CloudSigma servers.
@@ -98,7 +98,7 @@ resource "cloudsigma_server" "web" {
 - `cpu` (Number) Server's CPU Clock speed measured in MHz.
 - `memory` (Number) Server's RAM measured in bytes.
 - `name` (String) Human readable name of server.
-- `vnc_password` (String) VNC Password to connect to server.
+- `vnc_password` (String, Sensitive) VNC Password to connect to server.
 
 ### Optional
 

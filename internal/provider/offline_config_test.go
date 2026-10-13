@@ -3,12 +3,13 @@ package provider
 import (
 	"bytes"
 	"context"
+	"strings"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflogtest"
-	"strings"
-	"testing"
 )
 
 func TestOfflineConfigurePrivacy(t *testing.T) {

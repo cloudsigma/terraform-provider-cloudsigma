@@ -177,9 +177,9 @@ func testAccCheckSSHKeyDestroy(s *terraform.State) error {
 			continue
 		}
 
-		sshKey, _, err := client.Keypairs.Get(ctx, rs.Primary.ID)
-		if err == nil && sshKey.UUID == rs.Primary.ID {
-			return fmt.Errorf("SSH key (%s) still exists", rs.Primary.ID)
+		_, response, err := client.Keypairs.Get(ctx, rs.Primary.ID)
+		if err := requireDestroyed(response, err); err != nil {
+			return err
 		}
 	}
 
