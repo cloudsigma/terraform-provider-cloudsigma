@@ -120,7 +120,7 @@ func (d *ipDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 
 	if data.Filters != nil && len(data.Filters) > 0 {
 		// this logic belongs to deprecated filter block and should be removed after breaking change release
-		tflog.Warn(ctx, "Using legacy filter block", map[string]interface{}{"filters_count": len(data.Filters)})
+		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting IPs")
 		ips, _, err := d.client.IPs.List(ctx)
@@ -128,11 +128,11 @@ func (d *ipDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 			response.Diagnostics.AddError("Unable to get IPs", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got IPs", map[string]interface{}{"ips_count": len(ips)})
+		tflog.Trace(ctx, "Got IPs")
 
 		tflog.Debug(ctx, "Converting IPs for filtering")
 		ipsForFilters := migration.ToAnySlice(ips)
-		tflog.Debug(ctx, "Converted IPs for filtering", map[string]interface{}{"ips": ipsForFilters})
+		tflog.Debug(ctx, "Converted IPs for filtering")
 		filteredIPs, diags := migration.ApplyFilter(data.Filters, ipsForFilters)
 		if diags != nil {
 			response.Diagnostics.Append(diags)
@@ -169,13 +169,13 @@ func (d *ipDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 			return
 		}
 
-		tflog.Trace(ctx, "Getting IP using UUID", map[string]interface{}{"ip_uuid": ipUUID})
+		tflog.Trace(ctx, "Getting IP using UUID")
 		ip, _, err := d.client.IPs.Get(ctx, ipUUID)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get IP", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got IP", map[string]interface{}{"data": ip})
+		tflog.Trace(ctx, "Got IP")
 
 		data.Gateway = types.StringValue(ip.Gateway)
 		data.ID = types.StringValue(ip.UUID)

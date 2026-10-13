@@ -151,14 +151,14 @@ func (r *snapshotResource) Create(ctx context.Context, request resource.CreateRe
 			Name:  data.Name.ValueString(),
 		}},
 	}
-	tflog.Trace(ctx, "Creating snapshot", map[string]any{"payload": createRequest})
+	tflog.Trace(ctx, "Creating snapshot")
 	snapshots, _, err := r.client.Snapshots.Create(ctx, createRequest)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to create snapshot", err.Error())
 		return
 	}
 	snap := &snapshots[0]
-	tflog.Trace(ctx, "Created snapshot", map[string]any{"data": snap})
+	tflog.Trace(ctx, "Created snapshot")
 
 	tflog.Info(ctx, "Waiting for snapshot to be available")
 	err = snapshot.WaitSnapshotStatusAvailable(ctx, r.client, snap.UUID)
@@ -200,7 +200,7 @@ func (r *snapshotResource) Read(ctx context.Context, request resource.ReadReques
 	}
 
 	snapshotUUID := data.ID.ValueString()
-	tflog.Trace(ctx, "Getting snapshot", map[string]any{"snapshot_uuid": snapshotUUID})
+	tflog.Trace(ctx, "Getting snapshot")
 	snap, resp, err := r.client.Snapshots.Get(ctx, snapshotUUID)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
@@ -211,7 +211,7 @@ func (r *snapshotResource) Read(ctx context.Context, request resource.ReadReques
 		response.Diagnostics.AddError("Unable to get snapshot", err.Error())
 		return
 	}
-	tflog.Trace(ctx, "Got snapshot", map[string]any{"data": snap})
+	tflog.Trace(ctx, "Got snapshot")
 
 	// map response body to attributes
 	data.Drive = types.StringValue(snap.Drive.UUID)
@@ -243,16 +243,13 @@ func (r *snapshotResource) Update(ctx context.Context, request resource.UpdateRe
 			Name:  data.Name.ValueString(),
 		},
 	}
-	tflog.Trace(ctx, "Updating snapshot", map[string]any{
-		"payload":       updateRequest,
-		"snapshot_uuid": snapshotUUID,
-	})
+	tflog.Trace(ctx, "Updating snapshot")
 	snap, _, err := r.client.Snapshots.Update(ctx, snapshotUUID, updateRequest)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to update snapshot", err.Error())
 		return
 	}
-	tflog.Trace(ctx, "Updated snapshot", map[string]any{"data": snap})
+	tflog.Trace(ctx, "Updated snapshot")
 
 	// map response body to attributes
 	data.Drive = types.StringValue(snap.Drive.UUID)
@@ -278,13 +275,13 @@ func (r *snapshotResource) Delete(ctx context.Context, request resource.DeleteRe
 	}
 
 	snapshotUUID := data.ID.ValueString()
-	tflog.Trace(ctx, "Deleting snapshot", map[string]any{"snapshot_uuid": snapshotUUID})
+	tflog.Trace(ctx, "Deleting snapshot")
 	_, err := r.client.Snapshots.Delete(ctx, snapshotUUID)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to delete snapshot", err.Error())
 		return
 	}
-	tflog.Trace(ctx, "Deleted snapshot", map[string]any{"snapshot_uuid": snapshotUUID})
+	tflog.Trace(ctx, "Deleted snapshot")
 }
 
 func (r *snapshotResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {

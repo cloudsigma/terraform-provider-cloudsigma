@@ -92,9 +92,7 @@ func (d *profileDataSource) Read(ctx context.Context, _ datasource.ReadRequest, 
 		response.Diagnostics.AddError("Unable to fetch user profile", err.Error())
 		return
 	}
-	tflog.Debug(ctx, "Fetched user profile", map[string]interface{}{
-		"data": profile,
-	})
+	tflog.Debug(ctx, "Fetched user profile")
 
 	data.Address = types.StringValue(profile.Address)
 	data.Company = types.StringValue(profile.Company)

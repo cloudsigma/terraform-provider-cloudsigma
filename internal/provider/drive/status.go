@@ -26,7 +26,7 @@ func statusDriveStatus(ctx context.Context, client *cloudsigma.Client, driveUUID
 			return nil, "", fmt.Errorf("unable to get drive %s: %w", driveUUID, err)
 		}
 		if drive.Status == driveStatusUnavailable {
-			tflog.Warn(ctx, "Drive status is unavailable", map[string]interface{}{"drive_uuid": drive.UUID})
+			tflog.Warn(ctx, "Drive status is unavailable")
 		}
 		return drive, drive.Status, nil
 	}

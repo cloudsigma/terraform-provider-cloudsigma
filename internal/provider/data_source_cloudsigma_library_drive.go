@@ -151,7 +151,7 @@ func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.Re
 
 	if data.Filters != nil && len(data.Filters) > 0 {
 		// this logic belongs to deprecated filter block and should be removed after breaking change release
-		tflog.Warn(ctx, "Using legacy filter block", map[string]interface{}{"filters_count": len(data.Filters)})
+		tflog.Warn(ctx, "Using legacy filter block")
 
 		opts := &cloudsigma.LibraryDriveListOptions{
 			ListOptions: cloudsigma.ListOptions{Limit: 0},
@@ -162,11 +162,11 @@ func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.Re
 			response.Diagnostics.AddError("Unable to get library drives", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got library drives", map[string]interface{}{"drives_count": len(libraryDrives)})
+		tflog.Trace(ctx, "Got library drives")
 
 		tflog.Debug(ctx, "Converting library drives for filtering")
 		libraryDrivesForFilters := migration.ToAnySlice(libraryDrives)
-		tflog.Debug(ctx, "Converted library drives for filtering", map[string]interface{}{"library_drives": libraryDrivesForFilters})
+		tflog.Debug(ctx, "Converted library drives for filtering")
 		filteredLibraryDrives, diags := migration.ApplyFilter(data.Filters, libraryDrivesForFilters)
 		if diags != nil {
 			response.Diagnostics.Append(diags)
@@ -211,7 +211,7 @@ func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.Re
 		}
 
 		if libraryDriveUUID != "" {
-			tflog.Trace(ctx, "Getting library drive using UUID", map[string]interface{}{"library_drive_uuid": libraryDriveUUID})
+			tflog.Trace(ctx, "Getting library drive using UUID")
 			libraryDrive, resp, err := d.client.LibraryDrives.Get(ctx, libraryDriveUUID)
 			if err != nil {
 				if resp != nil && resp.StatusCode == http.StatusNotFound {
@@ -221,7 +221,7 @@ func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.Re
 				response.Diagnostics.AddError("Unable to get library drive", err.Error())
 				return
 			}
-			tflog.Trace(ctx, "Got library drive", map[string]interface{}{"data": libraryDrive})
+			tflog.Trace(ctx, "Got library drive")
 
 			// if name is defined check that it's equal
 			if libraryDriveName != "" && libraryDriveName != libraryDrive.Name {
@@ -248,13 +248,13 @@ func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.Re
 				ListOptions: cloudsigma.ListOptions{Limit: 0},
 				Names:       []string{libraryDriveName},
 			}
-			tflog.Trace(ctx, "Getting library drives", map[string]interface{}{"opts": opts})
+			tflog.Trace(ctx, "Getting library drives")
 			libraryDrives, _, err := d.client.LibraryDrives.List(ctx, opts)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get library drives", err.Error())
 				return
 			}
-			tflog.Trace(ctx, "Got library drives", map[string]interface{}{"data": libraryDrives})
+			tflog.Trace(ctx, "Got library drives")
 
 			if len(libraryDrives) > 1 {
 				response.Diagnostics.AddError(

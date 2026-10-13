@@ -152,18 +152,18 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		cloneDriveUUID := v.(string)
 		cloneRequest := &cloudsigma.DriveCloneRequest{Drive: drive}
 
-		log.Printf("[DEBUG] Drive clone configuration: %v", cloneRequest)
+		log.Print("[DEBUG] Drive clone configuration")
 		clonedDrive, _, err := client.Drives.Clone(ctx, cloneDriveUUID, cloneRequest)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
 		d.SetId(clonedDrive.UUID)
-		log.Printf("[INFO] Drive ID: %s", d.Id())
+		log.Print("[INFO] Drive ID")
 	} else {
 		createRequest := &cloudsigma.DriveCreateRequest{Drives: []cloudsigma.Drive{*drive}}
 
-		log.Printf("[DEBUG] Drive create configuration: %v", createRequest)
+		log.Print("[DEBUG] Drive create configuration")
 		drives, _, err := client.Drives.Create(ctx, createRequest)
 		if err != nil {
 			return diag.FromErr(err)
@@ -171,7 +171,7 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		createdDrive := &drives[0]
 
 		d.SetId(createdDrive.UUID)
-		log.Printf("[INFO] Drive ID: %s", d.Id())
+		log.Print("[INFO] Drive ID")
 	}
 
 	createStateConf := &retry.StateChangeConf{
@@ -195,7 +195,7 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		drive.Tags = expandTags(v.(*schema.Set).List())
 
 		updateRequest := &cloudsigma.DriveUpdateRequest{Drive: drive}
-		log.Printf("[DEBUG] Drive update configuration (attaching tags): %v", updateRequest)
+		log.Print("[DEBUG] Drive update configuration (attaching tags)")
 		_, _, err = client.Drives.Update(ctx, drive.UUID, updateRequest)
 		if err != nil {
 			return diag.FromErr(err)
@@ -254,10 +254,10 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 	updateRequest := &cloudsigma.DriveUpdateRequest{
 		Drive: drive,
 	}
-	log.Printf("[DEBUG] Drive update configuration: %v", updateRequest)
+	log.Print("[DEBUG] Drive update configuration")
 
 	if d.HasChange("size") {
-		log.Printf("[DEBUG] Check if drive (%v) is mounted on any server", d.Id())
+		log.Print("[DEBUG] Check if drive is mounted on any server")
 		if v, ok := d.GetOk("mounted_on"); ok {
 			mountedOns, err := expandMountedOn(v.([]interface{}))
 			if err != nil {

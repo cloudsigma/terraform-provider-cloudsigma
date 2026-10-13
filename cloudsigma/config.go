@@ -3,7 +3,6 @@ package cloudsigma
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -27,16 +26,10 @@ func (c *Config) Client() *cloudsigma.Client {
 	var creds cloudsigma.CredentialsProvider
 	if len(c.Token) > 0 {
 		creds = cloudsigma.NewTokenCredentialsProvider(c.Token)
-		tflog.Info(c.context, "CloudSigma Client configured using access token", map[string]interface{}{
-			"location": c.Location,
-		})
+		tflog.Info(c.context, "CloudSigma Client configured using access token")
 	} else {
 		creds = cloudsigma.NewUsernamePasswordCredentialsProvider(c.Username, c.Password)
-		tflog.Info(c.context, "CloudSigma Client configured for user", map[string]interface{}{
-			"location": c.Location,
-			"username": c.Username,
-		})
-		log.Printf("[INFO] CloudSigma Client configured for user: %s, location: %s", c.Username, c.Location)
+		tflog.Info(c.context, "CloudSigma Client configured for user")
 	}
 	client := cloudsigma.NewClient(
 		creds,

@@ -116,7 +116,7 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 
 	if data.Filters != nil && len(data.Filters) > 0 {
 		// this logic belongs to deprecated filter block and should be removed after breaking change release
-		tflog.Warn(ctx, "Using legacy filter block", map[string]interface{}{"filters_count": len(data.Filters)})
+		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting VLANs")
 		vlans, _, err := d.client.VLANs.List(ctx)
@@ -124,11 +124,11 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 			response.Diagnostics.AddError("Unable to get VLANs", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got VLANs", map[string]interface{}{"vlans_count": len(vlans)})
+		tflog.Trace(ctx, "Got VLANs")
 
 		tflog.Debug(ctx, "Converting VLANs for filtering")
 		vlansForFilters := migration.ToAnySlice(vlans)
-		tflog.Debug(ctx, "Converted VLANs", map[string]interface{}{"vlans": vlansForFilters})
+		tflog.Debug(ctx, "Converted VLANs")
 		filteredVLANs, diags := migration.ApplyFilter(data.Filters, vlansForFilters)
 		if diags != nil {
 			response.Diagnostics.Append(diags)
@@ -166,13 +166,13 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 		}
 
 		if vlanUUID != "" {
-			tflog.Trace(ctx, "Getting VLAN using UUID", map[string]interface{}{"vlan_uuid": vlanUUID})
+			tflog.Trace(ctx, "Getting VLAN using UUID")
 			vlan, _, err := d.client.VLANs.Get(ctx, vlanUUID)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get VLAN", err.Error())
 				return
 			}
-			tflog.Trace(ctx, "Got VLAN", map[string]interface{}{"data": vlan})
+			tflog.Trace(ctx, "Got VLAN")
 
 			// if name is defined check that it's equal
 			if vlanName != "" && vlanName != getVLANName(*vlan) {
@@ -188,13 +188,13 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 			data.ResourceURI = types.StringValue(vlan.ResourceURI)
 			data.UUID = types.StringValue(vlan.UUID)
 		} else {
-			tflog.Trace(ctx, "Getting VLANs for filtering", map[string]interface{}{"vlan_name": vlanName})
+			tflog.Trace(ctx, "Getting VLANs for filtering")
 			vlans, _, err := d.client.VLANs.List(ctx)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get VLANs", err.Error())
 				return
 			}
-			tflog.Trace(ctx, "Got VLANs", map[string]interface{}{"data": vlans})
+			tflog.Trace(ctx, "Got VLANs")
 
 			vlanFound := false
 			for _, vlan := range vlans {

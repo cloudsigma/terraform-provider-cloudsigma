@@ -167,6 +167,7 @@ The server resource allows you to manage CloudSigma servers.
 
 			"vnc_password": {
 				Description: "VNC Password to connect to server.",
+				Sensitive:   true,
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -265,14 +266,14 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	log.Printf("[DEBUG] Server create configuration: %v", createRequest)
+	log.Print("[DEBUG] Server create configuration")
 	servers, _, err := client.Servers.Create(ctx, createRequest)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	server := servers[0]
-	log.Printf("[INFO] Server ID: %s", server.UUID)
+	log.Print("[INFO] Server ID")
 
 	// store the resulting UUID so we can look this up later
 	d.SetId(server.UUID)
@@ -297,7 +298,7 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 		updateRequest := &cloudsigma.ServerUpdateRequest{
 			Server: &server,
 		}
-		log.Printf("[DEBUG] Server update configuration (attach drives): %v", updateRequest)
+		log.Print("[DEBUG] Server update configuration (attach drives)")
 		_, _, err := client.Servers.Update(ctx, d.Id(), updateRequest)
 		if err != nil {
 			return diag.FromErr(err)
@@ -490,7 +491,7 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	log.Printf("[DEBUG] Server update configuration: %v", *updateRequest)
+	log.Print("[DEBUG] Server update configuration")
 	_, _, err = client.Servers.Update(ctx, d.Id(), updateRequest)
 	if err != nil {
 		return diag.FromErr(err)
@@ -593,7 +594,7 @@ func serverStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, serv
 }
 
 func startServer(ctx context.Context, client *cloudsigma.Client, serverUUID string) error {
-	log.Printf("[DEBUG] Starting server (%s)", serverUUID)
+	log.Print("[DEBUG] Starting server")
 
 	log.Printf("[DEBUG] Checking server status before starting")
 	server, _, err := client.Servers.Get(ctx, serverUUID)
@@ -602,7 +603,7 @@ func startServer(ctx context.Context, client *cloudsigma.Client, serverUUID stri
 	}
 
 	if server.Status == "running" {
-		log.Printf("[DEBUG] Server (%s) is already running", server.UUID)
+		log.Print("[DEBUG] Server is already running")
 		return nil
 	}
 
@@ -626,7 +627,7 @@ func startServer(ctx context.Context, client *cloudsigma.Client, serverUUID stri
 }
 
 func stopServer(ctx context.Context, client *cloudsigma.Client, serverUUID string) error {
-	log.Printf("[DEBUG] Stopping server (%s)", serverUUID)
+	log.Print("[DEBUG] Stopping server")
 
 	log.Printf("[DEBUG] Checking server status before stopping")
 	server, resp, err := client.Servers.Get(ctx, serverUUID)
@@ -638,7 +639,7 @@ func stopServer(ctx context.Context, client *cloudsigma.Client, serverUUID strin
 	}
 
 	if server.Status == "stopped" {
-		log.Printf("[DEBUG] Server (%s) is already stopped", server.UUID)
+		log.Print("[DEBUG] Server is already stopped")
 		return nil
 	}
 
