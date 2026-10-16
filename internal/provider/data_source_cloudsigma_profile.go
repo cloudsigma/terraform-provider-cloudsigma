@@ -76,11 +76,19 @@ func (d *profileDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	}
 }
 
-func (d *profileDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+func (d *profileDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
 	if request.ProviderData == nil {
 		return
 	}
-	d.client = request.ProviderData.(*cloudsigma.Client)
+	client, ok := request.ProviderData.(*cloudsigma.Client)
+	if !ok {
+		response.Diagnostics.AddError(
+			"Unconfigured CloudSigma client",
+			"Please report this issue to the provider developers.",
+		)
+		return
+	}
+	d.client = client
 }
 
 func (d *profileDataSource) Read(ctx context.Context, _ datasource.ReadRequest, response *datasource.ReadResponse) {
