@@ -127,7 +127,7 @@ func (d *driveDataSource) Read(ctx context.Context, request datasource.ReadReque
 
 	if data.Filters != nil && len(data.Filters) > 0 {
 		// this logic belongs to deprecated filter block and should be removed after breaking change release
-		tflog.Warn(ctx, "Using legacy filter block", map[string]interface{}{"filters_count": len(data.Filters)})
+		tflog.Warn(ctx, "Using legacy filter block")
 
 		opts := &cloudsigma.DriveListOptions{
 			ListOptions: cloudsigma.ListOptions{Limit: 0},
@@ -138,11 +138,11 @@ func (d *driveDataSource) Read(ctx context.Context, request datasource.ReadReque
 			response.Diagnostics.AddError("Unable to get drives", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got drives", map[string]interface{}{"drives_count": len(drives)})
+		tflog.Trace(ctx, "Got drives")
 
 		tflog.Debug(ctx, "Converting drives for filtering")
 		drivesForFilters := migration.ToAnySlice(drives)
-		tflog.Debug(ctx, "Converted drives for filtering", map[string]interface{}{"drives": drivesForFilters})
+		tflog.Debug(ctx, "Converted drives for filtering")
 		filteredDrives, diags := migration.ApplyFilter(data.Filters, drivesForFilters)
 		if diags != nil {
 			response.Diagnostics.Append(diags)
@@ -182,7 +182,7 @@ func (d *driveDataSource) Read(ctx context.Context, request datasource.ReadReque
 		}
 
 		if driveUUID != "" {
-			tflog.Trace(ctx, "Getting drive using UUID", map[string]interface{}{"drive_uuid": driveUUID})
+			tflog.Trace(ctx, "Getting drive using UUID")
 			drive, resp, err := d.client.Drives.Get(ctx, driveUUID)
 			if err != nil {
 				if resp != nil && resp.StatusCode == http.StatusNotFound {
@@ -192,7 +192,7 @@ func (d *driveDataSource) Read(ctx context.Context, request datasource.ReadReque
 				response.Diagnostics.AddError("Unable to get drive", err.Error())
 				return
 			}
-			tflog.Trace(ctx, "Got drive", map[string]interface{}{"data": drive})
+			tflog.Trace(ctx, "Got drive")
 
 			// if name is defined check that it's equal
 			if driveName != "" && driveName != drive.Name {
@@ -214,13 +214,13 @@ func (d *driveDataSource) Read(ctx context.Context, request datasource.ReadReque
 				ListOptions: cloudsigma.ListOptions{Limit: 0},
 				Names:       []string{driveName},
 			}
-			tflog.Trace(ctx, "Getting drives", map[string]interface{}{"opts": opts})
+			tflog.Trace(ctx, "Getting drives")
 			drives, _, err := d.client.Drives.List(ctx, opts)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get drives", err.Error())
 				return
 			}
-			tflog.Trace(ctx, "Got drives", map[string]interface{}{"data": drives})
+			tflog.Trace(ctx, "Got drives")
 
 			if len(drives) > 1 {
 				response.Diagnostics.AddError(

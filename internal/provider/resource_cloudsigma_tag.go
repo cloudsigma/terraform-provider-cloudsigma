@@ -96,14 +96,14 @@ func (r *tagResource) Create(ctx context.Context, request resource.CreateRequest
 			Name: data.Name.ValueString(),
 		}},
 	}
-	tflog.Trace(ctx, "Creating tag", map[string]interface{}{"payload": createRequest})
+	tflog.Trace(ctx, "Creating tag")
 	tags, _, err := r.client.Tags.Create(ctx, createRequest)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to create tag", err.Error())
 		return
 	}
 	tag := tags[0]
-	tflog.Trace(ctx, "Created tag", map[string]interface{}{"data": tag})
+	tflog.Trace(ctx, "Created tag")
 
 	// map response body to attributes
 	data.ID = types.StringValue(tag.UUID)
@@ -125,7 +125,7 @@ func (r *tagResource) Read(ctx context.Context, request resource.ReadRequest, re
 	}
 
 	tagUUID := data.ID.ValueString()
-	tflog.Trace(ctx, "Getting tag", map[string]interface{}{"tag_uuid": tagUUID})
+	tflog.Trace(ctx, "Getting tag")
 	tag, resp, err := r.client.Tags.Get(ctx, tagUUID)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
@@ -136,7 +136,7 @@ func (r *tagResource) Read(ctx context.Context, request resource.ReadRequest, re
 		response.Diagnostics.AddError("Unable to get tag", err.Error())
 		return
 	}
-	tflog.Trace(ctx, "Got tag", map[string]interface{}{"data": tag})
+	tflog.Trace(ctx, "Got tag")
 
 	// map response body to attributes
 	data.ID = types.StringValue(tag.UUID)
@@ -163,16 +163,13 @@ func (r *tagResource) Update(ctx context.Context, request resource.UpdateRequest
 			Name: data.Name.ValueString(),
 		},
 	}
-	tflog.Trace(ctx, "Updating tag", map[string]interface{}{
-		"payload":  updateRequest,
-		"tag_uuid": tagUUID},
-	)
+	tflog.Trace(ctx, "Updating tag")
 	tag, _, err := r.client.Tags.Update(ctx, tagUUID, updateRequest)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to update tag", err.Error())
 		return
 	}
-	tflog.Trace(ctx, "Updated tag", map[string]interface{}{"data": tag})
+	tflog.Trace(ctx, "Updated tag")
 
 	// map response body to attributes
 	data.ID = types.StringValue(tag.UUID)
@@ -194,13 +191,13 @@ func (r *tagResource) Delete(ctx context.Context, request resource.DeleteRequest
 	}
 
 	tagUUID := data.ID.ValueString()
-	tflog.Trace(ctx, "Deleting tag", map[string]interface{}{"tag_uuid": tagUUID})
+	tflog.Trace(ctx, "Deleting tag")
 	_, err := r.client.Tags.Delete(ctx, tagUUID)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to delete tag", err.Error())
 		return
 	}
-	tflog.Trace(ctx, "Deleted tag", map[string]interface{}{"tag_uuid": tagUUID})
+	tflog.Trace(ctx, "Deleted tag")
 }
 
 func (r *tagResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {

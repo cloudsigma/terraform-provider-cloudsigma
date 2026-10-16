@@ -123,14 +123,14 @@ func (r *sshKeyResource) Create(ctx context.Context, request resource.CreateRequ
 	if publicKey != "" {
 		createRequest.Keypairs[0].PublicKey = publicKey
 	}
-	tflog.Trace(ctx, "Creating SSH key", map[string]interface{}{"payload": createRequest})
+	tflog.Trace(ctx, "Creating SSH key")
 	keypairs, _, err := r.client.Keypairs.Create(ctx, createRequest)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to create SSH key", err.Error())
 		return
 	}
 	keypair := keypairs[0]
-	tflog.Trace(ctx, "Created SSH key", map[string]interface{}{"data": keypair})
+	tflog.Trace(ctx, "Created SSH key")
 
 	// map response body to attributes
 	data.Name = types.StringValue(keypair.Name)
@@ -154,7 +154,7 @@ func (r *sshKeyResource) Read(ctx context.Context, request resource.ReadRequest,
 	}
 
 	keypairUUID := data.ID.ValueString()
-	tflog.Trace(ctx, "Getting SSH key", map[string]interface{}{"ssh_key_uuid": keypairUUID})
+	tflog.Trace(ctx, "Getting SSH key")
 	keypair, resp, err := r.client.Keypairs.Get(ctx, keypairUUID)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
@@ -165,7 +165,7 @@ func (r *sshKeyResource) Read(ctx context.Context, request resource.ReadRequest,
 		response.Diagnostics.AddError("Unable to get SSH key", err.Error())
 		return
 	}
-	tflog.Trace(ctx, "Got SSH key", map[string]interface{}{"data": keypair})
+	tflog.Trace(ctx, "Got SSH key")
 
 	// map response body to attributes
 	data.Name = types.StringValue(keypair.Name)
@@ -203,16 +203,13 @@ func (r *sshKeyResource) Update(ctx context.Context, request resource.UpdateRequ
 		keypair.PublicKey = plan.PublicKey.ValueString()
 	}
 	updateRequest := &cloudsigma.KeypairUpdateRequest{Keypair: keypair}
-	tflog.Trace(ctx, "Updating SSH key", map[string]interface{}{
-		"payload":      updateRequest,
-		"ssh_key_uuid": keypairUUID,
-	})
+	tflog.Trace(ctx, "Updating SSH key")
 	updatedKeypair, _, err := r.client.Keypairs.Update(ctx, keypairUUID, updateRequest)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to update SSH key", err.Error())
 		return
 	}
-	tflog.Trace(ctx, "Updated SSH key", map[string]interface{}{"data": updatedKeypair})
+	tflog.Trace(ctx, "Updated SSH key")
 
 	// map response body to attributes
 	plan.Name = types.StringValue(updatedKeypair.Name)
@@ -236,13 +233,13 @@ func (r *sshKeyResource) Delete(ctx context.Context, request resource.DeleteRequ
 	}
 
 	keypairUUID := data.ID.ValueString()
-	tflog.Trace(ctx, "Deleting SSH key", map[string]interface{}{"ssh_key_uuid": keypairUUID})
+	tflog.Trace(ctx, "Deleting SSH key")
 	_, err := r.client.Keypairs.Delete(ctx, keypairUUID)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to delete SSH key", err.Error())
 		return
 	}
-	tflog.Trace(ctx, "Deleted SSH key", map[string]interface{}{"ssh_key_uuid": keypairUUID})
+	tflog.Trace(ctx, "Deleted SSH key")
 }
 
 func (r *sshKeyResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {

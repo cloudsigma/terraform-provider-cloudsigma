@@ -23,9 +23,9 @@ func testAccCheckDriveDestroy(s *terraform.State) error {
 			continue
 		}
 
-		drive, _, err := client.Drives.Get(ctx, rs.Primary.ID)
-		if err == nil && drive.UUID == rs.Primary.ID {
-			return fmt.Errorf("drive (%s) still exists", rs.Primary.ID)
+		_, response, err := client.Drives.Get(ctx, rs.Primary.ID)
+		if err := requireDestroyed(response, err); err != nil {
+			return err
 		}
 	}
 

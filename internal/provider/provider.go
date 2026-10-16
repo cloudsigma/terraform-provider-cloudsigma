@@ -109,9 +109,7 @@ func (p *cloudSigmaProvider) Configure(ctx context.Context, request provider.Con
 		location = config.Location.ValueString()
 	} else {
 		if location == "" {
-			tflog.Info(ctx, "Setting CloudSigma location to default value", map[string]interface{}{
-				"location": defaultLocation,
-			})
+			tflog.Info(ctx, "Setting CloudSigma location to default value")
 			location = defaultLocation
 		}
 	}
@@ -160,19 +158,10 @@ func (p *cloudSigmaProvider) Configure(ctx context.Context, request provider.Con
 	var creds cloudsigma.CredentialsProvider
 	if token != "" {
 		creds = cloudsigma.NewTokenCredentialsProvider(token)
-		tflog.Info(ctx, "Configuring CloudSigma SDK client", map[string]interface{}{
-			"credentials_provider": "token",
-			"location":             location,
-			"terraform_version":    request.TerraformVersion,
-		})
+		tflog.Info(ctx, "Configuring CloudSigma SDK client")
 	} else {
 		creds = cloudsigma.NewUsernamePasswordCredentialsProvider(username, password)
-		tflog.Info(ctx, "Configuring CloudSigma SDK client", map[string]interface{}{
-			"credentials_provider": "username_and_password",
-			"location":             location,
-			"terraform_version":    request.TerraformVersion,
-			"username":             username,
-		})
+		tflog.Info(ctx, "Configuring CloudSigma SDK client")
 	}
 	client := cloudsigma.NewClient(
 		creds,

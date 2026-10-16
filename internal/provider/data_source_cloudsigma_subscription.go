@@ -150,7 +150,7 @@ func (d *subscriptionDataSource) Read(ctx context.Context, request datasource.Re
 
 	if data.Filters != nil && len(data.Filters) > 0 {
 		// this logic belongs to deprecated filter block and should be removed after breaking change release
-		tflog.Warn(ctx, "Using legacy filter block", map[string]interface{}{"filters_count": len(data.Filters)})
+		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting subscriptions")
 		subscriptions, _, err := d.client.Subscriptions.List(ctx)
@@ -158,11 +158,11 @@ func (d *subscriptionDataSource) Read(ctx context.Context, request datasource.Re
 			response.Diagnostics.AddError("Unable to get subscriptions", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got subscriptions", map[string]interface{}{"subscriptions_count": len(subscriptions)})
+		tflog.Trace(ctx, "Got subscriptions")
 
 		tflog.Debug(ctx, "Converting subscriptions for filtering")
 		subscriptionsForFilters := migration.ToAnySlice(subscriptions)
-		tflog.Debug(ctx, "Converted subscriptions for filtering", map[string]interface{}{"subscriptions": subscriptionsForFilters})
+		tflog.Debug(ctx, "Converted subscriptions for filtering")
 		filteredSubscriptions, diags := migration.ApplyFilter(data.Filters, subscriptionsForFilters)
 		if diags != nil {
 			response.Diagnostics.Append(diags)
@@ -211,7 +211,7 @@ func (d *subscriptionDataSource) Read(ctx context.Context, request datasource.Re
 			response.Diagnostics.AddError("Unable to get subscriptions", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got subscriptions", map[string]interface{}{"data": subscriptions})
+		tflog.Trace(ctx, "Got subscriptions")
 
 		subscriptionFound := false
 		for _, subscription := range subscriptions {

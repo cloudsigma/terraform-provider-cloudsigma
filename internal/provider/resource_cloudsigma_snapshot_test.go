@@ -179,13 +179,13 @@ func testAccCheckSnapshotDestroy(s *terraform.State) error {
 			continue
 		}
 
-		snapshot, _, err := client.Snapshots.Get(ctx, rs.Primary.ID)
-		if err == nil && snapshot.UUID == rs.Primary.ID {
-			return fmt.Errorf("snapshot (%s) still exists", rs.Primary.ID)
+		_, response, err := client.Snapshots.Get(ctx, rs.Primary.ID)
+		if err := requireDestroyed(response, err); err != nil {
+			return err
 		}
 	}
 
-	return nil
+	return testAccCheckDriveDestroy(s)
 }
 
 func testAccCheckSnapshotExists(n string, snapshot *cloudsigma.Snapshot) resource.TestCheckFunc {

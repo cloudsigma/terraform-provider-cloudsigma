@@ -165,9 +165,9 @@ func testAccCheckTagDestroy(s *terraform.State) error {
 			continue
 		}
 
-		tag, _, err := client.Tags.Get(ctx, rs.Primary.ID)
-		if err == nil && tag.UUID == rs.Primary.ID {
-			return fmt.Errorf("tag (%s) still exists", rs.Primary.ID)
+		_, response, err := client.Tags.Get(ctx, rs.Primary.ID)
+		if err := requireDestroyed(response, err); err != nil {
+			return err
 		}
 	}
 

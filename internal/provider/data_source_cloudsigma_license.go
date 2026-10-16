@@ -135,7 +135,7 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 
 	if data.Filters != nil && len(data.Filters) > 0 {
 		// this logic belongs to deprecated filter block and should be removed after breaking change release
-		tflog.Warn(ctx, "Using legacy filter block", map[string]interface{}{"filters_count": len(data.Filters)})
+		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting licenses")
 		licenses, _, err := d.client.Licenses.List(ctx)
@@ -143,11 +143,11 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 			response.Diagnostics.AddError("Unable to get licenses", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got licenses", map[string]interface{}{"licenses_count": len(licenses)})
+		tflog.Trace(ctx, "Got licenses")
 
 		tflog.Debug(ctx, "Converting licenses for filtering")
 		licensesForFilters := migration.ToAnySlice(licenses)
-		tflog.Debug(ctx, "Converted licenses for filtering", map[string]interface{}{"licenses": licensesForFilters})
+		tflog.Debug(ctx, "Converted licenses for filtering")
 		filteredLicenses, diags := migration.ApplyFilter(data.Filters, licensesForFilters)
 		if diags != nil {
 			response.Diagnostics.Append(diags)
@@ -187,13 +187,13 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 			return
 		}
 
-		tflog.Trace(ctx, "Getting licenses for filtering", map[string]interface{}{"license_name": licenseName})
+		tflog.Trace(ctx, "Getting licenses for filtering")
 		licenses, _, err := d.client.Licenses.List(ctx)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get licenses", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got licenses", map[string]interface{}{"data": licenses})
+		tflog.Trace(ctx, "Got licenses")
 
 		licenseFound := false
 		for _, license := range licenses {

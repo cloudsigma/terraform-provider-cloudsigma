@@ -120,7 +120,7 @@ func (d *locationDataSource) Read(ctx context.Context, request datasource.ReadRe
 
 	if data.Filters != nil && len(data.Filters) > 0 {
 		// this logic belongs to deprecated filter block and should be removed after breaking change release
-		tflog.Warn(ctx, "Using legacy filter block", map[string]interface{}{"filters_count": len(data.Filters)})
+		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting locations")
 		locations, _, err := d.client.Locations.List(ctx)
@@ -128,11 +128,11 @@ func (d *locationDataSource) Read(ctx context.Context, request datasource.ReadRe
 			response.Diagnostics.AddError("Unable to get locations", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got locations", map[string]interface{}{"locations_count": len(locations)})
+		tflog.Trace(ctx, "Got locations")
 
 		tflog.Debug(ctx, "Converting locations for filtering")
 		locationsForFilters := migration.ToAnySlice(locations)
-		tflog.Debug(ctx, "Converted locations for filtering", map[string]interface{}{"locations": len(locationsForFilters)})
+		tflog.Debug(ctx, "Converted locations for filtering")
 		filteredLocations, diags := migration.ApplyFilter(data.Filters, locationsForFilters)
 		if diags != nil {
 			response.Diagnostics.Append(diags)
@@ -175,10 +175,10 @@ func (d *locationDataSource) Read(ctx context.Context, request datasource.ReadRe
 			response.Diagnostics.AddError("Unable to get locations", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got locations", map[string]interface{}{"data": locations})
+		tflog.Trace(ctx, "Got locations")
 
 		locationFound := false
-		tflog.Debug(ctx, "Searching for location UUID", map[string]interface{}{"location_uuid": locationUUID})
+		tflog.Debug(ctx, "Searching for location UUID")
 		for _, location := range locations {
 			if locationUUID == location.ID {
 				data.APIEndpoint = types.StringValue(location.APIEndpoint)

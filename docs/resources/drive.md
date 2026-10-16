@@ -1,5 +1,5 @@
 ---
-page_title: "cloudsigma_drive Resource - terraform-provider-cloudsigma"
+page_title: "cloudsigma_drive Resource - cloudsigma"
 subcategory: ""
 description: |-
   The drive resource allows you to manage CloudSigma drives.

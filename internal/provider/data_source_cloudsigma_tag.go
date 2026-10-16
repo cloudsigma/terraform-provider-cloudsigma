@@ -116,7 +116,7 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 
 	if data.Filters != nil && len(data.Filters) > 0 {
 		// this logic belongs to deprecated filter block and should be removed after breaking change release
-		tflog.Warn(ctx, "Using legacy filter block", map[string]interface{}{"filters_count": len(data.Filters)})
+		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting tags")
 		tags, _, err := d.client.Tags.List(ctx)
@@ -124,11 +124,11 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 			response.Diagnostics.AddError("Unable to get tags", err.Error())
 			return
 		}
-		tflog.Trace(ctx, "Got tags", map[string]interface{}{"tags_count": len(tags)})
+		tflog.Trace(ctx, "Got tags")
 
 		tflog.Debug(ctx, "Converting tags for filtering")
 		tagsForFilters := migration.ToAnySlice(tags)
-		tflog.Debug(ctx, "Converted tags for filtering", map[string]interface{}{"tags": tagsForFilters})
+		tflog.Debug(ctx, "Converted tags for filtering")
 		filteredTags, diags := migration.ApplyFilter(data.Filters, tagsForFilters)
 		if diags != nil {
 			response.Diagnostics.Append(diags)
@@ -166,13 +166,13 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 		}
 
 		if tagUUID != "" {
-			tflog.Trace(ctx, "Getting tag using UUID", map[string]interface{}{"tag_uuid": tagUUID})
+			tflog.Trace(ctx, "Getting tag using UUID")
 			tag, _, err := d.client.Tags.Get(ctx, tagUUID)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get tag", err.Error())
 				return
 			}
-			tflog.Trace(ctx, "Got tag", map[string]interface{}{"data": tag})
+			tflog.Trace(ctx, "Got tag")
 
 			// if name is defined check that it's equal
 			if tagName != "" && tagName != tag.Name {
@@ -188,13 +188,13 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 			data.ResourceURI = types.StringValue(tag.ResourceURI)
 			data.UUID = types.StringValue(tag.UUID)
 		} else {
-			tflog.Trace(ctx, "Getting tags for filtering", map[string]interface{}{"tag_name": tagName})
+			tflog.Trace(ctx, "Getting tags for filtering")
 			tags, _, err := d.client.Tags.List(ctx)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get tags", err.Error())
 				return
 			}
-			tflog.Trace(ctx, "Got tags", map[string]interface{}{"data": tags})
+			tflog.Trace(ctx, "Got tags")
 
 			tagFound := false
 			for _, tag := range tags {

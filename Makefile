@@ -5,6 +5,7 @@ PKG_NAME = cloudsigma
 # Build variables
 .DEFAULT_GOAL = test
 BUILD_DIR := build
+ACCEPTANCE_TIMEOUT ?= 20m
 TOOLS_DIR := $(shell pwd)/tools
 TOOLS_BIN_DIR := ${TOOLS_DIR}/bin
 DEV_GOARCH := $(shell go env GOARCH)
@@ -47,7 +48,7 @@ test:
 testacc:
 	@echo "==> Running acceptance tests..."
 	@mkdir -p $(BUILD_DIR)
-	TF_ACC=1 go test -count=1 -parallel=4 -v -cover -coverprofile=$(BUILD_DIR)/coverage-with-acceptance.out -timeout 120m ./...
+	TF_ACC=1 go test -count=1 -parallel=4 -v -cover -coverprofile=$(BUILD_DIR)/coverage-with-acceptance.out -timeout $(ACCEPTANCE_TIMEOUT) ./...
 
 ## sweep: Run sweepers to cleanup leftover infrastructure after acceptance tests.
 .PHONY: sweep
@@ -72,8 +73,8 @@ docs:
 	@rm -f docs/guides/*.md
 	@rm -f docs/resources/*.md
 	@rm -f docs/index.md
-	@${TOOLS_BIN_DIR}/tfplugindocs generate
-	@${TOOLS_BIN_DIR}/tfplugindocs validate
+	@${TOOLS_BIN_DIR}/tfplugindocs generate --provider-name cloudsigma --rendered-provider-name terraform-provider-cloudsigma
+	@${TOOLS_BIN_DIR}/tfplugindocs validate --provider-name cloudsigma
 
 
 help: Makefile
