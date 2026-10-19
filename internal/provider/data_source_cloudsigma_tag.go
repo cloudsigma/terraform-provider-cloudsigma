@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -9,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/migration"
 )
 
@@ -20,7 +21,7 @@ var (
 
 // tagDataSource is the tag data source implementation.
 type tagDataSource struct {
-	client *cloudsigma.Client
+	clients *ProviderClients
 }
 
 // tagDataSourceModel maps the tag data source schema data.
@@ -88,13 +89,13 @@ The tag data source provides information about an existing CloudSigma tag.
 }
 
 func (d *tagDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	d.client = nil
+	d.clients = nil
 	if request.ProviderData == nil {
 		return
 	}
 
-	client, ok := legacyClient(request.ProviderData)
-	if !ok {
+	clients, ok := request.ProviderData.(*ProviderClients)
+	if !ok || clients == nil || clients.Legacy == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) {
 		response.Diagnostics.AddError(
 			"Unconfigured CloudSigma client",
 			"Please report this issue to the provider developers.",
@@ -102,11 +103,11 @@ func (d *tagDataSource) Configure(_ context.Context, request datasource.Configur
 		return
 	}
 
-	d.client = client
+	d.clients = clients
 }
 
 func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
-	if d.client == nil {
+	if d.clients == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -124,7 +125,7 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting tags")
-		tags, _, err := d.client.Tags.List(ctx)
+		tags, err := d.tags(ctx)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get tags", err.Error())
 			return
@@ -152,7 +153,7 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 			return
 		}
 
-		tag := filteredTags[0].(cloudsigma.Tag)
+		tag := filteredTags[0].(cloudsigmaapi.Tag)
 
 		data.ID = types.StringValue(tag.UUID)
 		data.Name = types.StringValue(tag.Name)
@@ -172,7 +173,9 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 
 		if tagUUID != "" {
 			tflog.Trace(ctx, "Getting tag using UUID")
-			tag, _, err := d.client.Tags.Get(ctx, tagUUID)
+			// Explicit legacy identifier path: public singular GET heading conflicts
+			// with the plural example and SDK. This is not an error fallback.
+			tag, _, err := d.clients.Legacy.Tags.Get(ctx, tagUUID)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get tag", err.Error())
 				return
@@ -194,7 +197,7 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 			data.UUID = types.StringValue(tag.UUID)
 		} else {
 			tflog.Trace(ctx, "Getting tags for filtering")
-			tags, _, err := d.client.Tags.List(ctx)
+			tags, err := d.tags(ctx)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get tags", err.Error())
 				return
@@ -223,4 +226,23 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 
 	diags = response.State.Set(ctx, &data)
 	response.Diagnostics.Append(diags...)
+}
+
+// Basic list reads are native. Token lists and all identifier reads remain
+// explicitly legacy pending their separate authentication/route qualification.
+func (d *tagDataSource) tags(ctx context.Context) ([]cloudsigmaapi.Tag, error) {
+	if d.clients.Auth == authBasic {
+		return d.clients.Native.Tags(ctx)
+	}
+	v, _, e := d.clients.Legacy.Tags.List(ctx)
+	if e != nil {
+		return nil, e
+	}
+	var out []cloudsigmaapi.Tag
+	b, e := json.Marshal(v)
+	if e != nil {
+		return nil, e
+	}
+	e = json.Unmarshal(b, &out)
+	return out, e
 }
