@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/drive"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/snapshot"
 )
@@ -27,6 +29,7 @@ var (
 // snapshotResource is the snapshot resource implementation.
 type snapshotResource struct {
 	client *cloudsigma.Client
+	native *cloudsigmaapi.Client
 }
 
 // snapshotResourceModel maps the snapshot resource schema data.
@@ -109,6 +112,7 @@ which makes it possible to restore an older version of a VM image.
 
 func (r *snapshotResource) Configure(_ context.Context, request resource.ConfigureRequest, response *resource.ConfigureResponse) {
 	r.client = nil
+	r.native = nil
 	if request.ProviderData == nil {
 		return
 	}
@@ -123,6 +127,9 @@ func (r *snapshotResource) Configure(_ context.Context, request resource.Configu
 	}
 
 	r.client = client
+	if clients := request.ProviderData.(*ProviderClients); clients.Auth == authBasic {
+		r.native = clients.Native
+	}
 }
 
 func (r *snapshotResource) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
@@ -204,6 +211,31 @@ func (r *snapshotResource) Read(ctx context.Context, request resource.ReadReques
 		return
 	}
 
+	if r.native != nil {
+		snap, err := r.native.Snapshot(ctx, data.ID.ValueString())
+		if err != nil {
+			var failure *cloudsigmaapi.Error
+			if errors.As(err, &failure) && failure.Status == http.StatusNotFound {
+				response.State.RemoveResource(ctx)
+				return
+			}
+			response.Diagnostics.AddError("Unable to get snapshot", err.Error())
+			return
+		}
+		if snap.Drive == nil {
+			response.Diagnostics.AddError("Unable to get snapshot", "Snapshot response is missing its drive.")
+			return
+		}
+		data.Drive = types.StringValue(snap.Drive.UUID)
+		data.Name = types.StringValue(snap.Name)
+		data.ID = types.StringValue(snap.UUID)
+		data.ResourceURI = types.StringValue(snap.ResourceURI)
+		data.Status = types.StringValue(snap.Status)
+		data.Timestamp = types.StringValue(snap.Timestamp)
+		data.UUID = types.StringValue(snap.UUID)
+		response.Diagnostics.Append(response.State.Set(ctx, &data)...)
+		return
+	}
 	snapshotUUID := data.ID.ValueString()
 	tflog.Trace(ctx, "Getting snapshot")
 	snap, resp, err := r.client.Snapshots.Get(ctx, snapshotUUID)
