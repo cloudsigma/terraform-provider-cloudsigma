@@ -62,6 +62,8 @@ const (
 	libraryDriveEndpoint
 	drivesEndpoint
 	driveEndpoint
+	ipsEndpoint
+	ipEndpoint
 )
 
 func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
@@ -72,7 +74,7 @@ func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
 func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, libraryRoute string) (any, error) {
 	route := ""
 	switch endpoint {
-	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint:
+	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint, ipsEndpoint, ipEndpoint:
 		route = libraryRoute
 	case profileEndpoint:
 		route = "profile/"
@@ -151,6 +153,10 @@ func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, li
 	}
 	var result any
 	switch endpoint {
+	case ipsEndpoint:
+		result, err = decodeIPs(body)
+	case ipEndpoint:
+		result, err = decodeIP(body)
 	case drivesEndpoint:
 		result, err = decodeDrives(body)
 	case driveEndpoint:
