@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 
 // profileDataSource is the profile data source implementation.
 type profileDataSource struct {
-	client *cloudsigma.Client
+	clients *ProviderClients
 }
 
 // profileDataSourceModel maps the profile data source schema data.
@@ -77,25 +77,39 @@ func (d *profileDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 }
 
 func (d *profileDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
+	d.clients = nil
 	if request.ProviderData == nil {
 		return
 	}
-	client, ok := request.ProviderData.(*cloudsigma.Client)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unconfigured CloudSigma client",
-			"Please report this issue to the provider developers.",
-		)
+	clients, ok := request.ProviderData.(*ProviderClients)
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
-	d.client = client
+	d.clients = clients
 }
 
 func (d *profileDataSource) Read(ctx context.Context, _ datasource.ReadRequest, response *datasource.ReadResponse) {
 	var data profileDataSourceModel
 
 	tflog.Debug(ctx, "Fetching user profile")
-	profile, _, err := d.client.Profile.Get(ctx)
+	if d.clients == nil {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
+		return
+	}
+	var profile *cloudsigmaapi.Profile
+	var err error
+	if d.clients.Auth == authBasic {
+		profile, err = d.clients.Native.Profile(ctx)
+	} else {
+		legacy, _, legacyErr := d.clients.Legacy.Profile.Get(ctx)
+		err = legacyErr
+		if err != nil {
+			err = &cloudsigmaapi.Error{Category: "transport"}
+		} else {
+			profile = &cloudsigmaapi.Profile{Address: legacy.Address, Company: legacy.Company, FirstName: legacy.FirstName, LastName: legacy.LastName, Title: legacy.Title, UUID: legacy.UUID}
+		}
+	}
 	if err != nil {
 		response.Diagnostics.AddError("Unable to fetch user profile", err.Error())
 		return

@@ -107,11 +107,12 @@ The license data source provides information about an existing CloudSigma licens
 }
 
 func (d *licenseDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
+	d.client = nil
 	if request.ProviderData == nil {
 		return
 	}
 
-	client, ok := request.ProviderData.(*cloudsigma.Client)
+	client, ok := legacyClient(request.ProviderData)
 	if !ok {
 		response.Diagnostics.AddError(
 			"Unconfigured CloudSigma client",
@@ -124,6 +125,10 @@ func (d *licenseDataSource) Configure(_ context.Context, request datasource.Conf
 }
 
 func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
+	if d.client == nil {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
+		return
+	}
 	var data licenseDataSourceModel
 
 	// read state data into the model

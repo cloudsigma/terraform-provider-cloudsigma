@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 )
 
 const (
@@ -154,6 +155,12 @@ func (p *cloudSigmaProvider) Configure(ctx context.Context, request provider.Con
 		return
 	}
 
+	// Unknown location cannot select an endpoint yet. Preserve credential validation
+	// above, but defer both clients without substituting the default location.
+	if config.Location.IsUnknown() {
+		return
+	}
+
 	// build cloudsigma sdk client
 	var creds cloudsigma.CredentialsProvider
 	if token != "" {
@@ -168,8 +175,18 @@ func (p *cloudSigmaProvider) Configure(ctx context.Context, request provider.Con
 		cloudsigma.WithLocation(location), cloudsigma.WithUserAgent(p.userAgent()),
 	)
 
-	response.DataSourceData = client
-	response.ResourceData = client
+	clients := &ProviderClients{Legacy: client, Auth: authToken}
+	if token == "" {
+		clients.Auth = authBasic
+		native, err := cloudsigmaapi.New(location, username, password, p.userAgent())
+		if err != nil {
+			response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
+			return
+		}
+		clients.Native = native
+	}
+	response.DataSourceData = clients
+	response.ResourceData = clients
 }
 
 func (p *cloudSigmaProvider) DataSources(_ context.Context) []func() datasource.DataSource {

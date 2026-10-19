@@ -74,11 +74,17 @@ in your configurations via their IDs.
 	}
 }
 
-func (r *tagResource) Configure(_ context.Context, request resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+func (r *tagResource) Configure(_ context.Context, request resource.ConfigureRequest, response *resource.ConfigureResponse) {
+	r.client = nil
 	if request.ProviderData == nil {
 		return
 	}
-	r.client = request.ProviderData.(*cloudsigma.Client)
+	client, ok := legacyClient(request.ProviderData)
+	if !ok {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
+		return
+	}
+	r.client = client
 }
 
 func (r *tagResource) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
@@ -115,6 +121,10 @@ func (r *tagResource) Create(ctx context.Context, request resource.CreateRequest
 }
 
 func (r *tagResource) Read(ctx context.Context, request resource.ReadRequest, response *resource.ReadResponse) {
+	if r.client == nil {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
+		return
+	}
 	var data tagResourceModel
 
 	// read state data into the model

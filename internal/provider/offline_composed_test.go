@@ -30,9 +30,6 @@ func TestOfflineConfiguredReadonly(t *testing.T) {
 	oldClient := http.DefaultClient
 	http.DefaultClient = &http.Client{Transport: f}
 	defer func() { http.DefaultClient = oldClient }()
-	old := http.DefaultTransport
-	http.DefaultTransport = f
-	defer func() { http.DefaultTransport = old }()
 	p := New("offline")()
 	var s provider.SchemaResponse
 	p.Schema(ctx, provider.SchemaRequest{}, &s)
@@ -41,7 +38,7 @@ func TestOfflineConfiguredReadonly(t *testing.T) {
 	for k, v := range typ.(tftypes.Object).AttributeTypes {
 		attrs[k] = tftypes.NewValue(v, nil)
 	}
-	for k, v := range map[string]string{"username": "PRIVATE-CANARY", "password": "PRIVATE-CANARY", "location": "next"} {
+	for k, v := range map[string]string{"token": "PRIVATE-CANARY", "location": "next"} {
 		attrs[k] = tftypes.NewValue(tftypes.String, v)
 	}
 	var config provider.ConfigureResponse
