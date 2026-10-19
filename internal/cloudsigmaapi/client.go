@@ -1,4 +1,4 @@
-// Package cloudsigmaapi implements the provider-owned Basic Profile transport.
+// Package cloudsigmaapi implements the provider-owned Basic read transport.
 package cloudsigmaapi
 
 import (
@@ -50,10 +50,27 @@ func New(location, username, password, userAgent string) (*Client, error) {
 	h := &http.Client{Transport: transport, Timeout: requestTimeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	return &Client{transport: h, base: "https://" + host + "/api/2.0/", username: username, password: password, userAgent: userAgent}, nil
 }
-func (c *Client) get(ctx context.Context) (*Profile, error) {
+
+type readEndpoint uint8
+
+const (
+	profileEndpoint readEndpoint = iota
+	locationsEndpoint
+)
+
+func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
+	route := ""
+	switch endpoint {
+	case profileEndpoint:
+		route = "profile/"
+	case locationsEndpoint:
+		route = "locations/"
+	default:
+		return nil, &Error{Category: "transport"}
+	}
 	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.base+"profile/", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.base+route, nil)
 	if err != nil {
 		return nil, &Error{Category: "transport"}
 	}
@@ -115,7 +132,13 @@ func (c *Client) get(ctx context.Context) (*Profile, error) {
 	if len(body) > responseLimit {
 		return nil, failure("response_too_large")
 	}
-	profile, err := decodeProfile(body)
+	var result any
+	switch endpoint {
+	case profileEndpoint:
+		result, err = decodeProfile(body)
+	case locationsEndpoint:
+		result, err = decodeLocations(body)
+	}
 	if err != nil {
 		return nil, failure("decode_error")
 	}
@@ -126,5 +149,5 @@ func (c *Client) get(ctx context.Context) (*Profile, error) {
 		}
 		return nil, failure(category)
 	}
-	return profile, nil
+	return result, nil
 }
