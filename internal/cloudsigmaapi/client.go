@@ -67,6 +67,7 @@ const (
 	vlansEndpoint
 	vlanEndpoint
 	tagsEndpoint
+	snapshotEndpoint
 )
 
 func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
@@ -77,7 +78,7 @@ func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
 func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, libraryRoute string) (any, error) {
 	route := ""
 	switch endpoint {
-	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint, ipsEndpoint, ipEndpoint, vlansEndpoint, vlanEndpoint:
+	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint, ipsEndpoint, ipEndpoint, vlansEndpoint, vlanEndpoint, snapshotEndpoint:
 		route = libraryRoute
 	case tagsEndpoint:
 		route = "tags/"
@@ -158,6 +159,8 @@ func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, li
 	}
 	var result any
 	switch endpoint {
+	case snapshotEndpoint:
+		result, err = decodeSnapshot(body)
 	case tagsEndpoint:
 		result, err = decodeTags(body)
 	case vlansEndpoint:
