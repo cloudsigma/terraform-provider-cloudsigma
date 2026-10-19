@@ -60,6 +60,8 @@ const (
 	subscriptionsEndpoint
 	libraryDrivesEndpoint
 	libraryDriveEndpoint
+	drivesEndpoint
+	driveEndpoint
 )
 
 func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
@@ -70,7 +72,7 @@ func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
 func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, libraryRoute string) (any, error) {
 	route := ""
 	switch endpoint {
-	case libraryDrivesEndpoint, libraryDriveEndpoint:
+	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint:
 		route = libraryRoute
 	case profileEndpoint:
 		route = "profile/"
@@ -149,6 +151,10 @@ func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, li
 	}
 	var result any
 	switch endpoint {
+	case drivesEndpoint:
+		result, err = decodeDrives(body)
+	case driveEndpoint:
+		result, err = decodeDrive(body)
 	case libraryDrivesEndpoint:
 		result, err = decodeLibraryDrives(body)
 	case libraryDriveEndpoint:
