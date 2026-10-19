@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/migration"
 )
 
@@ -21,7 +24,7 @@ var (
 
 // libraryDriveDataSource is the library drive data source implementation.
 type libraryDriveDataSource struct {
-	client *cloudsigma.Client
+	clients *ProviderClients
 }
 
 // driveDataSourceModel maps the library drive data source schema data.
@@ -123,25 +126,20 @@ func (d *libraryDriveDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 }
 
 func (d *libraryDriveDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	d.client = nil
+	d.clients = nil
 	if request.ProviderData == nil {
 		return
 	}
-
-	client, ok := legacyClient(request.ProviderData)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unconfigured CloudSigma client",
-			"Please report this issue to the provider developers.",
-		)
+	clients, ok := request.ProviderData.(*ProviderClients)
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
-
-	d.client = client
+	d.clients = clients
 }
 
 func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
-	if d.client == nil {
+	if d.clients == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -162,7 +160,7 @@ func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.Re
 			ListOptions: cloudsigma.ListOptions{Limit: 0},
 		}
 		tflog.Trace(ctx, "Getting library drives")
-		libraryDrives, _, err := d.client.LibraryDrives.List(ctx, opts)
+		libraryDrives, err := d.libraryDrives(ctx, opts)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get library drives", err.Error())
 			return
@@ -190,7 +188,7 @@ func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.Re
 			return
 		}
 
-		libraryDrive := filteredLibraryDrives[0].(cloudsigma.LibraryDrive)
+		libraryDrive := filteredLibraryDrives[0].(cloudsigmaapi.LibraryDrive)
 
 		data.Architecture = types.StringValue(libraryDrive.Arch)
 		data.Description = types.StringValue(libraryDrive.Description)
@@ -217,9 +215,9 @@ func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.Re
 
 		if libraryDriveUUID != "" {
 			tflog.Trace(ctx, "Getting library drive using UUID")
-			libraryDrive, resp, err := d.client.LibraryDrives.Get(ctx, libraryDriveUUID)
+			libraryDrive, status, err := d.libraryDrive(ctx, libraryDriveUUID)
 			if err != nil {
-				if resp != nil && resp.StatusCode == http.StatusNotFound {
+				if status == http.StatusNotFound {
 					response.Diagnostics.AddError("No search results", "Please refine your search.")
 					return
 				}
@@ -254,7 +252,7 @@ func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.Re
 				Names:       []string{libraryDriveName},
 			}
 			tflog.Trace(ctx, "Getting library drives")
-			libraryDrives, _, err := d.client.LibraryDrives.List(ctx, opts)
+			libraryDrives, err := d.libraryDrives(ctx, opts)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get library drives", err.Error())
 				return
@@ -291,4 +289,51 @@ func (d *libraryDriveDataSource) Read(ctx context.Context, request datasource.Re
 
 	diags = response.State.Set(ctx, &data)
 	response.Diagnostics.Append(diags...)
+}
+
+// Authentication mode is selected at Configure, never by retrying an error.
+func (d *libraryDriveDataSource) libraryDrives(ctx context.Context, opts *cloudsigma.LibraryDriveListOptions) ([]cloudsigmaapi.LibraryDrive, error) {
+	if d.clients.Auth == authBasic {
+		name := ""
+		if len(opts.Names) > 0 {
+			name = opts.Names[0]
+		}
+		return d.clients.Native.LibraryDrives(ctx, name)
+	}
+	v, _, e := d.clients.Legacy.LibraryDrives.List(ctx, opts)
+	if e != nil {
+		return nil, e
+	}
+	var out []cloudsigmaapi.LibraryDrive
+	b, e := json.Marshal(v)
+	if e != nil {
+		return nil, e
+	}
+	e = json.Unmarshal(b, &out)
+	return out, e
+}
+func (d *libraryDriveDataSource) libraryDrive(ctx context.Context, uuid string) (*cloudsigmaapi.LibraryDrive, int, error) {
+	if d.clients.Auth == authBasic {
+		v, e := d.clients.Native.LibraryDrive(ctx, uuid)
+		var apiErr *cloudsigmaapi.Error
+		if errors.As(e, &apiErr) {
+			return v, apiErr.Status, e
+		}
+		return v, 0, e
+	}
+	v, r, e := d.clients.Legacy.LibraryDrives.Get(ctx, uuid)
+	status := 0
+	if r != nil {
+		status = r.StatusCode
+	}
+	if e != nil {
+		return nil, status, e
+	}
+	var out cloudsigmaapi.LibraryDrive
+	b, e := json.Marshal(v)
+	if e != nil {
+		return nil, status, e
+	}
+	e = json.Unmarshal(b, &out)
+	return &out, status, e
 }
