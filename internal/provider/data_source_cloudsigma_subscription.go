@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/migration"
 )
 
@@ -20,7 +20,7 @@ var (
 
 // subscriptionDataSource is the subscription data source implementation.
 type subscriptionDataSource struct {
-	client *cloudsigma.Client
+	clients *ProviderClients
 }
 
 // subscriptionDataSourceModel maps the subscription data source schema data.
@@ -122,25 +122,20 @@ The subscription data source provides information about an existing CloudSigma s
 }
 
 func (d *subscriptionDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	d.client = nil
+	d.clients = nil
 	if request.ProviderData == nil {
 		return
 	}
-
-	client, ok := legacyClient(request.ProviderData)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unconfigured CloudSigma client",
-			"Please report this issue to the provider developers.",
-		)
+	clients, ok := request.ProviderData.(*ProviderClients)
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
-
-	d.client = client
+	d.clients = clients
 }
 
 func (d *subscriptionDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
-	if d.client == nil {
+	if d.clients == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -158,7 +153,7 @@ func (d *subscriptionDataSource) Read(ctx context.Context, request datasource.Re
 		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting subscriptions")
-		subscriptions, _, err := d.client.Subscriptions.List(ctx)
+		subscriptions, err := d.subscriptions(ctx)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get subscriptions", err.Error())
 			return
@@ -186,7 +181,7 @@ func (d *subscriptionDataSource) Read(ctx context.Context, request datasource.Re
 			return
 		}
 
-		subscription := filteredSubscriptions[0].(cloudsigma.Subscription)
+		subscription := filteredSubscriptions[0].(cloudsigmaapi.Subscription)
 
 		data.Amount = types.StringValue(subscription.Amount)
 		data.AutoRenew = types.BoolValue(subscription.AutoRenew)
@@ -211,7 +206,7 @@ func (d *subscriptionDataSource) Read(ctx context.Context, request datasource.Re
 		}
 
 		tflog.Trace(ctx, "Getting subscriptions for filtering")
-		subscriptions, _, err := d.client.Subscriptions.List(ctx)
+		subscriptions, err := d.subscriptions(ctx)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get subscriptions", err.Error())
 			return
@@ -246,4 +241,20 @@ func (d *subscriptionDataSource) Read(ctx context.Context, request datasource.Re
 
 	diags = response.State.Set(ctx, &data)
 	response.Diagnostics.Append(diags...)
+}
+
+// subscriptions selects auth mode at configuration, never as an error fallback.
+func (d *subscriptionDataSource) subscriptions(ctx context.Context) ([]cloudsigmaapi.Subscription, error) {
+	if d.clients.Auth == authBasic {
+		return d.clients.Native.Subscriptions(ctx)
+	}
+	legacy, _, err := d.clients.Legacy.Subscriptions.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	subscriptions := make([]cloudsigmaapi.Subscription, len(legacy))
+	for i, l := range legacy {
+		subscriptions[i] = cloudsigmaapi.Subscription(l)
+	}
+	return subscriptions, nil
 }

@@ -57,6 +57,7 @@ const (
 	profileEndpoint readEndpoint = iota
 	locationsEndpoint
 	licensesEndpoint
+	subscriptionsEndpoint
 )
 
 func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
@@ -66,6 +67,8 @@ func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
 		route = "profile/"
 	case locationsEndpoint:
 		route = "locations/"
+	case subscriptionsEndpoint:
+		route = "subscriptions/"
 	case licensesEndpoint:
 		route = "licenses/"
 	default:
@@ -141,6 +144,8 @@ func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
 		result, err = decodeProfile(body)
 	case locationsEndpoint:
 		result, err = decodeLocations(body)
+	case subscriptionsEndpoint:
+		result, err = decodeSubscriptions(body)
 	case licensesEndpoint:
 		result, err = decodeLicenses(body)
 	}
