@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -9,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/migration"
 )
 
@@ -20,7 +21,7 @@ var (
 
 // vlanDataSource is the VLAN data source implementation.
 type vlanDataSource struct {
-	client *cloudsigma.Client
+	clients *ProviderClients
 }
 
 // vlanDataSourceModel maps the VLAN data source schema data.
@@ -88,25 +89,20 @@ The vlan data source provides information about an existing CloudSigma VLAN.
 }
 
 func (d *vlanDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	d.client = nil
+	d.clients = nil
 	if request.ProviderData == nil {
 		return
 	}
-
-	client, ok := legacyClient(request.ProviderData)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unconfigured CloudSigma client",
-			"Please report this issue to the provider developers.",
-		)
+	clients, ok := request.ProviderData.(*ProviderClients)
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
-
-	d.client = client
+	d.clients = clients
 }
 
 func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
-	if d.client == nil {
+	if d.clients == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -124,7 +120,7 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting VLANs")
-		vlans, _, err := d.client.VLANs.List(ctx)
+		vlans, err := d.vlans(ctx)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get VLANs", err.Error())
 			return
@@ -152,7 +148,7 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 			return
 		}
 
-		vlan := filteredVLANs[0].(cloudsigma.VLAN)
+		vlan := filteredVLANs[0].(cloudsigmaapi.VLAN)
 
 		data.ID = types.StringValue(vlan.UUID)
 		data.Name = types.StringValue(getVLANName(vlan))
@@ -172,7 +168,7 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 
 		if vlanUUID != "" {
 			tflog.Trace(ctx, "Getting VLAN using UUID")
-			vlan, _, err := d.client.VLANs.Get(ctx, vlanUUID)
+			vlan, err := d.vlan(ctx, vlanUUID)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get VLAN", err.Error())
 				return
@@ -194,7 +190,7 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 			data.UUID = types.StringValue(vlan.UUID)
 		} else {
 			tflog.Trace(ctx, "Getting VLANs for filtering")
-			vlans, _, err := d.client.VLANs.List(ctx)
+			vlans, err := d.vlans(ctx)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get VLANs", err.Error())
 				return
@@ -225,11 +221,45 @@ func (d *vlanDataSource) Read(ctx context.Context, request datasource.ReadReques
 	response.Diagnostics.Append(diags...)
 }
 
-func getVLANName(vlan cloudsigma.VLAN) string {
+func getVLANName(vlan cloudsigmaapi.VLAN) string {
 	name, ok := vlan.Meta["name"]
 	if ok {
 		return fmt.Sprintf("%s", name)
 	} else {
 		return ""
 	}
+}
+
+// Authentication mode is selected at Configure, never by retrying an error.
+func (d *vlanDataSource) vlans(ctx context.Context) ([]cloudsigmaapi.VLAN, error) {
+	if d.clients.Auth == authBasic {
+		return d.clients.Native.VLANs(ctx)
+	}
+	v, _, e := d.clients.Legacy.VLANs.List(ctx)
+	if e != nil {
+		return nil, e
+	}
+	var out []cloudsigmaapi.VLAN
+	b, e := json.Marshal(v)
+	if e != nil {
+		return nil, e
+	}
+	e = json.Unmarshal(b, &out)
+	return out, e
+}
+func (d *vlanDataSource) vlan(ctx context.Context, id string) (*cloudsigmaapi.VLAN, error) {
+	if d.clients.Auth == authBasic {
+		return d.clients.Native.VLAN(ctx, id)
+	}
+	v, _, e := d.clients.Legacy.VLANs.Get(ctx, id)
+	if e != nil {
+		return nil, e
+	}
+	var out cloudsigmaapi.VLAN
+	b, e := json.Marshal(v)
+	if e != nil {
+		return nil, e
+	}
+	e = json.Unmarshal(b, &out)
+	return &out, e
 }
