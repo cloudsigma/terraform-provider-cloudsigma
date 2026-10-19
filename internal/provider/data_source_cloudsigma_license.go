@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/migration"
 )
 
@@ -20,7 +20,7 @@ var (
 
 // licenseDataSource is the license data source implementation.
 type licenseDataSource struct {
-	client *cloudsigma.Client
+	clients *ProviderClients
 }
 
 // licenseDataSourceModel maps the license data source schema data.
@@ -107,25 +107,20 @@ The license data source provides information about an existing CloudSigma licens
 }
 
 func (d *licenseDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	d.client = nil
+	d.clients = nil
 	if request.ProviderData == nil {
 		return
 	}
-
-	client, ok := legacyClient(request.ProviderData)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unconfigured CloudSigma client",
-			"Please report this issue to the provider developers.",
-		)
+	clients, ok := request.ProviderData.(*ProviderClients)
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
-
-	d.client = client
+	d.clients = clients
 }
 
 func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
-	if d.client == nil {
+	if d.clients == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -143,7 +138,7 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting licenses")
-		licenses, _, err := d.client.Licenses.List(ctx)
+		licenses, err := d.licenses(ctx)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get licenses", err.Error())
 			return
@@ -171,7 +166,7 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 			return
 		}
 
-		license := filteredLicenses[0].(cloudsigma.License)
+		license := filteredLicenses[0].(cloudsigmaapi.License)
 
 		data.Burstable = types.BoolValue(license.Burstable)
 		data.ID = types.StringValue(license.Name)
@@ -193,7 +188,7 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 		}
 
 		tflog.Trace(ctx, "Getting licenses for filtering")
-		licenses, _, err := d.client.Licenses.List(ctx)
+		licenses, err := d.licenses(ctx)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get licenses", err.Error())
 			return
@@ -225,4 +220,20 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 
 	diags = response.State.Set(ctx, &data)
 	response.Diagnostics.Append(diags...)
+}
+
+// licenses selects auth mode at configuration, never as an error fallback.
+func (d *licenseDataSource) licenses(ctx context.Context) ([]cloudsigmaapi.License, error) {
+	if d.clients.Auth == authBasic {
+		return d.clients.Native.Licenses(ctx)
+	}
+	legacy, _, err := d.clients.Legacy.Licenses.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	licenses := make([]cloudsigmaapi.License, len(legacy))
+	for i, l := range legacy {
+		licenses[i] = cloudsigmaapi.License(l)
+	}
+	return licenses, nil
 }
