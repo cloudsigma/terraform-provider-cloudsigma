@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/migration"
 )
 
@@ -20,7 +20,7 @@ var (
 
 // locationDataSource is the location data source implementation.
 type locationDataSource struct {
-	client *cloudsigma.Client
+	clients *ProviderClients
 }
 
 // locationDataSourceModel maps the location data source schema data.
@@ -92,25 +92,20 @@ The location data source provides information about an existing CloudSigma locat
 }
 
 func (d *locationDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	d.client = nil
+	d.clients = nil
 	if request.ProviderData == nil {
 		return
 	}
-
-	client, ok := legacyClient(request.ProviderData)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unconfigured CloudSigma client",
-			"Please report this issue to the provider developers.",
-		)
+	clients, ok := request.ProviderData.(*ProviderClients)
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
-
-	d.client = client
+	d.clients = clients
 }
 
 func (d *locationDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
-	if d.client == nil {
+	if d.clients == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -128,7 +123,7 @@ func (d *locationDataSource) Read(ctx context.Context, request datasource.ReadRe
 		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting locations")
-		locations, _, err := d.client.Locations.List(ctx)
+		locations, err := d.locations(ctx)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get locations", err.Error())
 			return
@@ -156,7 +151,7 @@ func (d *locationDataSource) Read(ctx context.Context, request datasource.ReadRe
 			return
 		}
 
-		location := filteredLocations[0].(cloudsigma.Location)
+		location := filteredLocations[0].(cloudsigmaapi.Location)
 
 		data.APIEndpoint = types.StringValue(location.APIEndpoint)
 		data.CountryCode = types.StringValue(location.CountryCode)
@@ -175,7 +170,7 @@ func (d *locationDataSource) Read(ctx context.Context, request datasource.ReadRe
 		}
 
 		tflog.Trace(ctx, "Getting locations")
-		locations, _, err := d.client.Locations.List(ctx)
+		locations, err := d.locations(ctx)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get locations", err.Error())
 			return
@@ -205,4 +200,20 @@ func (d *locationDataSource) Read(ctx context.Context, request datasource.ReadRe
 
 	diags = response.State.Set(ctx, &data)
 	response.Diagnostics.Append(diags...)
+}
+
+// locations selects auth mode at configuration, never as an error fallback.
+func (d *locationDataSource) locations(ctx context.Context) ([]cloudsigmaapi.Location, error) {
+	if d.clients.Auth == authBasic {
+		return d.clients.Native.Locations(ctx)
+	}
+	legacy, _, err := d.clients.Legacy.Locations.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	locations := make([]cloudsigmaapi.Location, len(legacy))
+	for i, l := range legacy {
+		locations[i] = cloudsigmaapi.Location(l)
+	}
+	return locations, nil
 }

@@ -11,7 +11,11 @@ import (
 type Profile struct{ Address, Company, FirstName, LastName, Title, UUID string }
 
 func (c *Client) Profile(ctx context.Context) (*Profile, error) {
-	return c.get(ctx)
+	v, err := c.get(ctx, profileEndpoint)
+	if err != nil {
+		return nil, err
+	}
+	return v.(*Profile), nil
 }
 func decodeProfile(b []byte) (*Profile, error) {
 	fail := func() (*Profile, error) { return nil, &Error{Category: "decode_error"} }
