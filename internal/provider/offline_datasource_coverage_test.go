@@ -76,7 +76,7 @@ func TestOfflineDatasourceCoverage(t *testing.T) {
 						return &http.Response{StatusCode: code, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: q}, nil
 					})}))
 					var conf datasource.ConfigureResponse
-					d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: client}, &conf)
+					d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Legacy: client, Auth: authToken}}, &conf)
 					if conf.Diagnostics.HasError() {
 						t.Fatal(conf.Diagnostics)
 					}

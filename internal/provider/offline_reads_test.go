@@ -73,7 +73,7 @@ func TestOfflineDatasourceReads(t *testing.T) {
 				}
 				raw := tftypes.NewValue(typ, attrs)
 				var conf datasource.ConfigureResponse
-				d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: c}, &conf)
+				d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Legacy: c, Auth: authToken}}, &conf)
 				resp := datasource.ReadResponse{State: tfsdk.State{Schema: sc.Schema, Raw: raw}}
 				d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: sc.Schema, Raw: raw}}, &resp)
 				if calls != 1 {

@@ -82,7 +82,7 @@ func TestOfflineNetworkProjectedState(t *testing.T) {
 					return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: q}, nil
 				})}))
 				var cr datasource.ConfigureResponse
-				d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: client}, &cr)
+				d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Legacy: client, Auth: authToken}}, &cr)
 				if len(cr.Diagnostics) != 0 {
 					t.Fatal(cr.Diagnostics)
 				}
