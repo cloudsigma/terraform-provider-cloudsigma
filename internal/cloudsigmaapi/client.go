@@ -66,6 +66,7 @@ const (
 	ipEndpoint
 	vlansEndpoint
 	vlanEndpoint
+	tagsEndpoint
 )
 
 func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
@@ -78,6 +79,8 @@ func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, li
 	switch endpoint {
 	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint, ipsEndpoint, ipEndpoint, vlansEndpoint, vlanEndpoint:
 		route = libraryRoute
+	case tagsEndpoint:
+		route = "tags/"
 	case profileEndpoint:
 		route = "profile/"
 	case locationsEndpoint:
@@ -155,6 +158,8 @@ func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, li
 	}
 	var result any
 	switch endpoint {
+	case tagsEndpoint:
+		result, err = decodeTags(body)
 	case vlansEndpoint:
 		result, err = decodeVLANs(body)
 	case vlanEndpoint:
