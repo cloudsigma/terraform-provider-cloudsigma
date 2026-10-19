@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 )
 
 var (
@@ -25,6 +27,7 @@ var (
 // sshKeyResource is the SSH key resource implementation.
 type sshKeyResource struct {
 	client *cloudsigma.Client
+	native *cloudsigmaapi.Client
 }
 
 // sshKeyResourceModel maps the SSH key resource schema data.
@@ -95,6 +98,7 @@ configuration via their IDs.
 
 func (r *sshKeyResource) Configure(_ context.Context, request resource.ConfigureRequest, response *resource.ConfigureResponse) {
 	r.client = nil
+	r.native = nil
 	if request.ProviderData == nil {
 		return
 	}
@@ -104,6 +108,9 @@ func (r *sshKeyResource) Configure(_ context.Context, request resource.Configure
 		return
 	}
 	r.client = client
+	if clients := request.ProviderData.(*ProviderClients); clients.Auth == authBasic {
+		r.native = clients.Native
+	}
 }
 
 func (r *sshKeyResource) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
@@ -160,6 +167,26 @@ func (r *sshKeyResource) Read(ctx context.Context, request resource.ReadRequest,
 	diags := request.State.Get(ctx, &data)
 	response.Diagnostics.Append(diags...)
 	if response.Diagnostics.HasError() {
+		return
+	}
+
+	if r.native != nil {
+		keypair, err := r.native.Keypair(ctx, data.ID.ValueString())
+		if err != nil {
+			var failure *cloudsigmaapi.Error
+			if errors.As(err, &failure) && failure.Status == http.StatusNotFound {
+				response.State.RemoveResource(ctx)
+				return
+			}
+			response.Diagnostics.AddError("Unable to get SSH key", err.Error())
+			return
+		}
+		data.Name = types.StringValue(keypair.Name)
+		data.ID = types.StringValue(keypair.UUID)
+		data.PrivateKey = types.StringValue(keypair.PrivateKey)
+		data.PublicKey = types.StringValue(keypair.PublicKey)
+		data.UUID = types.StringValue(keypair.UUID)
+		response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 		return
 	}
 
