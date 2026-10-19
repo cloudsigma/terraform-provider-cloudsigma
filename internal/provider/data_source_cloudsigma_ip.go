@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -9,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/migration"
 )
 
@@ -20,7 +21,7 @@ var (
 
 // ipDataSource is the IP data source implementation.
 type ipDataSource struct {
-	client *cloudsigma.Client
+	clients *ProviderClients
 }
 
 // ipDataSourceModel maps the IP data source schema data.
@@ -92,25 +93,20 @@ The ip data source provides information about an existing CloudSigma IP address.
 }
 
 func (d *ipDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	d.client = nil
+	d.clients = nil
 	if request.ProviderData == nil {
 		return
 	}
-
-	client, ok := legacyClient(request.ProviderData)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unconfigured CloudSigma client",
-			"Please report this issue to the provider developers.",
-		)
+	clients, ok := request.ProviderData.(*ProviderClients)
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
-
-	d.client = client
+	d.clients = clients
 }
 
 func (d *ipDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
-	if d.client == nil {
+	if d.clients == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -128,7 +124,7 @@ func (d *ipDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 		tflog.Warn(ctx, "Using legacy filter block")
 
 		tflog.Trace(ctx, "Getting IPs")
-		ips, _, err := d.client.IPs.List(ctx)
+		ips, err := d.ips(ctx)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get IPs", err.Error())
 			return
@@ -156,7 +152,7 @@ func (d *ipDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 			return
 		}
 
-		ip := filteredIPs[0].(cloudsigma.IP)
+		ip := filteredIPs[0].(cloudsigmaapi.IP)
 
 		data.Gateway = types.StringValue(ip.Gateway)
 		data.ID = types.StringValue(ip.UUID)
@@ -175,7 +171,7 @@ func (d *ipDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 		}
 
 		tflog.Trace(ctx, "Getting IP using UUID")
-		ip, _, err := d.client.IPs.Get(ctx, ipUUID)
+		ip, err := d.ip(ctx, ipUUID)
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get IP", err.Error())
 			return
@@ -191,4 +187,38 @@ func (d *ipDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 
 	diags = response.State.Set(ctx, &data)
 	response.Diagnostics.Append(diags...)
+}
+
+// Authentication mode is selected at Configure, never by retrying an error.
+func (d *ipDataSource) ips(ctx context.Context) ([]cloudsigmaapi.IP, error) {
+	if d.clients.Auth == authBasic {
+		return d.clients.Native.IPs(ctx)
+	}
+	v, _, e := d.clients.Legacy.IPs.List(ctx)
+	if e != nil {
+		return nil, e
+	}
+	var out []cloudsigmaapi.IP
+	b, e := json.Marshal(v)
+	if e != nil {
+		return nil, e
+	}
+	e = json.Unmarshal(b, &out)
+	return out, e
+}
+func (d *ipDataSource) ip(ctx context.Context, id string) (*cloudsigmaapi.IP, error) {
+	if d.clients.Auth == authBasic {
+		return d.clients.Native.IP(ctx, id)
+	}
+	v, _, e := d.clients.Legacy.IPs.Get(ctx, id)
+	if e != nil {
+		return nil, e
+	}
+	var out cloudsigmaapi.IP
+	b, e := json.Marshal(v)
+	if e != nil {
+		return nil, e
+	}
+	e = json.Unmarshal(b, &out)
+	return &out, e
 }
