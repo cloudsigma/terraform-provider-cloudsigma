@@ -56,6 +56,7 @@ type readEndpoint uint8
 const (
 	profileEndpoint readEndpoint = iota
 	locationsEndpoint
+	licensesEndpoint
 )
 
 func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
@@ -65,6 +66,8 @@ func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
 		route = "profile/"
 	case locationsEndpoint:
 		route = "locations/"
+	case licensesEndpoint:
+		route = "licenses/"
 	default:
 		return nil, &Error{Category: "transport"}
 	}
@@ -138,6 +141,8 @@ func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
 		result, err = decodeProfile(body)
 	case locationsEndpoint:
 		result, err = decodeLocations(body)
+	case licensesEndpoint:
+		result, err = decodeLicenses(body)
 	}
 	if err != nil {
 		return nil, failure("decode_error")
