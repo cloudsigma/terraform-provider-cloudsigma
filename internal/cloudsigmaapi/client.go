@@ -58,11 +58,20 @@ const (
 	locationsEndpoint
 	licensesEndpoint
 	subscriptionsEndpoint
+	libraryDrivesEndpoint
+	libraryDriveEndpoint
 )
 
 func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
+	return c.getLibraryDrives(ctx, endpoint, "")
+}
+
+// getLibraryDrives accepts routes only from the closed endpoint methods.
+func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, libraryRoute string) (any, error) {
 	route := ""
 	switch endpoint {
+	case libraryDrivesEndpoint, libraryDriveEndpoint:
+		route = libraryRoute
 	case profileEndpoint:
 		route = "profile/"
 	case locationsEndpoint:
@@ -140,6 +149,10 @@ func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
 	}
 	var result any
 	switch endpoint {
+	case libraryDrivesEndpoint:
+		result, err = decodeLibraryDrives(body)
+	case libraryDriveEndpoint:
+		result, err = decodeLibraryDrive(body)
 	case profileEndpoint:
 		result, err = decodeProfile(body)
 	case locationsEndpoint:
