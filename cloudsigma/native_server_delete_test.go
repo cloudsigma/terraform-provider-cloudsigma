@@ -184,6 +184,12 @@ func TestOfflineLegacyNativeServerDeletePreparation(t *testing.T) {
 				return 202, `{"uuid":"ack"}`
 			}, func(r *http.Request) (int, string) {
 				gets++
+				if gets == 1 && scenario == "initial404" {
+					return 404, "{}"
+				}
+				if gets == 1 && scenario == "initial500" {
+					return 500, "{}"
+				}
 				if gets == 2 && scenario == "second404" {
 					return 404, "{}"
 				}
