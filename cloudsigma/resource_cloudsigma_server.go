@@ -309,7 +309,7 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	// start server
-	err = startServer(ctx, client, d.Id())
+	err = startServer(ctx, meta, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -497,7 +497,7 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if needRestart {
-		err = stopServer(ctx, client, d.Id())
+		err = stopServer(ctx, meta, d.Id())
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -510,7 +510,7 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if needRestart {
-		err = startServer(ctx, client, d.Id())
+		err = startServer(ctx, meta, d.Id())
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -540,7 +540,7 @@ func resourceCloudSigmaServerDelete(ctx context.Context, d *schema.ResourceData,
 	}
 
 	// Stop server
-	err = stopServer(ctx, client, server.UUID)
+	err = stopServer(ctx, meta, server.UUID)
 	if err != nil {
 		return diag.Errorf("error stopping server: %s", err)
 	}
@@ -624,7 +624,11 @@ func serverStateRefreshFunc(ctx context.Context, client *cloudsigma.Client, serv
 	}
 }
 
-func startServer(ctx context.Context, client *cloudsigma.Client, serverUUID string) error {
+func startServer(ctx context.Context, meta interface{}, serverUUID string) error {
+	client, err := extractLegacy(meta)
+	if err != nil {
+		return err
+	}
 	log.Print("[DEBUG] Starting server")
 
 	log.Printf("[DEBUG] Checking server status before starting")
@@ -638,7 +642,7 @@ func startServer(ctx context.Context, client *cloudsigma.Client, serverUUID stri
 		return nil
 	}
 
-	_, _, err = client.Servers.Start(ctx, server.UUID)
+	err = dispatchServerPower(ctx, meta, client, server.UUID, true)
 	if err != nil {
 		return fmt.Errorf("error starting server: %s", err)
 	}
@@ -657,7 +661,11 @@ func startServer(ctx context.Context, client *cloudsigma.Client, serverUUID stri
 	return nil
 }
 
-func stopServer(ctx context.Context, client *cloudsigma.Client, serverUUID string) error {
+func stopServer(ctx context.Context, meta interface{}, serverUUID string) error {
+	client, err := extractLegacy(meta)
+	if err != nil {
+		return err
+	}
 	log.Print("[DEBUG] Stopping server")
 
 	log.Printf("[DEBUG] Checking server status before stopping")
@@ -674,7 +682,7 @@ func stopServer(ctx context.Context, client *cloudsigma.Client, serverUUID strin
 		return nil
 	}
 
-	_, _, err = client.Servers.Stop(context.Background(), server.UUID)
+	err = dispatchServerPower(context.Background(), meta, client, server.UUID, false)
 	if err != nil {
 		return fmt.Errorf("error stopping server: %s", err)
 	}

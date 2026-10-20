@@ -280,7 +280,7 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 			}
 
 			for _, mountedOn := range mountedOns {
-				err := stopServer(ctx, client, mountedOn.UUID)
+				err := stopServer(ctx, meta, mountedOn.UUID)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -301,7 +301,7 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 
 		for _, mountedOn := range mountedOns {
-			err := startServer(ctx, client, mountedOn.UUID)
+			err := startServer(ctx, meta, mountedOn.UUID)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -340,7 +340,7 @@ func resourceCloudSigmaDriveDelete(ctx context.Context, d *schema.ResourceData, 
 		}
 
 		for _, mountedOn := range mountedOns {
-			err := stopServer(ctx, client, mountedOn.UUID)
+			err := stopServer(ctx, meta, mountedOn.UUID)
 			if err != nil {
 				return diag.FromErr(err)
 			}
