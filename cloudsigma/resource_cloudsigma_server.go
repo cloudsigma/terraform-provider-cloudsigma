@@ -529,10 +529,11 @@ func resourceCloudSigmaServerDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(clientErr)
 	}
 
-	server, resp, err := client.Servers.Get(ctx, d.Id())
+	// Response-only UUID/status projection; token/raw SDK remains explicitly Legacy.
+	server, statusCode, err := readServerPowerStatus(ctx, meta, client, d.Id())
 	if err != nil {
 		// handle remotely destroyed server
-		if resp != nil && resp.StatusCode == 404 {
+		if statusCode == 404 {
 			d.SetId("")
 			return nil
 		}

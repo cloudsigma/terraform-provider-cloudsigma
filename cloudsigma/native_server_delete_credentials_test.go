@@ -104,7 +104,7 @@ func TestOfflineLegacyNativeServerDeleteCredentialParity(t *testing.T) {
 								t.Fatal("404 control")
 							}
 							if wrapped && token == "" {
-								if calls != 1 || nativeDials.Load() != 2 {
+								if calls != 0 || nativeDials.Load() != 3 {
 									t.Fatal("complete Basic not exclusively native")
 								}
 							} else if calls != 3 {
