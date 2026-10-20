@@ -50,6 +50,9 @@ func TestIndependentCredentialPaths(t *testing.T) {
 						code := 200
 						if r.Method == "POST" {
 							code = 201
+							if clone {
+								code = 202
+							}
 							if true {
 								body = `{"objects":[{"uuid":"created"}]}`
 							}
