@@ -198,3 +198,16 @@ func decodeServer(b []byte) (*Server, error) {
 	}
 	return (*Server)(&v), nil
 }
+
+// ServerWithCallerContext reads a server for legacy lifecycle helpers without
+// introducing a new per-read timeout. It does not poll or interpret completion.
+func (c *Client) ServerWithCallerContext(ctx context.Context, id string) (*Server, error) {
+	if !driveSegment.MatchString(id) {
+		return nil, &Error{Category: "transport"}
+	}
+	v, err := c.getLibraryDrivesContext(ctx, serverEndpoint, "servers/"+id+"/", false)
+	if err != nil {
+		return nil, err
+	}
+	return v.(*Server), nil
+}

@@ -29,6 +29,15 @@ func nativeServerDeleteFixture(t *testing.T, code int, body string, before func(
 			if e != nil {
 				return
 			}
+			if r.Method == "GET" {
+				body := `{"uuid":"fixture","status":"stopped"}`
+				code := 200
+				if len(power) > 1 {
+					code, body = power[1](r)
+				}
+				_, _ = fmt.Fprintf(b, "HTTP/1.1 %d response\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", code, len(body), body)
+				return
+			}
 			if r.Method == "POST" && len(power) != 0 {
 				u, p, ok := r.BasicAuth()
 				if !ok || u != "fixture" || p != "fixture" {
@@ -173,6 +182,18 @@ func TestOfflineLegacyNativeServerDeletePreparation(t *testing.T) {
 					return 500, "{}"
 				}
 				return 202, `{"uuid":"ack"}`
+			}, func(r *http.Request) (int, string) {
+				gets++
+				if gets == 2 && scenario == "second404" {
+					return 404, "{}"
+				}
+				if gets == 2 && scenario == "second500" || gets == 3 && scenario == "poll500" {
+					return 500, "{}"
+				}
+				if gets == 2 && (scenario == "running" || scenario == "stop500" || scenario == "poll500") {
+					return 200, `{"uuid":"fixture","status":"running"}`
+				}
+				return 200, `{"uuid":"fixture","status":"stopped"}`
 			})
 			clients.legacy = cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithHTTPClient(&http.Client{Transport: fakeRT(func(r *http.Request) (*http.Response, error) {
 				if deletes.Load() != 0 {

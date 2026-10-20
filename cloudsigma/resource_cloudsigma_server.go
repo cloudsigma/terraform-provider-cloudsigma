@@ -632,7 +632,7 @@ func startServer(ctx context.Context, meta interface{}, serverUUID string) error
 	log.Print("[DEBUG] Starting server")
 
 	log.Printf("[DEBUG] Checking server status before starting")
-	server, _, err := client.Servers.Get(ctx, serverUUID)
+	server, _, err := readServerPowerStatus(ctx, meta, client, serverUUID)
 	if err != nil {
 		return fmt.Errorf("error retrieving server: %s", err)
 	}
@@ -649,7 +649,7 @@ func startServer(ctx context.Context, meta interface{}, serverUUID string) error
 	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"stopped", "starting", "unavailable"},
 		Target:     []string{"running"},
-		Refresh:    serverStateRefreshFunc(ctx, client, server.UUID),
+		Refresh:    serverPowerStateRefreshFunc(ctx, meta, client, server.UUID),
 		Timeout:    10 * time.Minute,
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
@@ -669,9 +669,9 @@ func stopServer(ctx context.Context, meta interface{}, serverUUID string) error 
 	log.Print("[DEBUG] Stopping server")
 
 	log.Printf("[DEBUG] Checking server status before stopping")
-	server, resp, err := client.Servers.Get(ctx, serverUUID)
+	server, statusCode, err := readServerPowerStatus(ctx, meta, client, serverUUID)
 	if err != nil {
-		if resp != nil && resp.StatusCode == 404 {
+		if statusCode == 404 {
 			return nil
 		}
 		return fmt.Errorf("error retrieving server: %s", err)
@@ -689,7 +689,7 @@ func stopServer(ctx context.Context, meta interface{}, serverUUID string) error 
 	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"running", "stopping", "unavailable"},
 		Target:     []string{"stopped"},
-		Refresh:    serverStateRefreshFunc(ctx, client, server.UUID),
+		Refresh:    serverPowerStateRefreshFunc(ctx, meta, client, server.UUID),
 		Timeout:    10 * time.Minute,
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
