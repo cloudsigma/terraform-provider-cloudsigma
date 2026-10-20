@@ -311,6 +311,13 @@ func (r *snapshotResource) Delete(ctx context.Context, request resource.DeleteRe
 		return
 	}
 
+	if r.native != nil {
+		if err := r.native.DeleteSnapshot(ctx, data.ID.ValueString()); err != nil {
+			response.Diagnostics.AddError("Unable to delete snapshot", err.Error())
+		}
+		return
+	}
+
 	snapshotUUID := data.ID.ValueString()
 	tflog.Trace(ctx, "Deleting snapshot")
 	_, err := r.client.Snapshots.Delete(ctx, snapshotUUID)
