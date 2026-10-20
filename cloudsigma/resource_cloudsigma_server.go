@@ -270,12 +270,16 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	log.Print("[DEBUG] Server create configuration")
-	servers, _, err := client.Servers.Create(ctx, createRequest)
+	created, err := createServerDefinition(ctx, meta, createRequest)
+	// Retain a complete acknowledged identity before reporting cancellation.
+	if created != nil {
+		d.SetId(created.UUID)
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	server := servers[0]
+	server := *created
 	log.Print("[INFO] Server ID")
 
 	// store the resulting UUID so we can look this up later
