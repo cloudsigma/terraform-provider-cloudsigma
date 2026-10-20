@@ -228,6 +228,28 @@ func (r *sshKeyResource) Update(ctx context.Context, request resource.UpdateRequ
 		return
 	}
 
+	if r.native != nil {
+		input := cloudsigmaapi.KeypairUpdateRequest{Name: plan.Name.ValueString(), UUID: plan.ID.ValueString()}
+		if !plan.PrivateKey.Equal(oldPrivateKey) {
+			input.PrivateKey = plan.PrivateKey.ValueString()
+		}
+		if !plan.PublicKey.Equal(oldPublicKey) {
+			input.PublicKey = plan.PublicKey.ValueString()
+		}
+		updated, err := r.native.UpdateKeypair(ctx, plan.ID.ValueString(), input)
+		if err != nil {
+			response.Diagnostics.AddError("Unable to update SSH key", err.Error())
+			return
+		}
+		plan.Name = types.StringValue(updated.Name)
+		plan.ID = types.StringValue(updated.UUID)
+		plan.PrivateKey = types.StringValue(updated.PrivateKey)
+		plan.PublicKey = types.StringValue(updated.PublicKey)
+		plan.UUID = types.StringValue(updated.UUID)
+		response.Diagnostics.Append(response.State.Set(ctx, &plan)...)
+		return
+	}
+
 	keypairUUID := plan.ID.ValueString()
 	keypair := &cloudsigma.Keypair{
 		Name: plan.Name.ValueString(),
