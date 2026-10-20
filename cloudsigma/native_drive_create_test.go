@@ -72,7 +72,7 @@ func TestOfflineNativeDriveCreate(t *testing.T) {
 				t.Fatal(posts, ds)
 			}
 			if code == 201 {
-				if waits != 1 || reads != 1 || d.Id() != "created" || d.Get("name") != "after" {
+				if waits != 0 || reads != 2 || d.Id() != "created" || d.Get("name") != "after" {
 					t.Fatal(waits, reads, d.State())
 				}
 			} else if waits != 0 || reads != 0 || !reflect.DeepEqual(before, d.State()) {

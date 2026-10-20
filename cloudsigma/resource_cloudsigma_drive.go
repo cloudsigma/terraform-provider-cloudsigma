@@ -193,7 +193,7 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 	createStateConf := &retry.StateChangeConf{
 		Pending:    []string{"cloning_dst", "creating"},
 		Target:     []string{"mounted", "unmounted"},
-		Refresh:    driveStateRefreshFunc(ctx, client, d.Id()),
+		Refresh:    driveStatusRefreshFunc(ctx, meta, client, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
@@ -202,7 +202,7 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error waiting for drive (%s) to be created: %s", d.Id(), err)
 	}
 
-	// Attach tags if needed
+	// Attach tags if needed. Explicit Legacy GET: the full SDK model builds the PUT payload.
 	if v, ok := d.GetOk("tags"); ok {
 		drive, _, err := client.Drives.Get(ctx, d.Id())
 		if err != nil {
@@ -324,7 +324,7 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"cloning_dst", "creating", "resizing"},
 		Target:     []string{"mounted", "unmounted"},
-		Refresh:    driveStateRefreshFunc(ctx, client, d.Id()),
+		Refresh:    driveStatusRefreshFunc(ctx, meta, client, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutUpdate),
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
