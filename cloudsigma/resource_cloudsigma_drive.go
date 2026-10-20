@@ -324,6 +324,10 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceCloudSigmaDriveDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if clients, ok := meta.(*configClients); ok && clients != nil && clients.native != nil && clients.basicCredentialError != nil {
+		return diag.FromErr(clients.basicCredentialError)
+	}
+
 	client, clientErr := extractLegacy(meta)
 	if clientErr != nil {
 		return diag.FromErr(clientErr)
@@ -343,9 +347,21 @@ func resourceCloudSigmaDriveDelete(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	_, err := client.Drives.Delete(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
+	if clients, ok := meta.(*configClients); ok && clients != nil && clients.native != nil {
+		if err := ctx.Err(); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := clients.native.DeleteDrive(ctx, d.Id()); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := ctx.Err(); err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		_, err := client.Drives.Delete(ctx, d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	d.SetId("")
