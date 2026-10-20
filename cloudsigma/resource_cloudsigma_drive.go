@@ -222,9 +222,9 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error waiting for drive (%s) to be created: %s", d.Id(), err)
 	}
 
-	// Attach tags if needed. Explicit Legacy GET: the full SDK model builds the PUT payload.
+	// Attach tags using the complete model; the PUT remains on the legacy path.
 	if v, ok := d.GetOk("tags"); ok {
-		drive, _, err := client.Drives.Get(ctx, d.Id())
+		drive, err := driveForTagAttachment(ctx, meta, d.Id())
 		if err != nil {
 			return diag.FromErr(err)
 		}
