@@ -176,7 +176,10 @@ The server resource allows you to manage CloudSigma servers.
 }
 
 func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*cloudsigma.Client)
+	client, clientErr := extractLegacy(meta)
+	if clientErr != nil {
+		return diag.FromErr(clientErr)
+	}
 
 	err := validateSMP(d)
 	if err != nil {
@@ -315,7 +318,10 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*cloudsigma.Client)
+	client, clientErr := extractLegacy(meta)
+	if clientErr != nil {
+		return diag.FromErr(clientErr)
+	}
 
 	server, resp, err := client.Servers.Get(ctx, d.Id())
 	if err != nil {
@@ -384,7 +390,10 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*cloudsigma.Client)
+	client, clientErr := extractLegacy(meta)
+	if clientErr != nil {
+		return diag.FromErr(clientErr)
+	}
 
 	// Note that if a server is running, only name, meta, and tags fields can be changed
 	// and all other changes to the definition of a running server will be ignored.
@@ -508,7 +517,10 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceCloudSigmaServerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*cloudsigma.Client)
+	client, clientErr := extractLegacy(meta)
+	if clientErr != nil {
+		return diag.FromErr(clientErr)
+	}
 
 	server, resp, err := client.Servers.Get(ctx, d.Id())
 	if err != nil {

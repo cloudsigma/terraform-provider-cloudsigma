@@ -75,6 +75,10 @@ func providerConfigure(provider *schema.Provider) schema.ConfigureContextFunc {
 
 		config.loadAndValidate(ctx, provider.TerraformVersion)
 
-		return config.Client(), nil
+		clients, err := config.clients()
+		if err != nil {
+			return nil, diag.FromErr(err)
+		}
+		return clients, nil
 	}
 }
