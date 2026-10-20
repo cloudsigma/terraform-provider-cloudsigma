@@ -52,6 +52,20 @@ func (c *Client) Snapshot(ctx context.Context, uuid string) (*Snapshot, error) {
 	}
 	return v.(*Snapshot), nil
 }
+
+// SnapshotWithCallerContext reads lifecycle state without imposing a per-read
+// deadline. Other Snapshot readers retain their existing bounded policy.
+func (c *Client) SnapshotWithCallerContext(ctx context.Context, uuid string) (*Snapshot, error) {
+	if !driveSegment.MatchString(uuid) {
+		return nil, &Error{Category: "transport"}
+	}
+	v, err := c.getLibraryDrivesContext(ctx, snapshotEndpoint, "snapshots/"+uuid+"/", false)
+	if err != nil {
+		return nil, err
+	}
+	return v.(*Snapshot), nil
+}
+
 func decodeSnapshot(b []byte) (*Snapshot, error) {
 	var v snapshotResponse
 	if err := json.NewDecoder(bytes.NewReader(b)).Decode(&v); err != nil {

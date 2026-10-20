@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -165,11 +166,28 @@ func (r *snapshotResource) Create(ctx context.Context, request resource.CreateRe
 		response.Diagnostics.AddError("Unable to create snapshot", err.Error())
 		return
 	}
+	// A successful POST without a usable identity cannot establish ownership.
+	if len(snapshots) == 0 || !regexp.MustCompile(`^[a-zA-Z0-9-]+$`).MatchString(snapshots[0].UUID) {
+		response.Diagnostics.AddError("Unable to create snapshot", "Snapshot acknowledgement is missing a usable identity.")
+		return
+	}
 	snap := &snapshots[0]
+	// Preserve only acknowledged identity and known plan inputs before any
+	// fallible read. Null computed fields deliberately assert no server values.
+	// State.Set is local and remains usable when the caller is cancelled.
+	data.ID = types.StringValue(snap.UUID)
+	data.UUID = types.StringValue(snap.UUID)
+	data.ResourceURI = types.StringNull()
+	data.Status = types.StringNull()
+	data.Timestamp = types.StringNull()
+	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
+	if response.Diagnostics.HasError() {
+		return
+	}
 	tflog.Trace(ctx, "Created snapshot")
 
 	tflog.Info(ctx, "Waiting for snapshot to be available")
-	err = snapshot.WaitSnapshotStatusAvailable(ctx, r.client, snap.UUID)
+	err = snapshot.WaitSnapshotStatusAvailable(ctx, r.client, snap.UUID, r.native)
 	if err != nil {
 		response.Diagnostics.AddError(
 			"Invalid snapshot status",
@@ -178,7 +196,20 @@ func (r *snapshotResource) Create(ctx context.Context, request resource.CreateRe
 		return
 	}
 
-	snap, _, err = r.client.Snapshots.Get(ctx, snap.UUID)
+	if r.native != nil {
+		var read *cloudsigmaapi.Snapshot
+		read, err = r.native.SnapshotWithCallerContext(ctx, snap.UUID)
+		if err == nil {
+			if read.Drive == nil {
+				response.Diagnostics.AddError("Unable to create snapshot", "Snapshot response is missing its drive.")
+				return
+			}
+			// This projection feeds state only, never a mutation payload.
+			snap = &cloudsigma.Snapshot{Drive: &cloudsigma.Drive{UUID: read.Drive.UUID}, Name: read.Name, UUID: read.UUID, ResourceURI: read.ResourceURI, Status: read.Status, Timestamp: read.Timestamp}
+		}
+	} else {
+		snap, _, err = r.client.Snapshots.Get(ctx, snap.UUID)
+	}
 	if err != nil {
 		response.Diagnostics.AddError("Unable to create snapshot", err.Error())
 		return
