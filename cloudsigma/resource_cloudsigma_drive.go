@@ -138,7 +138,10 @@ Use "cloudsigma_library_drive" data source to find UUID of the library drive.
 }
 
 func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*cloudsigma.Client)
+	client, clientErr := extractLegacy(meta)
+	if clientErr != nil {
+		return diag.FromErr(clientErr)
+	}
 
 	drive := &cloudsigma.Drive{
 		Media:       d.Get("media").(string),
@@ -206,7 +209,16 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceCloudSigmaDriveRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*cloudsigma.Client)
+	if clients, ok := meta.(*configClients); ok && clients != nil && clients.native != nil {
+		if clients.basicCredentialError != nil {
+			return diag.FromErr(clients.basicCredentialError)
+		}
+		return readNativeDrive(ctx, d, clients.native)
+	}
+	client, clientErr := extractLegacy(meta)
+	if clientErr != nil {
+		return diag.FromErr(clientErr)
+	}
 
 	// Refresh the Drive state
 	drive, resp, err := client.Drives.Get(ctx, d.Id())
@@ -238,7 +250,10 @@ func resourceCloudSigmaDriveRead(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*cloudsigma.Client)
+	client, clientErr := extractLegacy(meta)
+	if clientErr != nil {
+		return diag.FromErr(clientErr)
+	}
 
 	drive := &cloudsigma.Drive{
 		Media:       d.Get("media").(string),
@@ -309,7 +324,10 @@ func resourceCloudSigmaDriveUpdate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceCloudSigmaDriveDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*cloudsigma.Client)
+	client, clientErr := extractLegacy(meta)
+	if clientErr != nil {
+		return diag.FromErr(clientErr)
+	}
 
 	if v, ok := d.GetOk("mounted_on"); ok {
 		mountedOns, err := expandMountedOn(v.([]interface{}))
