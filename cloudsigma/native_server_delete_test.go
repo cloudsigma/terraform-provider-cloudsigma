@@ -18,7 +18,7 @@ import (
 )
 
 // Actual constructor and HTTP client, in-memory wire only. No listening socket.
-func nativeServerDeleteFixture(t *testing.T, code int, body string, before func(), calls *atomic.Int32) *configClients {
+func nativeServerDeleteFixture(t *testing.T, code int, body string, before func(), calls *atomic.Int32, power ...func(*http.Request) (int, string)) *configClients {
 	t.Helper()
 	old := http.DefaultTransport
 	tr := &http.Transport{DialTLSContext: func(context.Context, string, string) (net.Conn, error) {
@@ -27,6 +27,15 @@ func nativeServerDeleteFixture(t *testing.T, code int, body string, before func(
 			defer b.Close()
 			r, e := http.ReadRequest(bufio.NewReader(b))
 			if e != nil {
+				return
+			}
+			if r.Method == "POST" && len(power) != 0 {
+				u, p, ok := r.BasicAuth()
+				if !ok || u != "fixture" || p != "fixture" {
+					t.Error("power auth")
+				}
+				code, body := power[0](r)
+				_, _ = fmt.Fprintf(b, "HTTP/1.1 %d response\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", code, len(body), body)
 				return
 			}
 			calls.Add(1)
@@ -153,8 +162,18 @@ func TestOfflineLegacyNativeServerDeletePreparation(t *testing.T) {
 	for _, scenario := range []string{"stopped", "running", "initial404", "initial500", "second404", "second500", "stop500", "poll500"} {
 		t.Run(scenario, func(t *testing.T) {
 			var deletes atomic.Int32
-			clients := nativeServerDeleteFixture(t, 204, "", nil, &deletes)
 			gets, stops := 0, 0
+			clients := nativeServerDeleteFixture(t, 204, "", nil, &deletes, func(r *http.Request) (int, string) {
+				stops++
+				body, _ := io.ReadAll(r.Body)
+				if r.URL.RequestURI() != "/api/2.0/servers/fixture/action/?do=stop" || string(body) != "{}" {
+					t.Error("power route/body")
+				}
+				if scenario == "stop500" {
+					return 500, "{}"
+				}
+				return 202, `{"uuid":"ack"}`
+			})
 			clients.legacy = cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithHTTPClient(&http.Client{Transport: fakeRT(func(r *http.Request) (*http.Response, error) {
 				if deletes.Load() != 0 {
 					t.Error("preparation after final mutation")
@@ -177,6 +196,7 @@ func TestOfflineLegacyNativeServerDeletePreparation(t *testing.T) {
 						t.Error("GET route")
 					}
 				case "POST":
+					t.Error("native power fell back")
 					stops++
 					if r.URL.RequestURI() != "/api/2.0/servers/fixture/action/?do=stop" {
 						t.Errorf("stop route %s", r.URL.RequestURI())
