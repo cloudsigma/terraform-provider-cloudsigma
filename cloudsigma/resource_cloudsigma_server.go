@@ -323,6 +323,13 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(clientErr)
 	}
 
+	if clients, ok := meta.(*configClients); ok && clients.native != nil {
+		if clients.basicCredentialError != nil {
+			return diag.FromErr(clients.basicCredentialError)
+		}
+		return readNativeServer(ctx, d, clients.native)
+	}
+
 	server, resp, err := client.Servers.Get(ctx, d.Id())
 	if err != nil {
 		// If the server is somehow already destroyed, mark as successfully gone
