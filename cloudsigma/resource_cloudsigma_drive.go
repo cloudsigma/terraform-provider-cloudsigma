@@ -160,12 +160,32 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		cloneRequest := &cloudsigma.DriveCloneRequest{Drive: drive}
 
 		log.Print("[DEBUG] Drive clone configuration")
-		clonedDrive, _, err := client.Drives.Clone(ctx, cloneDriveUUID, cloneRequest)
+		var clonedUUID string
+		var err error
+		if clients, ok := meta.(*configClients); ok && clients != nil && clients.native != nil {
+			var cloned *cloudsigmaapi.Drive
+			cloned, err = clients.native.CloneDrive(ctx, cloneDriveUUID, cloudsigmaapi.DriveCreateRequest{
+				Media: drive.Media, Name: drive.Name, Size: drive.Size, StorageType: drive.StorageType,
+			})
+			if cloned != nil {
+				clonedUUID = cloned.UUID
+			}
+		} else {
+			var cloned *cloudsigma.Drive
+			cloned, _, err = client.Drives.Clone(ctx, cloneDriveUUID, cloneRequest)
+			if err == nil {
+				clonedUUID = cloned.UUID
+			}
+		}
+		// Native CloneDrive may return a validated acknowledgment with cancellation.
+		if clonedUUID != "" {
+			d.SetId(clonedUUID)
+		}
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		d.SetId(clonedDrive.UUID)
+		d.SetId(clonedUUID)
 		log.Print("[INFO] Drive ID")
 	} else if clients, ok := meta.(*configClients); ok && clients != nil && clients.native != nil {
 		createdDrive, err := clients.native.CreateDrive(ctx, cloudsigmaapi.DriveCreateRequest{
