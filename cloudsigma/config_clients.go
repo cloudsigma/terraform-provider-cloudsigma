@@ -11,7 +11,7 @@ import (
 )
 
 // configClients keeps SDKv2 token precedence separate from Framework auth policy.
-// Only the Drive and Server resource Reads use native; mutations and waiters retain legacy.
+// Drive/Server Reads and Drive Delete use native; server preparation and waiters retain legacy.
 type configClients struct {
 	legacy               *cloudsigma.Client
 	native               *cloudsigmaapi.Client
