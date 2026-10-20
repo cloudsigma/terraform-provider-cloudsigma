@@ -26,12 +26,23 @@ func TestOfflineNativeServerPower(t *testing.T) {
 				}
 				old := http.DefaultTransport
 				var posts atomic.Int32
+				var nativeGets atomic.Int32
 				tr := &http.Transport{DialTLSContext: func(context.Context, string, string) (net.Conn, error) {
 					a, b := net.Pipe()
 					go func() {
 						defer b.Close()
 						r, e := http.ReadRequest(bufio.NewReader(b))
 						if e != nil {
+							return
+						}
+						if r.Method == "GET" {
+							n := nativeGets.Add(1)
+							status := initial
+							if n > 1 {
+								status = target
+							}
+							body := fmt.Sprintf(`{"uuid":"fixture","status":%q}`, status)
+							_, _ = fmt.Fprintf(b, "HTTP/1.1 200 response\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", len(body), body)
 							return
 						}
 						posts.Add(1)
@@ -76,10 +87,13 @@ func TestOfflineNativeServerPower(t *testing.T) {
 				if (e == nil) != (code == 202) || posts.Load() != 1 || !reflect.DeepEqual(before, d.State()) {
 					t.Fatal(e, posts.Load())
 				}
-				if code == 202 && gets < 2 {
+				if gets != 0 {
+					t.Fatal("legacy GET fallback", gets)
+				}
+				if code == 202 && nativeGets.Load() != 2 {
 					t.Fatal("ACK skipped waiter")
 				}
-				if code != 202 && gets != 1 {
+				if code != 202 && nativeGets.Load() != 1 {
 					t.Fatal("polled after failed action")
 				}
 			})
@@ -93,7 +107,25 @@ func TestOfflineNativeServerPowerCredentials(t *testing.T) {
 	for _, token := range []string{"", "token"} {
 		for _, user := range []string{"", "user"} {
 			for _, pass := range []string{"", "pass"} {
-				http.DefaultTransport = &http.Transport{}
+				var nativeCalls atomic.Int32
+				http.DefaultTransport = &http.Transport{DialTLSContext: func(context.Context, string, string) (net.Conn, error) {
+					a, b := net.Pipe()
+					go func() {
+						defer b.Close()
+						r, e := http.ReadRequest(bufio.NewReader(b))
+						if e != nil {
+							return
+						}
+						nativeCalls.Add(1)
+						u, p, ok := r.BasicAuth()
+						if !ok || u != user || p != pass || r.Method != "GET" {
+							t.Error("auth/method")
+						}
+						body := `{"uuid":"fixture","status":"running"}`
+						_, _ = fmt.Fprintf(b, "HTTP/1.1 200 OK\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", len(body), body)
+					}()
+					return a, nil
+				}}
 				c := &Config{Token: token, Username: user, Password: pass, Location: "zrh"}
 				c.loadAndValidate(context.Background(), "fixture")
 				clients, e := c.clients()
@@ -116,10 +148,10 @@ func TestOfflineNativeServerPowerCredentials(t *testing.T) {
 					}
 					return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"uuid":"fixture","status":"running"}`)), Request: r}, nil
 				})}))
-				// Initial SDK GET still lazily refuses incomplete Basic before any action.
+				// Incomplete Basic refuses before either native or Legacy dispatch.
 				e = startServer(context.Background(), clients, "fixture")
 				incomplete := token == "" && (user == "" || pass == "")
-				if (e != nil) != incomplete || (incomplete && calls != 0) || (!incomplete && calls != 1) {
+				if (e != nil) != incomplete || (incomplete && calls != 0) || (!incomplete && calls+int(nativeCalls.Load()) != 1) {
 					t.Fatal(e, calls)
 				}
 			}

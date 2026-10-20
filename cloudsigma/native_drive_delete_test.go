@@ -18,7 +18,7 @@ import (
 )
 
 // Actual constructor and HTTP client, in-memory wire only. No listening socket.
-func nativeDeleteFixture(t *testing.T, code int, body string, before func(), calls *atomic.Int32) *configClients {
+func nativeDeleteFixture(t *testing.T, code int, body string, before func(), calls *atomic.Int32, statusRead ...func(*http.Request) (int, string)) *configClients {
 	t.Helper()
 	old := http.DefaultTransport
 	tr := &http.Transport{DialTLSContext: func(context.Context, string, string) (net.Conn, error) {
@@ -27,6 +27,11 @@ func nativeDeleteFixture(t *testing.T, code int, body string, before func(), cal
 			defer b.Close()
 			r, e := http.ReadRequest(bufio.NewReader(b))
 			if e != nil {
+				return
+			}
+			if r.Method == "GET" && len(statusRead) != 0 {
+				code, body := statusRead[0](r)
+				_, _ = fmt.Fprintf(b, "HTTP/1.1 %d response\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", code, len(body), body)
 				return
 			}
 			calls.Add(1)
@@ -142,8 +147,14 @@ func TestOfflineLegacyNativeDriveDeleteMounted(t *testing.T) {
 	for _, preparation := range []int{200, 404, 500} {
 		t.Run(fmt.Sprint(preparation), func(t *testing.T) {
 			var calls atomic.Int32
-			clients := nativeDeleteFixture(t, 204, "", nil, &calls)
 			servers := 0
+			clients := nativeDeleteFixture(t, 204, "", nil, &calls, func(r *http.Request) (int, string) {
+				servers++
+				if r.URL.RequestURI() != "/api/2.0/servers/server/" || calls.Load() != 0 {
+					t.Error("preparation order/route")
+				}
+				return preparation, `{"uuid":"server","status":"stopped"}`
+			})
 			clients.legacy = cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithHTTPClient(&http.Client{Transport: fakeRT(func(r *http.Request) (*http.Response, error) {
 				servers++
 				if r.Method != "GET" || r.URL.RequestURI() != "/api/2.0/servers/server/" || calls.Load() != 0 {

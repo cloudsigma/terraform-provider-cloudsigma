@@ -79,6 +79,10 @@ func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
 
 // getLibraryDrives accepts routes only from the closed endpoint methods.
 func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, libraryRoute string) (any, error) {
+	return c.getLibraryDrivesContext(ctx, endpoint, libraryRoute, true)
+}
+
+func (c *Client) getLibraryDrivesContext(ctx context.Context, endpoint readEndpoint, libraryRoute string, bounded bool) (any, error) {
 	route := ""
 	switch endpoint {
 	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint, ipsEndpoint, ipEndpoint, vlansEndpoint, vlanEndpoint, snapshotEndpoint, pubkeyEndpoint, keypairEndpoint, serverEndpoint:
@@ -96,8 +100,16 @@ func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, li
 	default:
 		return nil, &Error{Category: "transport"}
 	}
-	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
-	defer cancel()
+	transport := c.transport
+	if bounded {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, requestTimeout)
+		defer cancel()
+	} else if h, ok := transport.(*http.Client); ok {
+		clone := *h
+		clone.Timeout = 0
+		transport = &clone
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.base+route, nil)
 	if err != nil {
 		return nil, &Error{Category: "transport"}
@@ -107,7 +119,7 @@ func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, li
 	req.Header.Set("Accept-Encoding", "identity")
 	req.Header.Set("User-Agent", c.userAgent)
 	req.SetBasicAuth(c.username, c.password)
-	resp, err := c.transport.Do(req)
+	resp, err := transport.Do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}

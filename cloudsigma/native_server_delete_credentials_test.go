@@ -35,8 +35,13 @@ func TestOfflineLegacyNativeServerDeleteCredentialParity(t *testing.T) {
 								return
 							}
 							u, p, ok := r.BasicAuth()
-							if !ok || u != user || p != password || r.Method != "DELETE" || r.URL.RequestURI() != "/api/2.0/servers/fixture/" {
+							if !ok || u != user || p != password || (r.Method != "DELETE" && r.Method != "GET") || r.URL.RequestURI() != "/api/2.0/servers/fixture/" {
 								t.Error("native auth/route")
+							}
+							if r.Method == "GET" {
+								body := `{"uuid":"fixture","status":"stopped"}`
+								_, _ = fmt.Fprintf(b, "HTTP/1.1 200 OK\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", len(body), body)
+								return
 							}
 							_, _ = fmt.Fprint(b, "HTTP/1.1 204 deleted\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
 						}()
@@ -99,7 +104,7 @@ func TestOfflineLegacyNativeServerDeleteCredentialParity(t *testing.T) {
 								t.Fatal("404 control")
 							}
 							if wrapped && token == "" {
-								if calls != 2 || nativeDials.Load() != 1 {
+								if calls != 1 || nativeDials.Load() != 2 {
 									t.Fatal("complete Basic not exclusively native")
 								}
 							} else if calls != 3 {
