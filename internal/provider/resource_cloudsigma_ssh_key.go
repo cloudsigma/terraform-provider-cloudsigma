@@ -269,6 +269,13 @@ func (r *sshKeyResource) Delete(ctx context.Context, request resource.DeleteRequ
 		return
 	}
 
+	if r.native != nil {
+		if err := r.native.DeleteKeypair(ctx, data.ID.ValueString()); err != nil {
+			response.Diagnostics.AddError("Unable to delete SSH key", err.Error())
+		}
+		return
+	}
+
 	keypairUUID := data.ID.ValueString()
 	tflog.Trace(ctx, "Deleting SSH key")
 	_, err := r.client.Keypairs.Delete(ctx, keypairUUID)
