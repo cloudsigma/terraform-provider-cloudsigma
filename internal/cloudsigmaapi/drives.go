@@ -116,3 +116,16 @@ func decodeDrives(b []byte) ([]Drive, error) {
 	}
 	return v, nil
 }
+
+// DriveWithCallerContext reads a drive for lifecycle status waiters without
+// introducing a per-read timeout. It does not poll or interpret completion.
+func (c *Client) DriveWithCallerContext(ctx context.Context, id string) (*Drive, error) {
+	if !driveSegment.MatchString(id) {
+		return nil, &Error{Category: "transport"}
+	}
+	v, err := c.getLibraryDrivesContext(ctx, driveEndpoint, "drives/"+id+"/", false)
+	if err != nil {
+		return nil, err
+	}
+	return v.(*Drive), nil
+}
