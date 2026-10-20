@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -138,6 +139,9 @@ Use "cloudsigma_library_drive" data source to find UUID of the library drive.
 }
 
 func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if clients, ok := meta.(*configClients); ok && clients != nil && clients.native != nil && clients.basicCredentialError != nil {
+		return diag.FromErr(clients.basicCredentialError)
+	}
 	client, clientErr := extractLegacy(meta)
 	if clientErr != nil {
 		return diag.FromErr(clientErr)
@@ -162,6 +166,15 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		}
 
 		d.SetId(clonedDrive.UUID)
+		log.Print("[INFO] Drive ID")
+	} else if clients, ok := meta.(*configClients); ok && clients != nil && clients.native != nil {
+		createdDrive, err := clients.native.CreateDrive(ctx, cloudsigmaapi.DriveCreateRequest{
+			Media: drive.Media, Name: drive.Name, Size: drive.Size, StorageType: drive.StorageType,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(createdDrive.UUID)
 		log.Print("[INFO] Drive ID")
 	} else {
 		createRequest := &cloudsigma.DriveCreateRequest{Drives: []cloudsigma.Drive{*drive}}
