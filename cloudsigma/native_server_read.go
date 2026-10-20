@@ -26,6 +26,11 @@ func readNativeServer(ctx context.Context, d *schema.ResourceData, client *cloud
 		}
 		return diag.FromErr(err)
 	}
+	metadata, metadataErr := serverReadMetadata(server.Meta)
+	if metadataErr != nil {
+		return diag.FromErr(metadataErr)
+	}
+
 	_ = d.Set("cpu", server.CPU)
 	_ = d.Set("ipv4_address", nativeServerIPv4(server))
 	_ = d.Set("memory", server.Memory)
@@ -38,17 +43,8 @@ func readNativeServer(ctx context.Context, d *schema.ResourceData, client *cloud
 		_ = d.Set("ssh_keys", nativeServerKeys(server.PublicKeys))
 	}
 
-	if server.Meta != nil {
-		meta := make(map[string]interface{})
-		for k, val := range server.Meta {
-			// Ignore ssh_public key as it is managed by ssh_keys property
-			if k != "ssh_public_key" {
-				meta[k] = val.(string)
-			}
-		}
-		if len(meta) > 0 {
-			_ = d.Set("meta", meta)
-		}
+	if len(metadata) > 0 {
+		_ = d.Set("meta", metadata)
 	}
 
 	if len(server.NICs) > 0 {
