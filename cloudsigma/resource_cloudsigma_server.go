@@ -520,6 +520,10 @@ func resourceCloudSigmaServerUpdate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceCloudSigmaServerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if clients, ok := meta.(*configClients); ok && clients != nil && clients.native != nil && clients.basicCredentialError != nil {
+		return diag.FromErr(clients.basicCredentialError)
+	}
+
 	client, clientErr := extractLegacy(meta)
 	if clientErr != nil {
 		return diag.FromErr(clientErr)
@@ -541,10 +545,22 @@ func resourceCloudSigmaServerDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("error stopping server: %s", err)
 	}
 
-	// Delete server
-	_, err = client.Servers.Delete(ctx, server.UUID)
-	if err != nil {
-		return diag.Errorf("error deleting server: %s", err)
+	// HTTP 204 acknowledges deletion started, not lifecycle completion.
+	if clients, ok := meta.(*configClients); ok && clients != nil && clients.native != nil {
+		if err := ctx.Err(); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := clients.native.DeleteServer(ctx, server.UUID); err != nil {
+			return diag.Errorf("error deleting server: %s", err)
+		}
+		if err := ctx.Err(); err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		_, err = client.Servers.Delete(ctx, server.UUID)
+		if err != nil {
+			return diag.Errorf("error deleting server: %s", err)
+		}
 	}
 
 	d.SetId("")
