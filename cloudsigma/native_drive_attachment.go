@@ -1,14 +1,16 @@
 package cloudsigma
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 
 	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 )
 
-// driveForTagAttachment migrates the read only. The complete pinned SDK model
-// still feeds the legacy PUT; this adapter does not authorize new writable fields.
+// driveForTagAttachment preserves the complete pinned attachment model.
+// This adapter does not authorize new writable fields.
 func driveForTagAttachment(ctx context.Context, meta interface{}, id string) (*cloudsigma.Drive, error) {
 	client, err := extractLegacy(meta)
 	if err != nil {
@@ -123,4 +125,18 @@ func attachmentMeta(v map[string]interface{}) map[string]interface{} {
 		r[k] = attachmentValue(x)
 	}
 	return r
+}
+
+// putNativeDriveAttachment deliberately retains the pinned SDK encoding DTO.
+// UUID clearing and Encoder newline match Drives.Update; SDK dispatch is not used.
+func putNativeDriveAttachment(ctx context.Context, clients *configClients, id string, request *cloudsigma.DriveUpdateRequest) error {
+	if clients.basicCredentialError != nil {
+		return clients.basicCredentialError
+	}
+	request.UUID = ""
+	var body bytes.Buffer
+	if err := json.NewEncoder(&body).Encode(request); err != nil {
+		return &cloudsigmaapi.Error{Category: "transport"}
+	}
+	return clients.native.PutDriveAttachment(ctx, id, body.Bytes())
 }

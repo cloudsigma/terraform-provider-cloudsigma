@@ -141,7 +141,7 @@ func TestNative26RichSuccess(t *testing.T) {
 						if !raw && bits == 3 {
 							wn = 3
 							if !reviewBaseline && tag {
-								wn++
+								wn += 2
 							}
 						}
 						if native != wn || legacy != len(want)-wn {

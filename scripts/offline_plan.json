@@ -94,6 +94,14 @@
     "total": 748
   },
   {
+    "package": "internal/cloudsigmaapi",
+    "stage": "TestNative31Transport",
+    "tests": [
+      "TestNative31Transport"
+    ],
+    "total": 21
+  },
+  {
     "package": "cloudsigma",
     "stage": "build",
     "tests": [],
@@ -150,6 +158,38 @@
       "TestStructureServer_flattenEnclavePageCaches"
     ],
     "total": 533
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative31AttachmentFaults",
+    "tests": [
+      "TestNative31AttachmentFaults"
+    ],
+    "total": 105
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative31AttachmentCreate",
+    "tests": [
+      "TestNative31AttachmentCreate"
+    ],
+    "total": 105
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative31AttachmentRawClone",
+    "tests": [
+      "TestNative31AttachmentRawClone"
+    ],
+    "total": 105
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative31AttachmentRawCreate",
+    "tests": [
+      "TestNative31AttachmentRawCreate"
+    ],
+    "total": 105
   },
   {
     "package": "cloudsigma",
