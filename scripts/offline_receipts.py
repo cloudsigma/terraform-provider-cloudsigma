@@ -126,4 +126,4 @@ def finish(directory, records):
     for i, record in enumerate(records):
         name = PLAN[i]['package'].replace('/','-')+'-'+PLAN[i]['stage']+'.log'
         semantic(record, (pathlib.Path(directory)/name).read_bytes(), i)
-    print('OFFLINE_COMPLETE '+json.dumps(dict(stages=18, valid=True)), flush=True)
+    print('OFFLINE_COMPLETE '+json.dumps(dict(stages=len(PLAN), valid=True)), flush=True)
