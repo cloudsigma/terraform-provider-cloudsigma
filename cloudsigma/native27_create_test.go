@@ -144,6 +144,9 @@ func TestNative27Callback(t *testing.T) {
 							if !native27Baseline {
 								wn++
 							}
+							if attach && id != "" {
+								wn++
+							}
 							if !failed {
 								wn += 2
 							}

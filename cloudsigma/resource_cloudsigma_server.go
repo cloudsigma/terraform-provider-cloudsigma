@@ -176,7 +176,7 @@ The server resource allows you to manage CloudSigma servers.
 }
 
 func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, clientErr := extractLegacy(meta)
+	_, clientErr := extractLegacy(meta)
 	if clientErr != nil {
 		return diag.FromErr(clientErr)
 	}
@@ -306,7 +306,7 @@ func resourceCloudSigmaServerCreate(ctx context.Context, d *schema.ResourceData,
 			Server: &server,
 		}
 		log.Print("[DEBUG] Server update configuration (attach drives)")
-		_, _, err := client.Servers.Update(ctx, d.Id(), updateRequest)
+		err := putServerCreateAttachment(ctx, meta, d.Id(), updateRequest)
 		if err != nil {
 			return diag.FromErr(err)
 		}
