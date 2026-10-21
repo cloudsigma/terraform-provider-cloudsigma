@@ -153,6 +153,22 @@
   },
   {
     "package": "cloudsigma",
+    "stage": "TestNative30Ownership",
+    "tests": [
+      "TestNative30Ownership"
+    ],
+    "total": 6
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative30Projection",
+    "tests": [
+      "TestNative30Projection"
+    ],
+    "total": 6
+  },
+  {
+    "package": "cloudsigma",
     "stage": "TestNative26Dispatch",
     "tests": [
       "TestNative26Dispatch"
