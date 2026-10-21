@@ -222,7 +222,7 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error waiting for drive (%s) to be created: %s", d.Id(), err)
 	}
 
-	// Attach tags using the complete model; the PUT remains on the legacy path.
+	// Attach tags using the complete model and exact legacy encoding.
 	if v, ok := d.GetOk("tags"); ok {
 		drive, err := driveForTagAttachment(ctx, meta, d.Id())
 		if err != nil {
@@ -232,7 +232,11 @@ func resourceCloudSigmaDriveCreate(ctx context.Context, d *schema.ResourceData, 
 
 		updateRequest := &cloudsigma.DriveUpdateRequest{Drive: drive}
 		log.Print("[DEBUG] Drive update configuration (attaching tags)")
-		_, _, err = client.Drives.Update(ctx, drive.UUID, updateRequest)
+		if clients, ok := meta.(*configClients); ok && clients != nil && clients.native != nil {
+			err = putNativeDriveAttachment(ctx, clients, drive.UUID, updateRequest)
+		} else {
+			_, _, err = client.Drives.Update(ctx, drive.UUID, updateRequest)
+		}
 		if err != nil {
 			return diag.FromErr(err)
 		}
