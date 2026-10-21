@@ -1,0 +1,281 @@
+[
+  {
+    "package": "internal/cloudsigmaapi",
+    "stage": "build",
+    "tests": [],
+    "total": 0
+  },
+  {
+    "package": "internal/cloudsigmaapi",
+    "stage": "canary",
+    "tests": [
+      "TestIsolationCanaries"
+    ],
+    "total": 1
+  },
+  {
+    "package": "internal/cloudsigmaapi",
+    "stage": "suite",
+    "tests": [
+      "TestSnapshotCallerContext",
+      "TestServerCreateBlockedRead",
+      "TestServerCreate",
+      "TestServerCreateBoundaries",
+      "TestDriveClone",
+      "TestDriveCallerContext",
+      "TestIndependentPOST",
+      "TestDriveCreateR1Transport",
+      "TestDriveCreate",
+      "TestServerCallerContext",
+      "TestServerPower",
+      "TestServerPowerBoundaries",
+      "TestServerDelete",
+      "TestServerDeleteBoundaries",
+      "TestServerDeleteFailures",
+      "TestDriveDelete",
+      "TestDriveDeleteBoundaries",
+      "TestDriveDeleteFailures",
+      "TestServer",
+      "TestServerBoundaries",
+      "TestKeypairUpdate",
+      "TestKeypairUpdateBoundaries",
+      "TestKeypairUpdateFailures",
+      "TestKeypairDelete",
+      "TestKeypairDeleteBoundaries",
+      "TestKeypairDeleteFailures",
+      "TestSnapshotDelete",
+      "TestSnapshotDeleteBoundaries",
+      "TestSnapshotHeldMutationOracle",
+      "TestKeypairs",
+      "TestKeypairHTTP",
+      "TestKeypairInvalidID",
+      "TestKeypairBoundaries",
+      "TestKeypairPubkeyCoexistence",
+      "TestPubkeys",
+      "TestPubkeyHTTP",
+      "TestPubkeyInvalidID",
+      "TestPubkeyBoundaries",
+      "TestSnapshotBoundaries",
+      "TestSnapshots",
+      "TestSnapshotHTTP",
+      "TestSnapshotInvalidID",
+      "TestTags",
+      "TestTagsHTTP",
+      "TestTagListBoundaries",
+      "TestVLANHTTP",
+      "TestVLANs",
+      "TestVLANListBoundaries",
+      "TestVLANSingleBoundaries",
+      "TestIPHTTP",
+      "TestIPs",
+      "TestIPListBoundaries",
+      "TestIPSingleBoundaries",
+      "TestDriveHTTP",
+      "TestDrives",
+      "TestDriveListBoundaries",
+      "TestDriveSingleBoundaries",
+      "TestLibraryHTTP",
+      "TestLibraryDrives",
+      "TestLibraryListBoundaries",
+      "TestLibrarySingleBoundaries",
+      "TestSubscriptions",
+      "TestSubscriptionsBoundaries",
+      "TestLicenses",
+      "TestLicensesBoundaries",
+      "TestLocations",
+      "TestClient",
+      "TestClientRedirect",
+      "TestProfile",
+      "TestReviewReadError",
+      "TestReviewEarlierDeadline",
+      "TestReviewCancellationDuringRead",
+      "TestReviewDeadlineDuringRead"
+    ],
+    "total": 748
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "build",
+    "tests": [],
+    "total": 0
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "canary",
+    "tests": [
+      "TestIsolationCanaries"
+    ],
+    "total": 1
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "suite",
+    "tests": [
+      "TestNative27Callback",
+      "TestNative25CloneCallback",
+      "TestOfflineServerDeletePreflight",
+      "TestNativeDriveWaiter",
+      "TestIndependentCredentialPaths",
+      "TestNativeCreateR1Callback",
+      "TestOfflineNativeDriveCreate",
+      "TestOfflineNativeServerPower",
+      "TestOfflineNativeServerPowerCredentials",
+      "TestOfflineLegacyNativeServerDelete",
+      "TestOfflineLegacyNativeServerDeleteCancellation",
+      "TestOfflineLegacyNativeServerDeleteCredentialParity",
+      "TestOfflineLegacyNativeServerDeletePreparation",
+      "TestOfflineDriveDeleteMetadataCoexistence",
+      "TestOfflineLegacyNativeDriveDelete",
+      "TestOfflineLegacyNativeDriveDeleteCancellation",
+      "TestOfflineLegacyNativeDriveDeleteCredentialParity",
+      "TestOfflineLegacyNativeDriveDeleteMounted",
+      "TestOfflineServerMetadataAtomic",
+      "TestOfflineLegacyNativeServerRead",
+      "TestOfflineLegacyNativeServerCancellation",
+      "TestOfflineLegacyNativeServerCredentialParity",
+      "TestOfflineLegacyNativeCredentialParity",
+      "TestOfflineLegacyNativeDriveRead",
+      "TestOfflineLegacyNativeDriveCancellation",
+      "TestOfflineLegacyClientSeam",
+      "TestOfflineLegacyCallbackExtraction",
+      "TestProvider",
+      "TestProvider_impl",
+      "TestOfflineRefresh",
+      "TestOfflineCloneEmptyGuard",
+      "TestOfflinePrivacyFixed",
+      "TestResourceCloudSigmaServer_findIPv4Address",
+      "TestStructureDrive_expandTags",
+      "TestStructureDrive_flattenTags",
+      "TestStructureServer_expandEnclavePageCaches",
+      "TestStructureServer_flattenEnclavePageCaches"
+    ],
+    "total": 533
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative26Dispatch",
+    "tests": [
+      "TestNative26Dispatch"
+    ],
+    "total": 65
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative26AckCancel",
+    "tests": [
+      "TestNative26AckCancel"
+    ],
+    "total": 5
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative26RichSuccess",
+    "tests": [
+      "TestNative26RichSuccess"
+    ],
+    "total": 65
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative26AttachmentFaults",
+    "tests": [
+      "TestNative26AttachmentFaults"
+    ],
+    "total": 65
+  },
+  {
+    "package": "internal/provider",
+    "stage": "build",
+    "tests": [],
+    "total": 0
+  },
+  {
+    "package": "internal/provider",
+    "stage": "canary",
+    "tests": [
+      "TestIsolationCanaries"
+    ],
+    "total": 1
+  },
+  {
+    "package": "internal/provider",
+    "stage": "suite",
+    "tests": [
+      "TestOfflineNativeSSHKeyUpdate",
+      "TestOfflineNativeSSHKeyUpdateInvalid",
+      "TestOfflineNativeSSHKeyDelete",
+      "TestOfflineNativeSSHKeyDeleteInvalid",
+      "TestOfflineNativeSnapshotDelete",
+      "TestOfflineNativeSnapshotDeleteInvalid",
+      "TestOfflineNativeSSHKey",
+      "TestOfflineNativeSSHKeyStateBoundaries",
+      "TestOfflineNativeSnapshot",
+      "TestOfflineNativeTagConfigure",
+      "TestOfflineTagCancel",
+      "TestOfflineNativeTag",
+      "TestOfflineVLANCancel",
+      "TestOfflineNativeVLAN",
+      "TestOfflineIPCancel",
+      "TestOfflineNativeIP",
+      "TestOfflineDriveCancel",
+      "TestOfflineNativeDrive",
+      "TestOfflineLibraryCancel",
+      "TestOfflineNativeLibraryDrive",
+      "TestOfflineNativeSubscription",
+      "TestOfflineNativeLicense",
+      "TestOfflineNativeLocation",
+      "TestOfflineNativeAuthMatrix",
+      "TestOfflineNativeConfigure",
+      "TestOfflineNativeState",
+      "TestOfflineImportProtocol",
+      "TestOfflineNetworkProjectedState",
+      "TestOfflineDatasourceCoverage",
+      "TestOfflineConfiguredReadonly",
+      "TestOfflineConfigurePrivacy",
+      "TestOfflineDatasourceReads",
+      "TestOfflineRegisteredSchemas",
+      "TestOfflineSnapshotPrivacy",
+      "TestOfflineDestroyStatus",
+      "TestOfflineSnapshotDependencyCleanup"
+    ],
+    "total": 434
+  },
+  {
+    "package": "internal/provider",
+    "stage": "TestNative28Matrix",
+    "tests": [
+      "TestNative28Matrix"
+    ],
+    "total": 165
+  },
+  {
+    "package": "internal/provider",
+    "stage": "TestNative28SnapshotLifecycle",
+    "tests": [
+      "TestNative28SnapshotLifecycle"
+    ],
+    "total": 19
+  },
+  {
+    "package": "readonly",
+    "stage": "build",
+    "tests": [],
+    "total": 0
+  },
+  {
+    "package": "readonly",
+    "stage": "canary",
+    "tests": [
+      "TestIsolationCanaries"
+    ],
+    "total": 1
+  },
+  {
+    "package": "readonly",
+    "stage": "suite",
+    "tests": [
+      "TestFence"
+    ],
+    "total": 1
+  }
+]
