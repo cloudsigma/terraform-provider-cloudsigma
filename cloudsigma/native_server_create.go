@@ -9,7 +9,7 @@ import (
 )
 
 // createServerDefinition substitutes only the Basic create send. The complete
-// response model still feeds the existing SDK attachment PUT and lifecycle.
+// response model still feeds the existing attachment payload and lifecycle.
 func createServerDefinition(ctx context.Context, meta interface{}, request *cs.ServerCreateRequest) (*cs.Server, error) {
 	legacy, err := extractLegacy(meta)
 	if err != nil {

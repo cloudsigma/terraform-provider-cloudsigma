@@ -95,6 +95,14 @@
   },
   {
     "package": "internal/cloudsigmaapi",
+    "stage": "TestNative32Transport",
+    "tests": [
+      "TestNative32Transport"
+    ],
+    "total": 21
+  },
+  {
+    "package": "internal/cloudsigmaapi",
     "stage": "TestNative31Transport",
     "tests": [
       "TestNative31Transport"
@@ -158,6 +166,22 @@
       "TestStructureServer_flattenEnclavePageCaches"
     ],
     "total": 533
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative32Callback",
+    "tests": [
+      "TestNative32Callback"
+    ],
+    "total": 417
+  },
+  {
+    "package": "cloudsigma",
+    "stage": "TestNative32Ack",
+    "tests": [
+      "TestNative32Ack"
+    ],
+    "total": 211
   },
   {
     "package": "cloudsigma",
