@@ -242,6 +242,14 @@
   },
   {
     "package": "internal/provider",
+    "stage": "TestNative29DriveReadiness",
+    "tests": [
+      "TestNative29DriveReadiness"
+    ],
+    "total": 27
+  },
+  {
+    "package": "internal/provider",
     "stage": "TestNative28Matrix",
     "tests": [
       "TestNative28Matrix"

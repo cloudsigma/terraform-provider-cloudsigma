@@ -308,7 +308,7 @@ func TestNative28Matrix(t *testing.T) {
 					if (strings.HasPrefix(phase, "wait-") || strings.HasPrefix(phase, "private-")) && wantErr {
 						wantReads = 1
 					}
-					want := []string{"false:GET:/api/2.0/drives/drive/", "false:POST:/api/2.0/snapshots/"}
+					want := []string{fmt.Sprintf("%t:GET:/api/2.0/drives/drive/", useNative), "false:POST:/api/2.0/snapshots/"}
 					for i := 0; i < wantReads; i++ {
 						want = append(want, fmt.Sprintf("%t:GET:/api/2.0/snapshots/created/", useNative))
 					}

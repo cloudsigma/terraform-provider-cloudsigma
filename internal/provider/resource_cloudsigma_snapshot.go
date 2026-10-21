@@ -145,7 +145,7 @@ func (r *snapshotResource) Create(ctx context.Context, request resource.CreateRe
 
 	tflog.Info(ctx, "Checking for drive to be mounted or unmounted")
 	driveUUID := data.Drive.ValueString()
-	err := drive.WaitDriveStatusMountedOrUnmounted(ctx, r.client, driveUUID)
+	err := drive.WaitDriveStatusMountedOrUnmounted(ctx, r.client, driveUUID, r.native)
 	if err != nil {
 		response.Diagnostics.AddError(
 			"Invalid drive status",
