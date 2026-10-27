@@ -1,0 +1,43 @@
+# Native token license read qualification — 2026-10-27
+
+Base: f825822598656d921ddbf030c4341cd52ab4c167
+Implementation: bb400fdb83b6937315abc59e8a1f8d76b271d82a
+
+## Passing checks
+
+- `GOPROXY=off go test ./internal/cloudsigmaapi -run 'Test.*License|TestNative.*License' -count=1 -timeout=45s` — PASS
+- `GOPROXY=off go test -race ./internal/cloudsigmaapi ./internal/provider -run 'Test.*License|TestOfflineNativeLicense|TestOfflineTokenLicenseNumericQuantity' -count=1 -timeout=90s` — PASS
+- `GOPROXY=off go build ./...` — PASS
+- `GOPROXY=off go vet ./...` — PASS
+- `git diff --check` — PASS
+
+The native client now supports explicit bearer construction and the license data source uses native transport whenever configured. Empty bearer tokens are rejected. Response decoding preserves numeric quantities through json.Number-backed license fields. No SDK fallback occurs after native dispatch; other unconverted provider surfaces remain SDK-backed.
+
+## Existing suite limitation retained
+
+The full command `GOPROXY=off go test ./... -count=1 -timeout=120s` was run on the surrounding native work and failed by timeout in existing waiter tests:
+
+- `TestNative26AttachmentFaults/5/deadline-body`
+- `TestNative28Matrix/credentials3/rawfalse/wait-partial`
+
+No live cloud, acceptance, credential, or dependency installation operation was performed.
+
+## Follow-on native profile slice
+
+The same provider-owned client now serves `cloudsigma_profile` for bearer-token configuration. The data source no longer requires an SDK client for token reads and has synthetic coverage for success, status failure, cancellation/state preservation, and strict bearer authorization.
+
+- `GOPROXY=off go test ./internal/provider -run '^TestOfflineNativeTokenProfile$' -count=1 -timeout=60s` — PASS
+- `GOPROXY=off go test -race ./internal/provider -run '^TestOfflineNativeTokenProfile$' -count=1 -timeout=90s` — PASS
+- `GOPROXY=off go build ./...` — PASS
+- `GOPROXY=off go vet ./...` — PASS
+- `git diff --check` — PASS
+
+## Configuration regression check
+
+The existing provider configuration test was updated so the token profile case supplies both native and legacy clients at the migration boundary. This preserves other SDK-backed token surfaces while requiring native transport for profile reads.
+
+- `GOPROXY=off go test ./internal/provider -run 'TestOfflineNativeConfigure|TestOfflineNativeTokenProfile|TestOfflineNativeState' -count=1 -timeout=60s` — PASS
+- `GOPROXY=off go test -race ./internal/provider -run 'TestOfflineNativeConfigure|TestOfflineNativeTokenProfile|TestOfflineNativeState' -count=1 -timeout=90s` — PASS
+- `GOPROXY=off go build ./...` — PASS
+- `GOPROXY=off go vet ./...` — PASS
+- `git diff --check` — PASS

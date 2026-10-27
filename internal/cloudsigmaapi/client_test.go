@@ -56,6 +56,29 @@ func TestClient(t *testing.T) {
 		}
 	}
 }
+
+func TestTokenClient(t *testing.T) {
+	c, err := NewToken("zrh", "fixture-token", "fixture-agent")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := &trackedBody{Reader: strings.NewReader(`{"uuid":"fixture"}`)}
+	c.transport = fakeDoer(func(r *http.Request) (*http.Response, error) {
+		if got := r.Header.Get("Authorization"); got != "Bearer fixture-token" {
+			t.Fatalf("authorization=%q", got)
+		}
+		if _, _, ok := r.BasicAuth(); ok {
+			t.Fatal("unexpected basic auth")
+		}
+		return &http.Response{StatusCode: http.StatusOK, Body: body, Header: make(http.Header), Request: r}, nil
+	})
+	if _, err := c.Profile(context.Background()); err != nil || !body.closed {
+		t.Fatalf("profile=%v closed=%v", err, body.closed)
+	}
+	if _, err := NewToken("zrh", "", "fixture-agent"); err == nil {
+		t.Fatal("accepted an empty bearer token")
+	}
+}
 func TestProfile(t *testing.T) {
 	for _, tc := range []struct {
 		body  string

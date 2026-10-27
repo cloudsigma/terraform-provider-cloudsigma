@@ -12,7 +12,9 @@ const (
 	authToken
 )
 
-// ProviderClients holds the explicit migration boundary. Token Profile remains legacy.
+// ProviderClients holds the explicit migration boundary. Native transport is
+// available for both credential modes; individual provider surfaces opt in by
+// auth mode while they migrate away from the SDK.
 type ProviderClients struct {
 	Native *cloudsigmaapi.Client
 	Legacy *cloudsigma.Client

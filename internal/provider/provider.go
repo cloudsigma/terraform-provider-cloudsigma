@@ -176,15 +176,19 @@ func (p *cloudSigmaProvider) Configure(ctx context.Context, request provider.Con
 	)
 
 	clients := &ProviderClients{Legacy: client, Auth: authToken}
-	if token == "" {
+	var native *cloudsigmaapi.Client
+	var nativeErr error
+	if token != "" {
+		native, nativeErr = cloudsigmaapi.NewToken(location, token, p.userAgent())
+	} else {
 		clients.Auth = authBasic
-		native, err := cloudsigmaapi.New(location, username, password, p.userAgent())
-		if err != nil {
-			response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
-			return
-		}
-		clients.Native = native
+		native, nativeErr = cloudsigmaapi.New(location, username, password, p.userAgent())
 	}
+	if nativeErr != nil {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
+		return
+	}
+	clients.Native = native
 	response.DataSourceData = clients
 	response.ResourceData = clients
 }

@@ -82,7 +82,7 @@ func (d *profileDataSource) Configure(_ context.Context, request datasource.Conf
 		return
 	}
 	clients, ok := request.ProviderData.(*ProviderClients)
-	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || clients.Native == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -99,17 +99,7 @@ func (d *profileDataSource) Read(ctx context.Context, _ datasource.ReadRequest, 
 	}
 	var profile *cloudsigmaapi.Profile
 	var err error
-	if d.clients.Auth == authBasic {
-		profile, err = d.clients.Native.Profile(ctx)
-	} else {
-		legacy, _, legacyErr := d.clients.Legacy.Profile.Get(ctx)
-		err = legacyErr
-		if err != nil {
-			err = &cloudsigmaapi.Error{Category: "transport"}
-		} else {
-			profile = &cloudsigmaapi.Profile{Address: legacy.Address, Company: legacy.Company, FirstName: legacy.FirstName, LastName: legacy.LastName, Title: legacy.Title, UUID: legacy.UUID}
-		}
-	}
+	profile, err = d.clients.Native.Profile(ctx)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to fetch user profile", err.Error())
 		return
