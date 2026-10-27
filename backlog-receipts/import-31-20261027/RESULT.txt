@@ -22,3 +22,9 @@ The broader command `GOPROXY=off go test ./internal/provider ./cloudsigma -count
 - `github.com/cloudsigma/terraform-provider-cloudsigma/cloudsigma`: timeout in existing `TestNative26AttachmentFaults/5/deadline-body`.
 
 Those tests enter SDK waiter paths that continue polling synthetic responses. No live cloud or acceptance tests were run, no dependencies were installed, and no existing dirty checkout was modified.
+
+## Hosted lint remediation
+
+PR #132 head `9e15791d36ee2578f0d5490bf89700a706f84e79` initially failed hosted `make lint` because staticcheck SA1019 rejected deprecated `schema.ImportStatePassthrough` in the two legacy resources. The callbacks were changed to `schema.ImportStatePassthroughContext` in commit `9fe32d8d6c2e3b2f92df0ed4fc21fd86dfc52a06`.
+
+The focused offline protocol/race/build/vet/diff checks were rerun after the fix and passed. Hosted checks for the corrected head are pending.
