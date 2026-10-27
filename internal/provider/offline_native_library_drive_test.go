@@ -20,8 +20,9 @@ import (
 )
 
 // In-memory TLS dial seam: no listener/socket or public constructor hook.
-func libraryFixture(t *testing.T, code int, body string, calls *int, path, query string) *cloudsigmaapi.Client {
+func libraryFixture(t *testing.T, code int, body string, calls *int, path, query string, tokenAuth ...bool) *cloudsigmaapi.Client {
 	t.Helper()
+	useToken := len(tokenAuth) > 0 && tokenAuth[0]
 	old := http.DefaultTransport
 	tr := old.(*http.Transport).Clone()
 	tr.Proxy = nil
@@ -34,8 +35,20 @@ func libraryFixture(t *testing.T, code int, body string, calls *int, path, query
 				return
 			}
 			*calls++
-			u, p, ok := r.BasicAuth()
-			if !ok || u != "fixture" || p != "fixture" || r.Method != "GET" || r.Header.Get("Accept-Encoding") != "identity" || r.URL.Path != path || r.URL.RawQuery != query {
+			if r.Method != "GET" || r.Header.Get("Accept-Encoding") != "identity" || r.URL.Path != path || r.URL.RawQuery != query {
+				return
+			}
+			if useToken {
+				if r.Header.Get("Authorization") != "Bearer fixture-token" {
+					return
+				}
+			} else {
+				u, p, ok := r.BasicAuth()
+				if !ok || u != "fixture" || p != "fixture" {
+					return
+				}
+			}
+			if r.Header.Get("Authorization") == "" {
 				return
 			}
 			_, _ = fmt.Fprintf(b, "HTTP/1.1 %d response\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", code, len(body), body)
@@ -44,7 +57,13 @@ func libraryFixture(t *testing.T, code int, body string, calls *int, path, query
 	}
 	tr.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12}
 	http.DefaultTransport = tr
-	c, e := cloudsigmaapi.New("zrh", "fixture", "fixture", "")
+	var c *cloudsigmaapi.Client
+	var e error
+	if useToken {
+		c, e = cloudsigmaapi.NewToken("zrh", "fixture-token", "")
+	} else {
+		c, e = cloudsigmaapi.New("zrh", "fixture", "fixture", "")
+	}
 	http.DefaultTransport = old
 	if e != nil {
 		t.Fatal(e)
@@ -91,7 +110,7 @@ func TestOfflineNativeLibraryDrive(t *testing.T) {
 		{"unknown", types.StringUnknown(), types.StringUnknown(), nil, `{}`, 200, "Missing required attributes"},
 	} {
 		for _, token := range []bool{false, true} {
-			t.Run(tc.name, func(t *testing.T) {
+			t.Run(fmt.Sprintf("%s/token=%v", tc.name, token), func(t *testing.T) {
 				ctx := context.Background()
 				calls := 0
 				path := "/api/2.0/libdrives/"
@@ -104,7 +123,7 @@ func TestOfflineNativeLibraryDrive(t *testing.T) {
 						query += "&name=" + tc.search.ValueString()
 					}
 				}
-				native := libraryFixture(t, tc.code, tc.body, &calls, path, query)
+				native := libraryFixture(t, tc.code, tc.body, &calls, path, query, token)
 				legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture"), cloudsigma.WithHTTPClient(&http.Client{Transport: fixtureRT(func(r *http.Request) (*http.Response, error) {
 					if !token {
 						t.Fatal("fallback")
