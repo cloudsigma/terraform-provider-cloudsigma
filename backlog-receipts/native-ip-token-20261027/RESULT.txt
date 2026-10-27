@@ -1,0 +1,14 @@
+Native bearer-authenticated IP data source qualification — 2026-10-27
+
+Base: 907b58488bfeb5d7e6ee80d49917be1fbceea2bd (PR135, stacked on PR133)
+
+Focused verification:
+- GOPROXY=off go test ./internal/provider -run '^TestOfflineNativeIP$|^TestOfflineIPCancel$|^TestOfflineTokenIPCancelPreservesState$|^TestOfflineIPConfigureRequiresNative$' -count=1 -timeout=90s — PASS
+- GOPROXY=off go test -race ./internal/provider -run '^TestOfflineNativeIP$|^TestOfflineTokenIPCancelPreservesState$|^TestOfflineIPConfigureRequiresNative$' -count=1 -timeout=120s — PASS
+- GOPROXY=off go build ./... — PASS
+- GOPROXY=off go vet ./... — PASS
+- git diff --check — PASS
+
+This slice uses the provider-owned native IP list/get methods for both Basic and bearer auth and removes SDK projection/fallback from this data-source surface. No live cloud or acceptance tests were run.
+
+Stack synchronization receipt: branch refreshed after hosted fixture remediation; no provider behavior change.

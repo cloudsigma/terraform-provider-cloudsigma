@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -70,6 +71,14 @@ func TestOfflineNetworkProjectedState(t *testing.T) {
 				}
 				raw := tftypes.NewValue(typ, attrs)
 				calls := 0
+				var native *cloudsigmaapi.Client
+				if tc.name == "ip" {
+					nativeBody := `{"objects":[` + tc.fixture + `]}`
+					if mode == "wire-type-error" {
+						nativeBody = `{"objects":[{"uuid":{}}]}`
+					}
+					native = libraryFixture(t, 200, nativeBody, &calls, "/api/2.0/"+tc.route, "", true)
+				}
 				client := cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithLocation("next"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(q *http.Request) (*http.Response, error) {
 					calls++
 					if q.Method != "GET" || q.URL.RequestURI() != "/api/2.0/"+tc.route {
@@ -82,7 +91,7 @@ func TestOfflineNetworkProjectedState(t *testing.T) {
 					return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: q}, nil
 				})}))
 				var cr datasource.ConfigureResponse
-				d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Legacy: client, Auth: authToken}}, &cr)
+				d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Legacy: client, Native: native, Auth: authToken}}, &cr)
 				if len(cr.Diagnostics) != 0 {
 					t.Fatal(cr.Diagnostics)
 				}
@@ -110,7 +119,7 @@ func TestOfflineNetworkProjectedState(t *testing.T) {
 					if out.Diagnostics[0].Summary() != summary {
 						t.Fatalf("summary %q", out.Diagnostics[0].Summary())
 					}
-					if mode == "wire-type-error" && !strings.Contains(out.Diagnostics[0].Detail(), "cannot unmarshal object") {
+					if mode == "wire-type-error" && !strings.Contains(out.Diagnostics[0].Detail(), "unmarshal") && !strings.Contains(out.Diagnostics[0].Detail(), "decode_error") {
 						t.Fatal(out.Diagnostics)
 					}
 					return
