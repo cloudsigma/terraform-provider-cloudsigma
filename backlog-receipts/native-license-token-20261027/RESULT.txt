@@ -21,3 +21,13 @@ The full command `GOPROXY=off go test ./... -count=1 -timeout=120s` was run on t
 - `TestNative28Matrix/credentials3/rawfalse/wait-partial`
 
 No live cloud, acceptance, credential, or dependency installation operation was performed.
+
+## Follow-on native profile slice
+
+The same provider-owned client now serves `cloudsigma_profile` for bearer-token configuration. The data source no longer requires an SDK client for token reads and has synthetic coverage for success, status failure, cancellation/state preservation, and strict bearer authorization.
+
+- `GOPROXY=off go test ./internal/provider -run '^TestOfflineNativeTokenProfile$' -count=1 -timeout=60s` — PASS
+- `GOPROXY=off go test -race ./internal/provider -run '^TestOfflineNativeTokenProfile$' -count=1 -timeout=90s` — PASS
+- `GOPROXY=off go build ./...` — PASS
+- `GOPROXY=off go vet ./...` — PASS
+- `git diff --check` — PASS
