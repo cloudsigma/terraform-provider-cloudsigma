@@ -25,6 +25,7 @@ The server resource allows you to manage CloudSigma servers.
 		ReadContext:   resourceCloudSigmaServerRead,
 		UpdateContext: resourceCloudSigmaServerUpdate,
 		DeleteContext: resourceCloudSigmaServerDelete,
+		Importer:      &schema.ResourceImporter{State: schema.ImportStatePassthrough},
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(30 * time.Minute),

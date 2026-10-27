@@ -62,13 +62,29 @@ func TestOfflineImportProtocol(t *testing.T) {
 		})
 	}
 	for _, name := range []string{"cloudsigma_drive", "cloudsigma_server"} {
-		t.Run(name+"_unsupported", func(t *testing.T) {
-			got, err := server.ImportResourceState(ctx, &tfprotov6.ImportResourceStateRequest{TypeName: name, ID: "11111111-1111-4111-8111-111111111111"})
+		t.Run(name, func(t *testing.T) {
+			id := "11111111-1111-4111-8111-111111111111"
+			got, err := server.ImportResourceState(ctx, &tfprotov6.ImportResourceStateRequest{TypeName: name, ID: id})
 			if err != nil || got == nil {
 				t.Fatalf("import: %v", err)
 			}
-			if len(got.ImportedResources) != 0 || len(got.Diagnostics) != 1 || got.Diagnostics[0].Severity != tfprotov6.DiagnosticSeverityError || got.Diagnostics[0].Summary != "resource "+name+" doesn't support import" {
-				t.Fatalf("expected unsupported import: %#v", got)
+			if len(got.Diagnostics) != 0 || got.Deferred != nil || len(got.ImportedResources) != 1 {
+				t.Fatalf("unexpected import result: %#v", got)
+			}
+			imported := got.ImportedResources[0]
+			if imported.TypeName != name || imported.State == nil {
+				t.Fatalf("unexpected imported resource: %#v", imported)
+			}
+			typ := schemas.ResourceSchemas[name].ValueType()
+			value, err := imported.State.Unmarshal(typ)
+			if err != nil {
+				t.Fatal(err)
+			}
+			object := value
+			idValueRaw, err := object.ApplyTerraform5AttributePathStep(tftypes.AttributeName("id"))
+			idValue, ok := idValueRaw.(tftypes.Value)
+			if err != nil || !ok || !idValue.Equal(tftypes.NewValue(tftypes.String, id)) {
+				t.Fatalf("identifier-only state mismatch: %s", object)
 			}
 		})
 	}
