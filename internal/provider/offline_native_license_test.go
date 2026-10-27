@@ -22,8 +22,9 @@ import (
 )
 
 // In-memory TLS dial seam: no listener/socket or public constructor hook.
-func licenseFixture(t *testing.T, code int, body string, calls *int) *cloudsigmaapi.Client {
+func licenseFixture(t *testing.T, code int, body string, calls *int, tokenAuth ...bool) *cloudsigmaapi.Client {
 	t.Helper()
+	useToken := len(tokenAuth) > 0 && tokenAuth[0]
 	old := http.DefaultTransport
 	tr := old.(*http.Transport).Clone()
 	tr.Proxy = nil
@@ -39,18 +40,67 @@ func licenseFixture(t *testing.T, code int, body string, calls *int) *cloudsigma
 			if r.URL.Path != "/api/2.0/licenses/" || r.URL.RawQuery != "" {
 				return
 			}
+			if useToken {
+				if r.Header.Get("Authorization") != "Bearer fixture-token" {
+					return
+				}
+			} else {
+				u, p, ok := r.BasicAuth()
+				if !ok || u != "fixture" || p != "fixture" {
+					return
+				}
+			}
 			_, _ = fmt.Fprintf(b, "HTTP/1.1 %d response\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", code, len(body), body)
 		}()
 		return a, nil
 	}
 	tr.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12}
 	http.DefaultTransport = tr
-	c, e := cloudsigmaapi.New("zrh", "fixture", "fixture", "")
+	var c *cloudsigmaapi.Client
+	var e error
+	if useToken {
+		c, e = cloudsigmaapi.NewToken("zrh", "fixture-token", "")
+	} else {
+		c, e = cloudsigmaapi.New("zrh", "fixture", "fixture", "")
+	}
 	http.DefaultTransport = old
 	if e != nil {
 		t.Fatal(e)
 	}
 	return c
+}
+
+func TestOfflineNativeTokenLicense(t *testing.T) {
+	const body = `{"objects":[{"name":"win","burstable":true,"long_name":"Windows","resource_uri":"uri","type":"instance","user_metric":"smp","free":9007199254740993}]}`
+	calls := 0
+	native := licenseFixture(t, http.StatusOK, body, &calls, true)
+	legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture-token"), cloudsigma.WithHTTPClient(&http.Client{Transport: fixtureRT(func(*http.Request) (*http.Response, error) {
+		t.Fatal("token license read fell back to the Go SDK")
+		return nil, errors.New("unexpected fallback")
+	})}))
+	d := &licenseDataSource{}
+	ctx := context.Background()
+	var conf datasource.ConfigureResponse
+	d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authToken, Native: native, Legacy: legacy}}, &conf)
+	if conf.Diagnostics.HasError() {
+		t.Fatal(conf.Diagnostics)
+	}
+	var schemaResponse datasource.SchemaResponse
+	d.Schema(ctx, datasource.SchemaRequest{}, &schemaResponse)
+	state := tfsdk.State{Schema: schemaResponse.Schema}
+	prior := licenseDataSourceModel{Name: types.StringValue("win"), ID: types.StringValue("prior")}
+	if diags := state.Set(ctx, &prior); diags.HasError() {
+		t.Fatal(diags)
+	}
+	out := datasource.ReadResponse{State: state}
+	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: schemaResponse.Schema, Raw: state.Raw}}, &out)
+	if out.Diagnostics.HasError() || calls != 1 {
+		t.Fatalf("native token license read failed: calls=%d diagnostics=%v", calls, out.Diagnostics)
+	}
+	var got licenseDataSourceModel
+	if diags := out.State.Get(ctx, &got); diags.HasError() || got.Name.ValueString() != "win" || got.LongName.ValueString() != "Windows" {
+		t.Fatalf("native token license state: %+v diagnostics=%v", got, diags)
+	}
 }
 
 func TestOfflineTokenLicenseNumericQuantity(t *testing.T) {

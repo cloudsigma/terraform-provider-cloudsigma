@@ -75,7 +75,7 @@ func TestOfflineNativeAuthMatrix(t *testing.T) {
 				continue
 			}
 			c, ok := o.DataSourceData.(*ProviderClients)
-			if !ok || c == nil || o.ResourceData != c || c.Legacy == nil || (effective == 3 && (c.Auth != authBasic || c.Native == nil)) || (effective == 4 && (c.Auth != authToken || c.Native != nil)) {
+			if !ok || c == nil || o.ResourceData != c || c.Legacy == nil || (effective == 3 && (c.Auth != authBasic || c.Native == nil)) || (effective == 4 && (c.Auth != authToken || c.Native == nil)) {
 				t.Fatalf("selection bits%d %s", bits, variant)
 			}
 		}

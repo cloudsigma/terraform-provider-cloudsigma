@@ -1,4 +1,4 @@
-// Package cloudsigmaapi implements the provider-owned Basic read transport.
+// Package cloudsigmaapi implements the provider-owned HTTP transport.
 package cloudsigmaapi
 
 import (
@@ -18,14 +18,27 @@ type doer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 type Client struct {
-	transport                           doer
-	base, username, password, userAgent string
+	transport                                  doer
+	base, username, password, token, userAgent string
 }
 
 var locationLabel = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 
 // New constructs a fixed-policy client. No arbitrary endpoint is accepted.
 func New(location, username, password, userAgent string) (*Client, error) {
+	return newClient(location, username, password, "", userAgent)
+}
+
+// NewToken constructs a fixed-policy bearer-token client for native read
+// paths. It shares the same endpoint and redirect policy as Basic clients.
+func NewToken(location, token, userAgent string) (*Client, error) {
+	if token == "" {
+		return nil, &Error{Category: "transport"}
+	}
+	return newClient(location, "", "", token, userAgent)
+}
+
+func newClient(location, username, password, token, userAgent string) (*Client, error) {
 	location = strings.ToLower(location)
 	if !locationLabel.MatchString(location) {
 		return nil, &Error{Category: "transport"}
@@ -48,7 +61,15 @@ func New(location, username, password, userAgent string) (*Client, error) {
 	transport := t.Clone()
 	transport.DisableCompression = true
 	h := &http.Client{Transport: transport, Timeout: requestTimeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
-	return &Client{transport: h, base: "https://" + host + "/api/2.0/", username: username, password: password, userAgent: userAgent}, nil
+	return &Client{transport: h, base: "https://" + host + "/api/2.0/", username: username, password: password, token: token, userAgent: userAgent}, nil
+}
+
+func (c *Client) authenticate(req *http.Request) {
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+		return
+	}
+	req.SetBasicAuth(c.username, c.password)
 }
 
 type readEndpoint uint8
@@ -118,7 +139,7 @@ func (c *Client) getLibraryDrivesContext(ctx context.Context, endpoint readEndpo
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept-Encoding", "identity")
 	req.Header.Set("User-Agent", c.userAgent)
-	req.SetBasicAuth(c.username, c.password)
+	c.authenticate(req)
 	resp, err := transport.Do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
