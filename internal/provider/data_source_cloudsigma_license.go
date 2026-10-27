@@ -133,7 +133,7 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 		return
 	}
 
-	if data.Filters != nil && len(data.Filters) > 0 {
+	if len(data.Filters) > 0 {
 		// this logic belongs to deprecated filter block and should be removed after breaking change release
 		tflog.Warn(ctx, "Using legacy filter block")
 

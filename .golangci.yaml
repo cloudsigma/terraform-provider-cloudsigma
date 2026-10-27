@@ -3,7 +3,7 @@ linters:
   enable:
     - durationcheck
     - errcheck
-    - exportloopref
+    - copyloopvar
     #- forcetypeassert (disable for now)
     - godot
     - gofmt
@@ -16,7 +16,6 @@ linters:
     - nilerr
     - predeclared
     - staticcheck
-    - tenv
     - unconvert
     - unused
 
