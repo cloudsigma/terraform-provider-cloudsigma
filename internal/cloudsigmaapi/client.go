@@ -54,12 +54,21 @@ func newClient(location, username, password, token, userAgent string) (*Client, 
 	case "wdc":
 		host = "wdc.alpha3cloud.com"
 	}
-	t, ok := http.DefaultTransport.(*http.Transport)
-	if !ok {
-		return nil, &Error{Category: "transport"}
+	var transport http.RoundTripper
+	// A caller-provided default client transport is the narrow test/integration
+	// seam. Production uses the standard transport clone with compression
+	// disabled; the fixed API base and redirect policy remain provider-owned.
+	if http.DefaultClient != nil && http.DefaultClient.Transport != nil {
+		transport = http.DefaultClient.Transport
+	} else {
+		t, ok := http.DefaultTransport.(*http.Transport)
+		if !ok {
+			return nil, &Error{Category: "transport"}
+		}
+		clone := t.Clone()
+		clone.DisableCompression = true
+		transport = clone
 	}
-	transport := t.Clone()
-	transport.DisableCompression = true
 	h := &http.Client{Transport: transport, Timeout: requestTimeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	return &Client{transport: h, base: "https://" + host + "/api/2.0/", username: username, password: password, token: token, userAgent: userAgent}, nil
 }

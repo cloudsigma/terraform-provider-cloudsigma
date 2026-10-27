@@ -55,28 +55,34 @@ func TestOfflineDatasourceCoverage(t *testing.T) {
 					attrs["filter"] = tftypes.NewValue(ft, []tftypes.Value{tftypes.NewValue(ft.ElementType, map[string]tftypes.Value{"name": tftypes.NewValue(tftypes.String, field), "values": tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "selected")})})})
 					raw := tftypes.NewValue(typ, attrs)
 					calls := 0
+					body := `{"objects":[` + tc.item + `]}`
+					code := 200
+					switch mode {
+					case "none":
+						body = `{"objects":[]}`
+					case "many":
+						body = `{"objects":[` + tc.item + `,` + tc.item + `]}`
+					case "http-error":
+						code = 500
+						body = `[]`
+					case "malformed":
+						body = `{`
+					}
+					route := "/api/2.0/" + tc.route
+					path, query := route, ""
+					if i := strings.IndexByte(route, '?'); i >= 0 {
+						path, query = route[:i], route[i+1:]
+					}
+					native := libraryFixture(t, code, body, &calls, path, query)
 					client := cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithLocation("next"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(q *http.Request) (*http.Response, error) {
 						calls++
 						if q.Method != "GET" || q.URL.RequestURI() != "/api/2.0/"+tc.route {
 							t.Fatalf("unexpected request %s %s", q.Method, q.URL.RequestURI())
 						}
-						body := `{"objects":[` + tc.item + `]}`
-						code := 200
-						switch mode {
-						case "none":
-							body = `{"objects":[]}`
-						case "many":
-							body = `{"objects":[` + tc.item + `,` + tc.item + `]}`
-						case "http-error":
-							code = 500
-							body = `[]`
-						case "malformed":
-							body = `{`
-						}
 						return &http.Response{StatusCode: code, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: q}, nil
 					})}))
 					var conf datasource.ConfigureResponse
-					d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Legacy: client, Auth: authToken}}, &conf)
+					d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Native: native, Legacy: client, Auth: authToken}}, &conf)
 					if conf.Diagnostics.HasError() {
 						t.Fatal(conf.Diagnostics)
 					}
