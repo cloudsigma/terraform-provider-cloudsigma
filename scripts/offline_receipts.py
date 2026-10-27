@@ -6,7 +6,6 @@ Output payload is never semantic evidence. Framing is not a hostile-code boundar
 import hashlib
 import json
 import pathlib
-import re
 
 PLAN = json.loads(pathlib.Path(__file__).with_name('offline_plan.json').read_text())
 
