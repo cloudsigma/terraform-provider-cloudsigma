@@ -50,17 +50,30 @@ func TestOfflineDatasourceReads(t *testing.T) {
 					path += "tags/fixture/"
 				}
 				calls := 0
-				c := cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithLocation("next"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(q *http.Request) (*http.Response, error) {
-					calls++
-					if q.Method != "GET" || q.URL.RequestURI() != path {
-						t.Fatal("wire", q.URL.RequestURI())
-					}
-					body := `{"uuid":"fixture","name":"PRIVATE-CANARY","address":"PRIVATE-CANARY","company":"PRIVATE-CANARY","meta":{"s":"PRIVATE-CANARY"},"netmask":24}`
+				var providerData *ProviderClients
+				if kind == "profile" {
+					// Profile reads are provider-owned native transport on both
+					// credential modes; keep this fixture aligned with that boundary
+					// instead of expecting a legacy SDK round trip.
+					body := `{"uuid":"fixture","name":"PRIVATE-CANARY","address":"PRIVATE-CANARY","company":"PRIVATE-CANARY","first_name":"PRIVATE-CANARY","last_name":"PRIVATE-CANARY","title":"PRIVATE-CANARY"}`
 					if code != 200 {
 						body = `[]`
 					}
-					return &http.Response{StatusCode: code, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: q}, nil
-				})}))
+					providerData = &ProviderClients{Auth: authToken, Native: profileFixture(t, code, body, &calls, "Bearer fixture-token")}
+				} else {
+					c := cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithLocation("next"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(q *http.Request) (*http.Response, error) {
+						calls++
+						if q.Method != "GET" || q.URL.RequestURI() != path {
+							t.Fatal("wire", q.URL.RequestURI())
+						}
+						body := `{"uuid":"fixture","name":"PRIVATE-CANARY","address":"PRIVATE-CANARY","company":"PRIVATE-CANARY","meta":{"s":"PRIVATE-CANARY"},"netmask":24}`
+						if code != 200 {
+							body = `[]`
+						}
+						return &http.Response{StatusCode: code, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: q}, nil
+					})}))
+					providerData = &ProviderClients{Legacy: c, Auth: authToken}
+				}
 				var sc datasource.SchemaResponse
 				d.Schema(ctx, datasource.SchemaRequest{}, &sc)
 				typ := sc.Schema.Type().TerraformType(ctx)
@@ -73,7 +86,7 @@ func TestOfflineDatasourceReads(t *testing.T) {
 				}
 				raw := tftypes.NewValue(typ, attrs)
 				var conf datasource.ConfigureResponse
-				d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Legacy: c, Auth: authToken}}, &conf)
+				d.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: providerData}, &conf)
 				resp := datasource.ReadResponse{State: tfsdk.State{Schema: sc.Schema, Raw: raw}}
 				d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: sc.Schema, Raw: raw}}, &resp)
 				if calls != 1 {
