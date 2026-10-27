@@ -97,7 +97,7 @@ func (d *locationDataSource) Configure(_ context.Context, request datasource.Con
 		return
 	}
 	clients, ok := request.ProviderData.(*ProviderClients)
-	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || clients.Native == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -204,16 +204,5 @@ func (d *locationDataSource) Read(ctx context.Context, request datasource.ReadRe
 
 // locations selects auth mode at configuration, never as an error fallback.
 func (d *locationDataSource) locations(ctx context.Context) ([]cloudsigmaapi.Location, error) {
-	if d.clients.Auth == authBasic {
-		return d.clients.Native.Locations(ctx)
-	}
-	legacy, _, err := d.clients.Legacy.Locations.List(ctx)
-	if err != nil {
-		return nil, err
-	}
-	locations := make([]cloudsigmaapi.Location, len(legacy))
-	for i, l := range legacy {
-		locations[i] = cloudsigmaapi.Location(l)
-	}
-	return locations, nil
+	return d.clients.Native.Locations(ctx)
 }
