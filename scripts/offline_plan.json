@@ -318,7 +318,7 @@
       "TestOfflineDestroyStatus",
       "TestOfflineSnapshotDependencyCleanup"
     ],
-    "total": 444
+    "total": 443
   },
   {
     "package": "internal/provider",
