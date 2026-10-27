@@ -54,9 +54,7 @@ jobs:
 
       - name: Build production Go packages
         if: matrix.language == 'go'
-        run: |
-          go build ./...
-          (cd tools && go build -tags=tools ./...)
+        run: go build ./...
 
       - name: Compile Go test packages without running tests
         if: matrix.language == 'go'
@@ -65,7 +63,7 @@ jobs:
           while IFS= read -r package; do
             [[ -z "$package" ]] && continue
             go test -c -o "$RUNNER_TEMP/codeql-tests.test" "$package"
-          done < <(go list -f '{{if .TestGoFiles}}{{.ImportPath}}{{end}}' ./...)
+          done < <(go list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./...)
 
       - name: Analyze
         uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
