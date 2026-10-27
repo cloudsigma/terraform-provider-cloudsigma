@@ -1,6 +1,6 @@
 Native bearer-authenticated Drive data source qualification — 2026-10-27
 
-Base: 5a1e0ad70db735ae26a95d323d47f637b1746b71 (origin/native-license-token, PR133)
+Base: 406c2588b71d35b8da782c0868216d7f0ddabb63 (main after merged PR133)
 
 Focused verification:
 - GOPROXY=off go test ./internal/provider -run '^TestOfflineNativeDrive$|^TestOfflineDriveCancel$|^TestOfflineTokenDriveCancelPreservesState$|^TestOfflineDriveConfigureRequiresNative$' -count=1 -timeout=90s — PASS
