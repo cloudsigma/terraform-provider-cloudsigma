@@ -318,7 +318,7 @@
       "TestOfflineDestroyStatus",
       "TestOfflineSnapshotDependencyCleanup"
     ],
-    "total": 434
+    "total": 444
   },
   {
     "package": "internal/provider",
