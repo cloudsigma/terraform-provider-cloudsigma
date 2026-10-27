@@ -73,7 +73,7 @@ func TestOfflineDatasourceCoverage(t *testing.T) {
 					if i := strings.IndexByte(route, '?'); i >= 0 {
 						path, query = route[:i], route[i+1:]
 					}
-					native := libraryFixture(t, code, body, &calls, path, query, tc.name == "ip")
+					native := libraryFixtureAuth(t, code, body, &calls, path, query, tc.name == "ip" || tc.name == "vlan")
 					client := cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithLocation("next"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(q *http.Request) (*http.Response, error) {
 						calls++
 						if q.Method != "GET" || q.URL.RequestURI() != "/api/2.0/"+tc.route {

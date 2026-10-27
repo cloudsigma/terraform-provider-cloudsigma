@@ -72,7 +72,7 @@ func TestOfflineNetworkProjectedState(t *testing.T) {
 				raw := tftypes.NewValue(typ, attrs)
 				calls := 0
 				var native *cloudsigmaapi.Client
-				if tc.name == "ip" {
+				if tc.name == "ip" || tc.name == "vlan" {
 					nativeBody := `{"objects":[` + tc.fixture + `]}`
 					if mode == "wire-type-error" {
 						nativeBody = `{"objects":[{"uuid":{}}]}`
