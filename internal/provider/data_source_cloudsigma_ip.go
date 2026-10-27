@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -98,7 +97,7 @@ func (d *ipDataSource) Configure(_ context.Context, request datasource.Configure
 		return
 	}
 	clients, ok := request.ProviderData.(*ProviderClients)
-	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || clients.Native == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -191,34 +190,8 @@ func (d *ipDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 
 // Authentication mode is selected at Configure, never by retrying an error.
 func (d *ipDataSource) ips(ctx context.Context) ([]cloudsigmaapi.IP, error) {
-	if d.clients.Auth == authBasic {
-		return d.clients.Native.IPs(ctx)
-	}
-	v, _, e := d.clients.Legacy.IPs.List(ctx)
-	if e != nil {
-		return nil, e
-	}
-	var out []cloudsigmaapi.IP
-	b, e := json.Marshal(v)
-	if e != nil {
-		return nil, e
-	}
-	e = json.Unmarshal(b, &out)
-	return out, e
+	return d.clients.Native.IPs(ctx)
 }
 func (d *ipDataSource) ip(ctx context.Context, id string) (*cloudsigmaapi.IP, error) {
-	if d.clients.Auth == authBasic {
-		return d.clients.Native.IP(ctx, id)
-	}
-	v, _, e := d.clients.Legacy.IPs.Get(ctx, id)
-	if e != nil {
-		return nil, e
-	}
-	var out cloudsigmaapi.IP
-	b, e := json.Marshal(v)
-	if e != nil {
-		return nil, e
-	}
-	e = json.Unmarshal(b, &out)
-	return &out, e
+	return d.clients.Native.IP(ctx, id)
 }
