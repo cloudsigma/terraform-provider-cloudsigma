@@ -19,8 +19,9 @@ import (
 )
 
 // In-memory TLS dial seam: no listener/socket or public constructor hook.
-func locationFixture(t *testing.T, code int, body string, calls *int) *cloudsigmaapi.Client {
+func locationFixture(t *testing.T, code int, body string, calls *int, tokenAuth ...bool) *cloudsigmaapi.Client {
 	t.Helper()
+	useToken := len(tokenAuth) > 0 && tokenAuth[0]
 	old := http.DefaultTransport
 	tr := old.(*http.Transport).Clone()
 	tr.Proxy = nil
@@ -36,13 +37,26 @@ func locationFixture(t *testing.T, code int, body string, calls *int) *cloudsigm
 			if r.URL.Path != "/api/2.0/locations/" || r.URL.RawQuery != "" {
 				return
 			}
+			if useToken {
+				if r.Header.Get("Authorization") != "Bearer fixture-token" {
+					return
+				}
+			} else if u, p, ok := r.BasicAuth(); !ok || u != "fixture" || p != "fixture" {
+				return
+			}
 			_, _ = fmt.Fprintf(b, "HTTP/1.1 %d response\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", code, len(body), body)
 		}()
 		return a, nil
 	}
 	tr.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12}
 	http.DefaultTransport = tr
-	c, e := cloudsigmaapi.New("zrh", "fixture", "fixture", "")
+	var c *cloudsigmaapi.Client
+	var e error
+	if useToken {
+		c, e = cloudsigmaapi.NewToken("zrh", "fixture-token", "")
+	} else {
+		c, e = cloudsigmaapi.New("zrh", "fixture", "fixture", "")
+	}
 	http.DefaultTransport = old
 	if e != nil {
 		t.Fatal(e)
@@ -68,46 +82,52 @@ func TestOfflineNativeLocation(t *testing.T) {
 		{"unknownuuid", 200, `{}`, types.StringUnknown(), nil, "Missing required attributes"},
 		{"multiple", 200, `{"objects":[{"id":"ZRH"},{"id":"ZRH"}]}`, types.StringNull(), []migration.FilterModel{{Name: types.StringValue("id"), Values: []types.String{types.StringValue("ZRH")}}}, "Too many search results"},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-			calls := 0
-			native := locationFixture(t, tc.code, tc.body, &calls)
-			d := &locationDataSource{}
-			var conf datasource.ConfigureResponse
-			d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authBasic, Native: native}}, &conf)
-			if conf.Diagnostics.HasError() {
-				t.Fatal(conf.Diagnostics)
-			}
-			var s datasource.SchemaResponse
-			d.Schema(ctx, datasource.SchemaRequest{}, &s)
-			state := tfsdk.State{Schema: s.Schema}
-			prior := locationDataSourceModel{ID: types.StringValue("old"), UUID: tc.uuid, Filters: tc.filters}
-			if x := state.Set(ctx, &prior); x.HasError() {
-				t.Fatal(x)
-			}
-			out := datasource.ReadResponse{State: state}
-			d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: s.Schema, Raw: state.Raw}}, &out)
-			if tc.want != "" {
-				if !out.Diagnostics.HasError() || out.Diagnostics[0].Summary() != tc.want || !out.State.Raw.Equal(state.Raw) {
-					t.Fatal(out.Diagnostics)
+		for _, token := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/token=%v", tc.name, token), func(t *testing.T) {
+				ctx := context.Background()
+				calls := 0
+				native := locationFixture(t, tc.code, tc.body, &calls, token)
+				d := &locationDataSource{}
+				var conf datasource.ConfigureResponse
+				auth := authBasic
+				if token {
+					auth = authToken
 				}
-			} else {
-				var got locationDataSourceModel
-				if x := out.State.Get(ctx, &got); x.HasError() {
+				d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: auth, Native: native}}, &conf)
+				if conf.Diagnostics.HasError() {
+					t.Fatal(conf.Diagnostics)
+				}
+				var s datasource.SchemaResponse
+				d.Schema(ctx, datasource.SchemaRequest{}, &s)
+				state := tfsdk.State{Schema: s.Schema}
+				prior := locationDataSourceModel{ID: types.StringValue("old"), UUID: tc.uuid, Filters: tc.filters}
+				if x := state.Set(ctx, &prior); x.HasError() {
 					t.Fatal(x)
 				}
-				if out.Diagnostics.HasError() || got.ID.ValueString() != "ZRH" || got.UUID.ValueString() != "ZRH" || got.CountryCode.ValueString() != "CH" || got.APIEndpoint.ValueString() != "api" || got.DisplayName.ValueString() != "Zurich" {
-					t.Fatalf("%+v %v", got, out.Diagnostics)
+				out := datasource.ReadResponse{State: state}
+				d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: s.Schema, Raw: state.Raw}}, &out)
+				if tc.want != "" {
+					if !out.Diagnostics.HasError() || out.Diagnostics[0].Summary() != tc.want || !out.State.Raw.Equal(state.Raw) {
+						t.Fatal(out.Diagnostics)
+					}
+				} else {
+					var got locationDataSourceModel
+					if x := out.State.Get(ctx, &got); x.HasError() {
+						t.Fatal(x)
+					}
+					if out.Diagnostics.HasError() || got.ID.ValueString() != "ZRH" || got.UUID.ValueString() != "ZRH" || got.CountryCode.ValueString() != "CH" || got.APIEndpoint.ValueString() != "api" || got.DisplayName.ValueString() != "Zurich" {
+						t.Fatalf("%+v %v", got, out.Diagnostics)
+					}
 				}
-			}
-			want := 1
-			if tc.want == "Missing required attributes" {
-				want = 0
-			}
-			if calls != want {
-				t.Fatal(calls)
-			}
-		})
+				want := 1
+				if tc.want == "Missing required attributes" {
+					want = 0
+				}
+				if calls != want {
+					t.Fatal(calls)
+				}
+			})
+		}
 	}
 	// Cancellation with actual provider state and no possible legacy fallback.
 	ctx, cancel := context.WithCancel(context.Background())
@@ -125,5 +145,36 @@ func TestOfflineNativeLocation(t *testing.T) {
 	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: s.Schema, Raw: state.Raw}}, &out)
 	if !out.Diagnostics.HasError() || !out.State.Raw.Equal(state.Raw) || !strings.Contains(out.Diagnostics[0].Detail(), "cancelled") {
 		t.Fatal(errors.New("cancel state"))
+	}
+}
+
+func TestOfflineTokenLocationCancelPreservesState(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	native, err := cloudsigmaapi.NewToken("zrh", "fixture-token", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := &locationDataSource{clients: &ProviderClients{Auth: authToken, Native: native}}
+	var schema datasource.SchemaResponse
+	d.Schema(ctx, datasource.SchemaRequest{}, &schema)
+	state := tfsdk.State{Schema: schema.Schema}
+	prior := locationDataSourceModel{UUID: types.StringValue("ZRH"), ID: types.StringValue("old")}
+	if diags := state.Set(context.Background(), &prior); diags.HasError() {
+		t.Fatal(diags)
+	}
+	out := datasource.ReadResponse{State: state}
+	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: schema.Schema, Raw: state.Raw}}, &out)
+	if !out.Diagnostics.HasError() || !out.State.Raw.Equal(state.Raw) || !strings.Contains(out.Diagnostics[0].Detail(), "cancelled") {
+		t.Fatal(out.Diagnostics)
+	}
+}
+
+func TestOfflineLocationConfigureRequiresNative(t *testing.T) {
+	d := &locationDataSource{}
+	var response datasource.ConfigureResponse
+	d.Configure(context.Background(), datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authToken}}, &response)
+	if d.clients != nil || !response.Diagnostics.HasError() {
+		t.Fatal(response.Diagnostics)
 	}
 }
