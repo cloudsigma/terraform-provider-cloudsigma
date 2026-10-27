@@ -1,0 +1,12 @@
+Native bearer-authenticated VLAN data source qualification — 2026-10-27
+
+Base: f44f4b5547a17056a9eefd6d697a4a98cd00248 (PR136, stacked on PR135 and PR133)
+
+Focused verification:
+- GOPROXY=off go test ./internal/provider -run '^TestOfflineNativeVLAN$|^TestOfflineVLANCancel$|^TestOfflineTokenVLANCancelPreservesState$|^TestOfflineVLANConfigureRequiresNative$' -count=1 -timeout=90s — PASS
+- GOPROXY=off go test -race ./internal/provider -run '^TestOfflineNativeVLAN$|^TestOfflineTokenVLANCancelPreservesState$|^TestOfflineVLANConfigureRequiresNative$' -count=1 -timeout=120s — PASS
+- GOPROXY=off go build ./... — PASS
+- GOPROXY=off go vet ./... — PASS
+- git diff --check — PASS
+
+This slice uses the provider-owned native VLAN list/get methods for both Basic and bearer auth and removes SDK projection/fallback from this data-source surface. No live cloud or acceptance tests were run.

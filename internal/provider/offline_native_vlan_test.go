@@ -66,10 +66,7 @@ func TestOfflineNativeVLAN(t *testing.T) {
 						query = ""
 					}
 				}
-				native := libraryFixture(t, tc.code, tc.body, &calls, path, query)
-				if token {
-					native = nil
-				}
+				native := libraryFixture(t, tc.code, tc.body, &calls, path, query, token)
 				legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture"), cloudsigma.WithHTTPClient(&http.Client{Transport: fixtureRT(func(r *http.Request) (*http.Response, error) {
 					if !token {
 						t.Fatal("fallback")
@@ -149,5 +146,37 @@ func TestOfflineVLANCancel(t *testing.T) {
 	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: schema.Schema, Raw: state.Raw}}, &out)
 	if !out.Diagnostics.HasError() || !strings.Contains(out.Diagnostics[0].Detail(), "cancelled") || !out.State.Raw.Equal(state.Raw) {
 		t.Fatal(out.Diagnostics)
+	}
+}
+
+func TestOfflineTokenVLANCancelPreservesState(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	native, err := cloudsigmaapi.NewToken("zrh", "fixture-token", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := &vlanDataSource{clients: &ProviderClients{Auth: authToken, Native: native}}
+	var schema datasource.SchemaResponse
+	d.Schema(ctx, datasource.SchemaRequest{}, &schema)
+	state := tfsdk.State{Schema: schema.Schema}
+	prior := vlanDataSourceModel{UUID: types.StringValue("vlan-id"), ID: types.StringValue("old"), Name: types.StringValue("old-name")}
+	if diags := state.Set(context.Background(), &prior); diags.HasError() {
+		t.Fatal(diags)
+	}
+	out := datasource.ReadResponse{State: state}
+	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: schema.Schema, Raw: state.Raw}}, &out)
+	if !out.Diagnostics.HasError() || !strings.Contains(out.Diagnostics[0].Detail(), "cancelled") || !out.State.Raw.Equal(state.Raw) {
+		t.Fatal(out.Diagnostics)
+	}
+}
+
+func TestOfflineVLANConfigureRequiresNative(t *testing.T) {
+	legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture"))
+	d := &vlanDataSource{}
+	var response datasource.ConfigureResponse
+	d.Configure(context.Background(), datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authToken, Legacy: legacy}}, &response)
+	if d.clients != nil || !response.Diagnostics.HasError() {
+		t.Fatal(response.Diagnostics)
 	}
 }
