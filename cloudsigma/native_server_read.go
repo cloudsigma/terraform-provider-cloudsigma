@@ -43,6 +43,12 @@ func readNativeServer(ctx context.Context, d *schema.ResourceData, client *cloud
 		_ = d.Set("ssh_keys", nativeServerKeys(server.PublicKeys))
 	}
 
+	if drives, ok := nativeServerDrives(server.Drives); ok {
+		if err := d.Set("drive", drives); err != nil {
+			return diag.Errorf("error setting server drives: %v", err)
+		}
+	}
+
 	if len(metadata) > 0 {
 		_ = d.Set("meta", metadata)
 	}
@@ -94,6 +100,23 @@ func nativeServerKeys(keys []cloudsigmaapi.Keypair) []interface{} {
 		v[i] = k.UUID
 	}
 	return v
+}
+
+func nativeServerDrives(drives []cloudsigmaapi.ServerDrive) ([]interface{}, bool) {
+	if drives == nil {
+		return nil, false
+	}
+	result := make([]interface{}, len(drives))
+	for i, attached := range drives {
+		if attached.Drive == nil || attached.Drive.UUID == "" {
+			return nil, false
+		}
+		result[i] = map[string]interface{}{
+			"uuid":   attached.Drive.UUID,
+			"device": attached.Device,
+		}
+	}
+	return result, true
 }
 func nativeServerTags(tags []cloudsigmaapi.Tag) []interface{} {
 	v := make([]interface{}, len(tags))

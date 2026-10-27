@@ -361,6 +361,12 @@ func resourceCloudSigmaServerRead(ctx context.Context, d *schema.ResourceData, m
 		_ = d.Set("ssh_keys", extractSSHKeys(server.PublicKeys))
 	}
 
+	if drives, ok := flattenServerDrives(server.Drives); ok {
+		if err := d.Set("drive", drives); err != nil {
+			return diag.Errorf("error setting server drives: %v", err)
+		}
+	}
+
 	if len(metadata) > 0 {
 		_ = d.Set("meta", metadata)
 	}
@@ -592,6 +598,27 @@ func extractSSHKeys(serverSSHKeys []cloudsigma.Keypair) []interface{} {
 	}
 
 	return extractedSshKeys
+}
+
+// flattenServerDrives projects the response's attached-drive references into
+// the resource state. A missing or malformed drives field is left untouched so
+// a partial response cannot erase a known attachment; an explicit empty list
+// is still authoritative and clears the state.
+func flattenServerDrives(drives []cloudsigma.ServerDrive) ([]interface{}, bool) {
+	if drives == nil {
+		return nil, false
+	}
+	result := make([]interface{}, len(drives))
+	for i, attached := range drives {
+		if attached.Drive == nil || attached.Drive.UUID == "" {
+			return nil, false
+		}
+		result[i] = map[string]interface{}{
+			"uuid":   attached.Drive.UUID,
+			"device": attached.Device,
+		}
+	}
+	return result, true
 }
 
 func findIPv4Address(server *cloudsigma.Server, addrType string) string {
