@@ -80,8 +80,11 @@ func TestOfflineServerMetadataAtomic(t *testing.T) {
 					if !reflect.DeepEqual(d.Get("meta"), want) {
 						t.Fatal("metadata compatibility")
 					}
-					if d.Id() != "fixture" || !reflect.DeepEqual(d.Get("drive"), initial["drive"]) {
-						t.Fatal("unprojected state changed")
+					if d.Id() != "fixture" {
+						t.Fatal("identity changed")
+					}
+					if drives := d.Get("drive"); !reflect.DeepEqual(drives, initial["drive"]) {
+						t.Fatal("response without drives changed attachment state")
 					}
 				}
 			})

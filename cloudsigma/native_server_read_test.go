@@ -122,8 +122,18 @@ func TestOfflineLegacyNativeServerRead(t *testing.T) {
 			if calls.Load() != 1 || !reflect.DeepEqual(d.State(), old.State()) {
 				t.Fatalf("projection mismatch\n%#v\n%#v", d.State(), old.State())
 			}
-			if d.Id() != "fixture" || d.Get("drive").([]interface{})[0].(map[string]interface{})["uuid"] != "keep-drive" {
+			if d.Id() != "fixture" {
 				t.Fatal("identity/drive changed")
+			}
+			if body == object {
+				drives := d.Get("drive").([]interface{})
+				if len(drives) != 1 || drives[0].(map[string]interface{})["uuid"] != "other" || drives[0].(map[string]interface{})["device"] != "ide" {
+					t.Fatal("attached drive was not refreshed")
+				}
+			} else {
+				if d.Get("drive").([]interface{})[0].(map[string]interface{})["uuid"] != "keep-drive" {
+					t.Fatal("partial response erased drive state")
+				}
 			}
 			if body == object && (d.Get("memory") != int(9007199254740993) || d.Get("ipv4_address") != "192.0.2.2" || d.Get("meta").(map[string]interface{})["keep"] != "value" || !d.Get("ssh_keys").(*schema.Set).Contains("key")) {
 				t.Fatal("explicit projection")
@@ -150,5 +160,45 @@ func TestOfflineLegacyNativeServerRead(t *testing.T) {
 		} else if !reflect.DeepEqual(before, d.State()) || strings.Contains(fmt.Sprint(ds), "PRIVATE") {
 			t.Fatal("state/privacy")
 		}
+	}
+}
+
+func TestOfflineServerDriveReplacementIsRefreshed(t *testing.T) {
+	body := `{"uuid":"fixture","cpu":1000,"mem":536870912,"name":"server","smp":1,"vnc_password":"fixture","drives":[{"device":"virtio","drive":{"uuid":"new-drive"}}]}`
+	for _, path := range []string{"native", "token", "bare"} {
+		t.Run(path, func(t *testing.T) {
+			var calls atomic.Int32
+			var client interface{}
+			if path == "native" {
+				client = nativeServerReadFixture(t, 200, body, nil, &calls)
+			} else {
+				legacy := cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithHTTPClient(&http.Client{Transport: fakeRT(func(r *http.Request) (*http.Response, error) {
+					calls.Add(1)
+					if r.URL.RequestURI() != "/api/2.0/servers/fixture/" {
+						t.Fatalf("unexpected server request: %s", r.URL)
+					}
+					return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: r}, nil
+				})}))
+				client = legacy
+				if path == "token" {
+					client = &configClients{legacy: legacy}
+				}
+			}
+			d := schema.TestResourceDataRaw(t, resourceCloudSigmaServer().Schema, map[string]interface{}{
+				"name": "server", "cpu": 1000, "memory": 536870912, "smp": 1, "vnc_password": "fixture",
+				"drive": []interface{}{map[string]interface{}{"uuid": "old-drive", "device": "virtio"}},
+			})
+			d.SetId("fixture")
+			if diags := resourceCloudSigmaServerRead(context.Background(), d, client); diags.HasError() {
+				t.Fatal(diags)
+			}
+			if calls.Load() != 1 {
+				t.Fatalf("server read calls: %d", calls.Load())
+			}
+			drives := d.Get("drive").([]interface{})
+			if len(drives) != 1 || drives[0].(map[string]interface{})["uuid"] != "new-drive" {
+				t.Fatalf("replacement drive not reflected in state: %#v", drives)
+			}
+		})
 	}
 }
