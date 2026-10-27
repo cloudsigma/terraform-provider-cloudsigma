@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/migration"
 )
@@ -107,7 +105,7 @@ func (d *driveDataSource) Configure(_ context.Context, request datasource.Config
 		return
 	}
 	clients, ok := request.ProviderData.(*ProviderClients)
-	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || clients.Native == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -132,11 +130,8 @@ func (d *driveDataSource) Read(ctx context.Context, request datasource.ReadReque
 		// this logic belongs to deprecated filter block and should be removed after breaking change release
 		tflog.Warn(ctx, "Using legacy filter block")
 
-		opts := &cloudsigma.DriveListOptions{
-			ListOptions: cloudsigma.ListOptions{Limit: 0},
-		}
 		tflog.Trace(ctx, "Getting drives")
-		drives, err := d.drives(ctx, opts)
+		drives, err := d.drives(ctx, "")
 		if err != nil {
 			response.Diagnostics.AddError("Unable to get drives", err.Error())
 			return
@@ -213,12 +208,8 @@ func (d *driveDataSource) Read(ctx context.Context, request datasource.ReadReque
 			data.StorageType = types.StringValue(drive.StorageType)
 			data.UUID = types.StringValue(drive.UUID)
 		} else {
-			opts := &cloudsigma.DriveListOptions{
-				ListOptions: cloudsigma.ListOptions{Limit: 0},
-				Names:       []string{driveName},
-			}
 			tflog.Trace(ctx, "Getting drives")
-			drives, err := d.drives(ctx, opts)
+			drives, err := d.drives(ctx, driveName)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get drives", err.Error())
 				return
@@ -253,48 +244,14 @@ func (d *driveDataSource) Read(ctx context.Context, request datasource.ReadReque
 }
 
 // Authentication mode is selected at Configure, never by retrying an error.
-func (d *driveDataSource) drives(ctx context.Context, opts *cloudsigma.DriveListOptions) ([]cloudsigmaapi.Drive, error) {
-	if d.clients.Auth == authBasic {
-		name := ""
-		if len(opts.Names) > 0 {
-			name = opts.Names[0]
-		}
-		return d.clients.Native.Drives(ctx, name)
-	}
-	v, _, e := d.clients.Legacy.Drives.List(ctx, opts)
-	if e != nil {
-		return nil, e
-	}
-	var out []cloudsigmaapi.Drive
-	b, e := json.Marshal(v)
-	if e != nil {
-		return nil, e
-	}
-	e = json.Unmarshal(b, &out)
-	return out, e
+func (d *driveDataSource) drives(ctx context.Context, name string) ([]cloudsigmaapi.Drive, error) {
+	return d.clients.Native.Drives(ctx, name)
 }
 func (d *driveDataSource) drive(ctx context.Context, uuid string) (*cloudsigmaapi.Drive, int, error) {
-	if d.clients.Auth == authBasic {
-		v, e := d.clients.Native.Drive(ctx, uuid)
-		var apiErr *cloudsigmaapi.Error
-		if errors.As(e, &apiErr) {
-			return v, apiErr.Status, e
-		}
-		return v, 0, e
+	v, e := d.clients.Native.Drive(ctx, uuid)
+	var apiErr *cloudsigmaapi.Error
+	if errors.As(e, &apiErr) {
+		return v, apiErr.Status, e
 	}
-	v, r, e := d.clients.Legacy.Drives.Get(ctx, uuid)
-	status := 0
-	if r != nil {
-		status = r.StatusCode
-	}
-	if e != nil {
-		return nil, status, e
-	}
-	var out cloudsigmaapi.Drive
-	b, e := json.Marshal(v)
-	if e != nil {
-		return nil, status, e
-	}
-	e = json.Unmarshal(b, &out)
-	return &out, status, e
+	return v, 0, e
 }
