@@ -123,37 +123,48 @@ func (r *sshKeyResource) Create(ctx context.Context, request resource.CreateRequ
 		return
 	}
 
-	createRequest := &cloudsigma.KeypairCreateRequest{
-		Keypairs: []cloudsigma.Keypair{{
-			Name: data.Name.ValueString(),
-		}},
-	}
+	createInput := cloudsigmaapi.KeypairCreateRequest{Name: data.Name.ValueString()}
 	privateKey := data.PrivateKey.ValueString()
 	if privateKey != "" {
-		createRequest.Keypairs[0].PrivateKey = privateKey
+		createInput.PrivateKey = privateKey
 	}
 	publicKey := strings.Trim(data.PublicKey.ValueString(), "\n")
 	if publicKey != "" {
-		createRequest.Keypairs[0].PublicKey = publicKey
+		createInput.PublicKey = publicKey
 	}
 	tflog.Trace(ctx, "Creating SSH key")
-	keypairs, _, err := r.client.Keypairs.Create(ctx, createRequest)
+	var keypair *cloudsigmaapi.Keypair
+	var err error
+	if r.native != nil {
+		keypair, err = r.native.CreateKeypair(ctx, createInput)
+	} else {
+		keypairs, _, legacyErr := r.client.Keypairs.Create(ctx, &cloudsigma.KeypairCreateRequest{Keypairs: []cloudsigma.Keypair{{
+			Name: data.Name.ValueString(), PrivateKey: privateKey, PublicKey: publicKey,
+		}}})
+		err = legacyErr
+		if err == nil {
+			if len(keypairs) != 1 || keypairs[0].UUID == "" {
+				err = errors.New("SSH key acknowledgement is missing a usable identity")
+			} else {
+				keypair = &cloudsigmaapi.Keypair{
+					Name: keypairs[0].Name, UUID: keypairs[0].UUID, PrivateKey: keypairs[0].PrivateKey, PublicKey: keypairs[0].PublicKey,
+				}
+			}
+		}
+	}
+	if keypair != nil {
+		data.Name = types.StringValue(keypair.Name)
+		data.ID = types.StringValue(keypair.UUID)
+		data.PrivateKey = types.StringValue(keypair.PrivateKey)
+		data.PublicKey = types.StringValue(keypair.PublicKey)
+		data.UUID = types.StringValue(keypair.UUID)
+		response.Diagnostics.Append(response.State.Set(ctx, &data)...)
+	}
 	if err != nil {
 		response.Diagnostics.AddError("Unable to create SSH key", err.Error())
 		return
 	}
-	keypair := keypairs[0]
 	tflog.Trace(ctx, "Created SSH key")
-
-	// map response body to attributes
-	data.Name = types.StringValue(keypair.Name)
-	data.ID = types.StringValue(keypair.UUID)
-	data.PrivateKey = types.StringValue(keypair.PrivateKey)
-	data.PublicKey = types.StringValue(keypair.PublicKey)
-	data.UUID = types.StringValue(keypair.UUID)
-
-	diags = response.State.Set(ctx, &data)
-	response.Diagnostics.Append(diags...)
 }
 
 func (r *sshKeyResource) Read(ctx context.Context, request resource.ReadRequest, response *resource.ReadResponse) {
