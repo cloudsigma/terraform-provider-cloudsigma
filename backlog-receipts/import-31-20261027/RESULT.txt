@@ -25,6 +25,6 @@ Those tests enter SDK waiter paths that continue polling synthetic responses. No
 
 ## Hosted lint remediation
 
-PR #132 head `9e15791d36ee2578f0d5490bf89700a706f84e79` initially failed hosted `make lint` because staticcheck SA1019 rejected deprecated `schema.ImportStatePassthrough` in the two legacy resources. The callbacks were changed to `schema.ImportStatePassthroughContext` in commit `9fe32d8d6c2e3b2f92df0ed4fc21fd86dfc52a06`.
+PR #132 head `9e15791d36ee2578f0d5490bf89700a706f84e79` initially failed hosted `make lint` because staticcheck SA1019 rejected deprecated `schema.ImportStatePassthrough` in the two legacy resources. The callbacks were changed to `schema.ImportStatePassthroughContext` in commit `9fe32d85f9265e88b5c2feddc149f7bdb67472a9`.
 
 The focused offline protocol/race/build/vet/diff checks were rerun after the fix and passed. Hosted checks for the corrected head are pending.
