@@ -66,10 +66,7 @@ func TestOfflineNativeTag(t *testing.T) {
 						query = ""
 					}
 				}
-				native := libraryFixture(t, tc.code, tc.body, &calls, path, query)
-				if token {
-					native = nil
-				}
+				native := libraryFixture(t, tc.code, tc.body, &calls, path, query, token)
 				legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture"), cloudsigma.WithHTTPClient(&http.Client{Transport: fixtureRT(func(r *http.Request) (*http.Response, error) {
 					if !token && path == "/api/2.0/tags/" {
 						t.Fatal("fallback")
@@ -144,6 +141,28 @@ func TestOfflineTagCancel(t *testing.T) {
 	m := tagDataSourceModel{Name: types.StringValue("blue"), ID: types.StringValue("old")}
 	if x := state.Set(context.Background(), &m); x.HasError() {
 		t.Fatal(x)
+	}
+	out := datasource.ReadResponse{State: state}
+	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: schema.Schema, Raw: state.Raw}}, &out)
+	if !out.Diagnostics.HasError() || !strings.Contains(out.Diagnostics[0].Detail(), "cancelled") || !out.State.Raw.Equal(state.Raw) {
+		t.Fatal(out.Diagnostics)
+	}
+}
+
+func TestOfflineTokenTagListCancelPreservesState(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	native, err := cloudsigmaapi.NewToken("zrh", "fixture-token", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := &tagDataSource{clients: &ProviderClients{Auth: authToken, Native: native, Legacy: cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture-token"))}}
+	var schema datasource.SchemaResponse
+	d.Schema(ctx, datasource.SchemaRequest{}, &schema)
+	state := tfsdk.State{Schema: schema.Schema}
+	prior := tagDataSourceModel{Filters: []migration.FilterModel{{Name: types.StringValue("uuid"), Values: []types.String{types.StringValue("tag-id")}}}, ID: types.StringValue("old")}
+	if diags := state.Set(context.Background(), &prior); diags.HasError() {
+		t.Fatal(diags)
 	}
 	out := datasource.ReadResponse{State: state}
 	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: schema.Schema, Raw: state.Raw}}, &out)
