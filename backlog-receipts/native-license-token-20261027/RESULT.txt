@@ -31,3 +31,13 @@ The same provider-owned client now serves `cloudsigma_profile` for bearer-token 
 - `GOPROXY=off go build ./...` — PASS
 - `GOPROXY=off go vet ./...` — PASS
 - `git diff --check` — PASS
+
+## Configuration regression check
+
+The existing provider configuration test was updated so the token profile case supplies both native and legacy clients at the migration boundary. This preserves other SDK-backed token surfaces while requiring native transport for profile reads.
+
+- `GOPROXY=off go test ./internal/provider -run 'TestOfflineNativeConfigure|TestOfflineNativeTokenProfile|TestOfflineNativeState' -count=1 -timeout=60s` — PASS
+- `GOPROXY=off go test -race ./internal/provider -run 'TestOfflineNativeConfigure|TestOfflineNativeTokenProfile|TestOfflineNativeState' -count=1 -timeout=90s` — PASS
+- `GOPROXY=off go build ./...` — PASS
+- `GOPROXY=off go vet ./...` — PASS
+- `git diff --check` — PASS
