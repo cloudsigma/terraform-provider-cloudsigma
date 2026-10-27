@@ -60,6 +60,12 @@ func TestOfflineDatasourceReads(t *testing.T) {
 						body = `[]`
 					}
 					providerData = &ProviderClients{Auth: authToken, Native: profileFixture(t, code, body, &calls, "Bearer fixture-token")}
+				} else if kind == "ip" {
+					body := `{"uuid":"fixture","name":"PRIVATE-CANARY","address":"PRIVATE-CANARY","company":"PRIVATE-CANARY","meta":{"s":"PRIVATE-CANARY"},"netmask":24}`
+					if code != 200 {
+						body = `[]`
+					}
+					providerData = &ProviderClients{Auth: authToken, Native: libraryFixtureAuth(t, code, body, &calls, path, "", true)}
 				} else {
 					c := cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithLocation("next"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(q *http.Request) (*http.Response, error) {
 						calls++
