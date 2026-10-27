@@ -1,0 +1,24 @@
+# Import issue #31 qualification — 2026-10-27
+
+Repository: cloudsigma/terraform-provider-cloudsigma
+Base: f825822598656d921ddbf030c4341cd52ab4c167
+Head implementation commit before receipt: a3f077e16742edb00bb99e8ddd5bf5c4de28e18d
+
+## Passing offline checks
+
+- `GOPROXY=off go test ./internal/provider ./cloudsigma -run 'TestOfflineImportProtocol|TestOffline.*Import|Test.*Import' -count=1 -timeout=45s` — PASS
+- `GOPROXY=off go test -race ./internal/provider -run '^TestOfflineImportProtocol$' -count=1 -timeout=120s` — PASS
+- `GOPROXY=off go build ./...` — PASS
+- `GOPROXY=off go vet ./...` — PASS
+- `git diff --check` — PASS
+
+The import protocol test now covers identifier-only import for `cloudsigma_tag`, `cloudsigma_ssh_key`, `cloudsigma_snapshot`, `cloudsigma_drive`, and `cloudsigma_server`. The SDK mux includes adapter private metadata for legacy resources; the assertion intentionally validates type/state/ID and does not reject that adapter metadata.
+
+## Existing test-suite limitation retained
+
+The broader command `GOPROXY=off go test ./internal/provider ./cloudsigma -count=1 -timeout=120s` was run and failed by timeout, without a code assertion failure in the import test:
+
+- `github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider`: timeout in existing `TestNative28Matrix/credentials3/rawfalse/wait-partial`.
+- `github.com/cloudsigma/terraform-provider-cloudsigma/cloudsigma`: timeout in existing `TestNative26AttachmentFaults/5/deadline-body`.
+
+Those tests enter SDK waiter paths that continue polling synthetic responses. No live cloud or acceptance tests were run, no dependencies were installed, and no existing dirty checkout was modified.
