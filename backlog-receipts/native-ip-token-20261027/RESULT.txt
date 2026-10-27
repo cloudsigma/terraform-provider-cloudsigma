@@ -10,3 +10,5 @@ Focused verification:
 - git diff --check — PASS
 
 This slice uses the provider-owned native IP list/get methods for both Basic and bearer auth and removes SDK projection/fallback from this data-source surface. No live cloud or acceptance tests were run.
+
+Stack synchronization receipt: branch refreshed after hosted fixture remediation; no provider behavior change.
