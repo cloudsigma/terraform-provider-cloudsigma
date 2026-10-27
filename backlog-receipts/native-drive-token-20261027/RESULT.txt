@@ -1,0 +1,17 @@
+Native bearer-authenticated Drive data source qualification — 2026-10-27
+
+Base: 406c2588b71d35b8da782c0868216d7f0ddabb63 (main after merged PR133)
+
+Focused verification:
+- GOPROXY=off go test ./internal/provider -run '^TestOfflineNativeDrive$|^TestOfflineDriveCancel$|^TestOfflineTokenDriveCancelPreservesState$|^TestOfflineDriveConfigureRequiresNative$' -count=1 -timeout=90s — PASS
+- GOPROXY=off go test -race ./internal/provider -run '^TestOfflineNativeDrive$|^TestOfflineTokenDriveCancelPreservesState$|^TestOfflineDriveConfigureRequiresNative$' -count=1 -timeout=120s — PASS
+- GOPROXY=off go build ./... — PASS
+- GOPROXY=off go vet ./... — PASS
+- git diff --check — PASS
+- make lint — BLOCKED: repository-local tools/bin/golangci-lint is absent; no dependency installation requested.
+
+Broad-package evidence (retained failure, not relabeled):
+- Command: GOPROXY=off go test ./internal/provider -count=1 -timeout=180s
+- Exit: 1
+- Output: panic: test timed out after 3m0s; running TestNative28Matrix/credentials3/rawfalse/wait-status; package failed at internal/provider/native28_matrix_test.go:255 through drive.WaitDriveStatusMountedOrUnmounted and resource_cloudsigma_snapshot.go:148.
+- The same run also left parallel acceptance tests waiting because the synthetic waiter did not complete. No live cloud or acceptance operation was run.
