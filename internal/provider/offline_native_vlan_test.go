@@ -66,7 +66,7 @@ func TestOfflineNativeVLAN(t *testing.T) {
 						query = ""
 					}
 				}
-				native := libraryFixtureAuth(t, tc.code, tc.body, &calls, path, query, token)
+				native := libraryFixture(t, tc.code, tc.body, &calls, path, query, token)
 				legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture"), cloudsigma.WithHTTPClient(&http.Client{Transport: fixtureRT(func(r *http.Request) (*http.Response, error) {
 					if !token {
 						t.Fatal("fallback")
