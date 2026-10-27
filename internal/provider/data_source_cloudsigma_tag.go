@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -228,21 +227,8 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 	response.Diagnostics.Append(diags...)
 }
 
-// Basic list reads are native. Token lists and all identifier reads remain
-// explicitly legacy pending their separate authentication/route qualification.
+// List reads are native for both auth modes. Identifier reads remain legacy
+// because the public singular tag route is not contract-qualified here.
 func (d *tagDataSource) tags(ctx context.Context) ([]cloudsigmaapi.Tag, error) {
-	if d.clients.Auth == authBasic {
-		return d.clients.Native.Tags(ctx)
-	}
-	v, _, e := d.clients.Legacy.Tags.List(ctx)
-	if e != nil {
-		return nil, e
-	}
-	var out []cloudsigmaapi.Tag
-	b, e := json.Marshal(v)
-	if e != nil {
-		return nil, e
-	}
-	e = json.Unmarshal(b, &out)
-	return out, e
+	return d.clients.Native.Tags(ctx)
 }
