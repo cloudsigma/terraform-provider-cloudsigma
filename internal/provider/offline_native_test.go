@@ -68,7 +68,7 @@ func TestOfflineNativeConfigure(t *testing.T) {
 		}
 	}
 	d := &profileDataSource{}
-	for _, c := range []*ProviderClients{{Auth: authBasic, Native: native}, {Auth: authToken, Legacy: good.Legacy}} {
+	for _, c := range []*ProviderClients{{Auth: authBasic, Native: native}, {Auth: authToken, Native: native, Legacy: good.Legacy}} {
 		var out datasource.ConfigureResponse
 		d.Configure(ctx, datasource.ConfigureRequest{ProviderData: c}, &out)
 		if out.Diagnostics.HasError() {
