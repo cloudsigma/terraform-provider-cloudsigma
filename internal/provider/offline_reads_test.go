@@ -65,7 +65,7 @@ func TestOfflineDatasourceReads(t *testing.T) {
 					if code != 200 {
 						body = `[]`
 					}
-					providerData = &ProviderClients{Auth: authToken, Native: libraryFixtureAuth(t, code, body, &calls, path, "", true)}
+					providerData = &ProviderClients{Auth: authToken, Native: libraryFixture(t, code, body, &calls, path, "", true)}
 				} else {
 					c := cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithLocation("next"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(q *http.Request) (*http.Response, error) {
 						calls++

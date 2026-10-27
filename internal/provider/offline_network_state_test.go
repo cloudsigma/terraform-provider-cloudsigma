@@ -77,7 +77,7 @@ func TestOfflineNetworkProjectedState(t *testing.T) {
 					if mode == "wire-type-error" {
 						nativeBody = `{"objects":[{"uuid":{}}]}`
 					}
-					native = libraryFixtureAuth(t, 200, nativeBody, &calls, "/api/2.0/"+tc.route, "", true)
+					native = libraryFixture(t, 200, nativeBody, &calls, "/api/2.0/"+tc.route, "", true)
 				}
 				client := cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithLocation("next"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(q *http.Request) (*http.Response, error) {
 					calls++
