@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"reflect"
@@ -51,6 +52,42 @@ func licenseFixture(t *testing.T, code int, body string, calls *int) *cloudsigma
 	}
 	return c
 }
+
+func TestOfflineTokenLicenseNumericQuantity(t *testing.T) {
+	const body = `{"objects":[{"name":"win","free":9007199254740993,"initial_purchase_requirement":1.20e3,"subsequent_purchase_requirement":-0}]}`
+	var calls int
+	legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture-token"), cloudsigma.WithLocation("zrh"), cloudsigma.WithHTTPClient(&http.Client{Transport: fixtureRT(func(r *http.Request) (*http.Response, error) {
+		calls++
+		if r.Method != http.MethodGet || r.URL.Path != "/api/2.0/licenses/" || r.URL.RawQuery != "" || r.Header.Get("Authorization") != "Bearer fixture-token" {
+			t.Fatalf("unexpected token license request: %s %s auth=%q", r.Method, r.URL, r.Header.Get("Authorization"))
+		}
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: r}, nil
+	})}))
+	d := &licenseDataSource{}
+	ctx := context.Background()
+	var conf datasource.ConfigureResponse
+	d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authToken, Legacy: legacy}}, &conf)
+	if conf.Diagnostics.HasError() {
+		t.Fatal(conf.Diagnostics)
+	}
+	var schemaResponse datasource.SchemaResponse
+	d.Schema(ctx, datasource.SchemaRequest{}, &schemaResponse)
+	state := tfsdk.State{Schema: schemaResponse.Schema}
+	prior := licenseDataSourceModel{ID: types.StringValue("old"), Filters: []migration.FilterModel{{Name: types.StringValue("free"), Values: []types.String{types.StringValue("9007199254740993")}}}}
+	if diags := state.Set(ctx, &prior); diags.HasError() {
+		t.Fatal(diags)
+	}
+	out := datasource.ReadResponse{State: state}
+	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: schemaResponse.Schema, Raw: state.Raw}}, &out)
+	if out.Diagnostics.HasError() || calls != 1 {
+		t.Fatalf("token numeric license read failed: calls=%d diagnostics=%v", calls, out.Diagnostics)
+	}
+	var got licenseDataSourceModel
+	if diags := out.State.Get(ctx, &got); diags.HasError() || got.Name.ValueString() != "win" {
+		t.Fatalf("token numeric license state: %+v diagnostics=%v", got, diags)
+	}
+}
+
 func TestOfflineNativeLicense(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
