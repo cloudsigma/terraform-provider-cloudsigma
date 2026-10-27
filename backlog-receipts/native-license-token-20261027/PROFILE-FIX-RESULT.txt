@@ -1,0 +1,17 @@
+Native profile fixture correction — 2026-10-27
+
+Issue:
+- Hosted PR #133 unit stage failed at TestOfflineDatasourceReads/profile200, profile404, and profile500 because the shared fixture still configured only a legacy SDK client after profile reads moved to provider-owned native transport.
+
+Fix:
+- Profile cases now use the native bearer fixture and retain the existing SDK fixture for IP/VLAN/Tag cases.
+- Profile fixture responses include the native profile fields and validate the bearer header.
+
+Verification:
+- GOPROXY=off go test ./internal/provider -run '^TestOfflineDatasourceReads$|^TestOfflineNativeTokenProfile$' -count=1 -timeout=90s — PASS
+- GOPROXY=off go test -race ./internal/provider -run '^TestOfflineDatasourceReads$|^TestOfflineNativeTokenProfile$' -count=1 -timeout=120s — PASS
+- GOPROXY=off go build ./... — PASS
+- GOPROXY=off go vet ./... — PASS
+- git diff --check — PASS
+
+No live cloud or acceptance tests were run.
