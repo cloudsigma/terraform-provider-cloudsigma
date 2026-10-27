@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -94,7 +93,7 @@ func (d *vlanDataSource) Configure(_ context.Context, request datasource.Configu
 		return
 	}
 	clients, ok := request.ProviderData.(*ProviderClients)
-	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) || (clients.Auth == authToken && clients.Legacy == nil) {
+	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || clients.Native == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -232,34 +231,8 @@ func getVLANName(vlan cloudsigmaapi.VLAN) string {
 
 // Authentication mode is selected at Configure, never by retrying an error.
 func (d *vlanDataSource) vlans(ctx context.Context) ([]cloudsigmaapi.VLAN, error) {
-	if d.clients.Auth == authBasic {
-		return d.clients.Native.VLANs(ctx)
-	}
-	v, _, e := d.clients.Legacy.VLANs.List(ctx)
-	if e != nil {
-		return nil, e
-	}
-	var out []cloudsigmaapi.VLAN
-	b, e := json.Marshal(v)
-	if e != nil {
-		return nil, e
-	}
-	e = json.Unmarshal(b, &out)
-	return out, e
+	return d.clients.Native.VLANs(ctx)
 }
 func (d *vlanDataSource) vlan(ctx context.Context, id string) (*cloudsigmaapi.VLAN, error) {
-	if d.clients.Auth == authBasic {
-		return d.clients.Native.VLAN(ctx, id)
-	}
-	v, _, e := d.clients.Legacy.VLANs.Get(ctx, id)
-	if e != nil {
-		return nil, e
-	}
-	var out cloudsigmaapi.VLAN
-	b, e := json.Marshal(v)
-	if e != nil {
-		return nil, e
-	}
-	e = json.Unmarshal(b, &out)
-	return &out, e
+	return d.clients.Native.VLAN(ctx, id)
 }
