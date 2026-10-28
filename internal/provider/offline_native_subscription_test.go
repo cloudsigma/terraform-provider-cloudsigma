@@ -21,8 +21,9 @@ import (
 )
 
 // In-memory TLS dial seam: no listener/socket or public constructor hook.
-func subscriptionFixture(t *testing.T, code int, body string, calls *int) *cloudsigmaapi.Client {
+func subscriptionFixture(t *testing.T, code int, body string, calls *int, tokenAuth ...bool) *cloudsigmaapi.Client {
 	t.Helper()
+	useToken := len(tokenAuth) > 0 && tokenAuth[0]
 	old := http.DefaultTransport
 	tr := old.(*http.Transport).Clone()
 	tr.Proxy = nil
@@ -35,8 +36,20 @@ func subscriptionFixture(t *testing.T, code int, body string, calls *int) *cloud
 				return
 			}
 			*calls++
-			u, p, ok := r.BasicAuth()
-			if !ok || u != "fixture" || p != "fixture" || r.Method != "GET" || r.Header.Get("Accept-Encoding") != "identity" || r.URL.Path != "/api/2.0/subscriptions/" || r.URL.RawQuery != "" {
+			if r.Method != "GET" || r.Header.Get("Accept-Encoding") != "identity" || r.URL.Path != "/api/2.0/subscriptions/" || r.URL.RawQuery != "" {
+				return
+			}
+			if useToken {
+				if r.Header.Get("Authorization") != "Bearer fixture-token" {
+					return
+				}
+			} else {
+				u, p, ok := r.BasicAuth()
+				if !ok || u != "fixture" || p != "fixture" {
+					return
+				}
+			}
+			if r.Header.Get("Authorization") == "" {
 				return
 			}
 			_, _ = fmt.Fprintf(b, "HTTP/1.1 %d response\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", code, len(body), body)
@@ -45,7 +58,13 @@ func subscriptionFixture(t *testing.T, code int, body string, calls *int) *cloud
 	}
 	tr.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12}
 	http.DefaultTransport = tr
-	c, e := cloudsigmaapi.New("zrh", "fixture", "fixture", "")
+	var c *cloudsigmaapi.Client
+	var e error
+	if useToken {
+		c, e = cloudsigmaapi.NewToken("zrh", "fixture-token", "")
+	} else {
+		c, e = cloudsigmaapi.New("zrh", "fixture", "fixture", "")
+	}
 	http.DefaultTransport = old
 	if e != nil {
 		t.Fatal(e)
@@ -157,5 +176,61 @@ func TestOfflineNativeSubscription(t *testing.T) {
 	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: s.Schema, Raw: state.Raw}}, &out)
 	if !out.Diagnostics.HasError() || !out.State.Raw.Equal(state.Raw) || !strings.Contains(out.Diagnostics[0].Detail(), "cancelled") {
 		t.Fatal(errors.New("cancel state"))
+	}
+}
+
+func TestOfflineNativeTokenSubscription(t *testing.T) {
+	const body = `{"objects":[{"amount":"9007199254740993","auto_renew":true,"free_tier":false,"id":"14","period":"month","price":"0.000003839842975139617919921875","remaining":"0E-20","resource":"cpu","resource_uri":"uri","status":"active","uuid":"selected"}]}`
+	calls := 0
+	native := subscriptionFixture(t, http.StatusOK, body, &calls, true)
+	d := &subscriptionDataSource{}
+	ctx := context.Background()
+	var conf datasource.ConfigureResponse
+	d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authToken, Native: native}}, &conf)
+	if conf.Diagnostics.HasError() {
+		t.Fatal(conf.Diagnostics)
+	}
+	var s datasource.SchemaResponse
+	d.Schema(ctx, datasource.SchemaRequest{}, &s)
+	state := tfsdk.State{Schema: s.Schema}
+	prior := subscriptionDataSourceModel{UUID: types.StringValue("selected"), ID: types.StringValue("old")}
+	if diags := state.Set(ctx, &prior); diags.HasError() {
+		t.Fatal(diags)
+	}
+	out := datasource.ReadResponse{State: state}
+	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: s.Schema, Raw: state.Raw}}, &out)
+	if out.Diagnostics.HasError() || calls != 1 {
+		t.Fatalf("diagnostics=%v calls=%d", out.Diagnostics, calls)
+	}
+}
+
+func TestOfflineTokenSubscriptionCancelPreservesState(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	native, err := cloudsigmaapi.NewToken("zrh", "fixture-token", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := &subscriptionDataSource{clients: &ProviderClients{Auth: authToken, Native: native}}
+	var s datasource.SchemaResponse
+	d.Schema(ctx, datasource.SchemaRequest{}, &s)
+	state := tfsdk.State{Schema: s.Schema}
+	prior := subscriptionDataSourceModel{UUID: types.StringValue("selected"), ID: types.StringValue("old")}
+	if diags := state.Set(context.Background(), &prior); diags.HasError() {
+		t.Fatal(diags)
+	}
+	out := datasource.ReadResponse{State: state}
+	d.Read(ctx, datasource.ReadRequest{Config: tfsdk.Config{Schema: s.Schema, Raw: state.Raw}}, &out)
+	if !out.Diagnostics.HasError() || !out.State.Raw.Equal(state.Raw) || !strings.Contains(out.Diagnostics[0].Detail(), "cancelled") {
+		t.Fatal(out.Diagnostics)
+	}
+}
+
+func TestOfflineSubscriptionConfigureRequiresNative(t *testing.T) {
+	d := &subscriptionDataSource{}
+	var response datasource.ConfigureResponse
+	d.Configure(context.Background(), datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authToken}}, &response)
+	if d.clients != nil || !response.Diagnostics.HasError() {
+		t.Fatal(response.Diagnostics)
 	}
 }
