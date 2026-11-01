@@ -30,5 +30,9 @@ output:
     - format: tab
   show-stats: true
 
+issues:
+  exclude-dirs:
+    - build/offline
+
 run:
   timeout: 10m

@@ -1,0 +1,10 @@
+package PACKAGE
+
+import "testing"
+
+// TestIsolationCanaries is intentionally skipped on platforms where the
+// Linux amd64 seccomp/TSYNC guard cannot be compiled or enforced. The Linux
+// amd64 template remains the enforced offline-test boundary.
+func TestIsolationCanaries(t *testing.T) {
+	t.Skip("Linux amd64 syscall isolation guard unavailable on this platform")
+}
