@@ -25,3 +25,12 @@ Validation:
 
 This slice does not switch snapshot create/update/delete to native transport.
 Those operations still require state/import and full lifecycle parity review.
+
+## Deadline-policy correction
+
+Native refreshes keep the caller's request context unchanged. The waiter owns
+its overall timeout with an external timer, matching the legacy waiter's
+deadline policy and preserving the Native28 `deadline-policy` contract.
+
+Focused verification: `TestNative28Matrix/credentials3/rawfalse/deadline-policy`
+and `rawtrue` both pass after this correction.

@@ -32,11 +32,30 @@ func (c *Client) WaitSnapshotAvailable(ctx context.Context, uuid string, timeout
 	if delay <= 0 {
 		delay = defaultSnapshotWaitDelay
 	}
-	waitCtx, cancel := context.WithTimeout(ctx, timeout)
+	// Keep the caller's request deadline policy intact. The legacy waiter owns
+	// its overall timeout outside the refresh request, so native reads must not
+	// acquire a synthetic deadline when the caller supplied none.
+	waitCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	timeoutTimer := time.NewTimer(timeout)
+	defer timeoutTimer.Stop()
+	timedOut := make(chan struct{})
+	go func() {
+		select {
+		case <-timeoutTimer.C:
+			close(timedOut)
+			cancel()
+		case <-waitCtx.Done():
+		}
+	}()
 
 	for {
 		if err := waitCtx.Err(); err != nil {
+			select {
+			case <-timedOut:
+				return nil, &Error{Category: "timeout"}
+			default:
+			}
 			return nil, remoteContextError(waitCtx, err)
 		}
 		snapshot, err := c.SnapshotWithCallerContext(waitCtx, uuid)
@@ -60,6 +79,11 @@ func (c *Client) WaitSnapshotAvailable(ctx context.Context, uuid string, timeout
 				case <-timer.C:
 				default:
 				}
+			}
+			select {
+			case <-timedOut:
+				return nil, &Error{Category: "timeout"}
+			default:
 			}
 			return nil, remoteContextError(waitCtx, waitCtx.Err())
 		case <-timer.C:
