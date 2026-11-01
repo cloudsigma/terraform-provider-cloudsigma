@@ -39,6 +39,8 @@ func TestOfflineUsageDataSources(t *testing.T) {
 			_, _ = io.WriteString(w, `{"current":{"cpu":1},"next":{"cpu":2},"meta":{"total_count":1},"objects":[]}`)
 		case "/api/2.0/discount/":
 			_, _ = io.WriteString(w, `{"meta":{"total_count":1},"objects":[{"period":"3 months","value":"0.03"}]}`)
+		case "/api/2.0/ledger/":
+			_, _ = io.WriteString(w, `{"meta":{"total_count":1},"objects":[{"id":"tx-1","amount":"0.01"}]}`)
 		default:
 			http.NotFound(w, req)
 		}
@@ -67,6 +69,7 @@ func TestOfflineUsageDataSources(t *testing.T) {
 		{name: "daily", new: NewDailyBurstUsageDataSource, want: "dailyburstusage"},
 		{name: "pricing", new: NewPricingDataSource, want: "pricing"},
 		{name: "discount", new: NewDiscountDataSource, want: "discount"},
+		{name: "ledger", new: NewLedgerDataSource, want: "ledger"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			d := tc.new()
@@ -94,6 +97,10 @@ func TestOfflineUsageDataSources(t *testing.T) {
 					t.Fatal(diags)
 				}
 			case "discount":
+				if diags := out.State.Set(context.Background(), &discountDataSourceModel{}); diags.HasError() {
+					t.Fatal(diags)
+				}
+			case "ledger":
 				if diags := out.State.Set(context.Background(), &discountDataSourceModel{}); diags.HasError() {
 					t.Fatal(diags)
 				}
@@ -130,6 +137,12 @@ func TestOfflineUsageDataSources(t *testing.T) {
 				}
 				id, encoded = got.ID.ValueString(), got.JSON.ValueString()
 			case "discount":
+				var got discountDataSourceModel
+				if diags := out.State.Get(context.Background(), &got); diags.HasError() {
+					t.Fatal(diags)
+				}
+				id, encoded = got.ID.ValueString(), got.JSON.ValueString()
+			case "ledger":
 				var got discountDataSourceModel
 				if diags := out.State.Get(context.Background(), &got); diags.HasError() {
 					t.Fatal(diags)

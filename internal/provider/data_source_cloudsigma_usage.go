@@ -62,6 +62,7 @@ func NewDailyBurstUsageDataSource() datasource.DataSource {
 }
 func NewPricingDataSource() datasource.DataSource  { return &usageDataSource{kind: "pricing"} }
 func NewDiscountDataSource() datasource.DataSource { return &usageDataSource{kind: "discount"} }
+func NewLedgerDataSource() datasource.DataSource   { return &usageDataSource{kind: "ledger"} }
 
 func (d *usageDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "cloudsigma_" + d.kind
@@ -135,20 +136,26 @@ func (d *usageDataSource) Read(ctx context.Context, request datasource.ReadReque
 		response.Diagnostics.Append(response.State.Set(ctx, &state)...)
 		return
 	}
-	if d.kind == "discount" {
+	if d.kind == "discount" || d.kind == "ledger" {
 		var state discountDataSourceModel
 		response.Diagnostics.Append(request.Config.Get(ctx, &state)...)
 		if response.Diagnostics.HasError() {
 			return
 		}
-		document, err := d.clients.Native.Discount(ctx)
+		var document cloudsigmaapi.DynamicDocument
+		var err error
+		if d.kind == "ledger" {
+			document, err = d.clients.Native.Ledger(ctx)
+		} else {
+			document, err = d.clients.Native.Discount(ctx)
+		}
 		if err != nil {
-			response.Diagnostics.AddError("Unable to fetch CloudSigma discount", err.Error())
+			response.Diagnostics.AddError("Unable to fetch CloudSigma "+d.kind, err.Error())
 			return
 		}
 		encoded, err := json.Marshal(document)
 		if err != nil {
-			response.Diagnostics.AddError("Unable to encode CloudSigma discount", err.Error())
+			response.Diagnostics.AddError("Unable to encode CloudSigma "+d.kind, err.Error())
 			return
 		}
 		state.ID, state.JSON = types.StringValue(d.kind), types.StringValue(string(encoded))

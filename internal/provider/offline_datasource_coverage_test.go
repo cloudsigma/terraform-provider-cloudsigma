@@ -124,7 +124,7 @@ func TestOfflineDatasourceCoverage(t *testing.T) {
 		})
 	}
 	// Every registered datasource has a nil-provider-data no-op and wrong-type diagnostic.
-	factories := []func() datasource.DataSource{NewBackupSchedulersDataSource, NewCapabilitiesDataSource, NewCurrentUsageDataSource, NewUsageDataSource, NewBalanceDataSource, NewBurstUsageDataSource, NewDailyBurstUsageDataSource, NewPricingDataSource, NewDiscountDataSource, NewVirtualRoutersDataSource, NewNotificationContactsDataSource, NewNotificationPreferencesDataSource, NewACLsDataSource, NewJobsDataSource, NewDriveDataSource, NewLibraryDriveDataSource, NewLicenseDataSource, NewLocationDataSource, NewSubscriptionDataSource, NewIPDataSource, NewVLANDataSource, NewTagDataSource, NewProfileDataSource}
+	factories := []func() datasource.DataSource{NewBackupSchedulersDataSource, NewCapabilitiesDataSource, NewCurrentUsageDataSource, NewUsageDataSource, NewBalanceDataSource, NewBurstUsageDataSource, NewDailyBurstUsageDataSource, NewPricingDataSource, NewDiscountDataSource, NewLedgerDataSource, NewVirtualRoutersDataSource, NewNotificationContactsDataSource, NewNotificationPreferencesDataSource, NewACLsDataSource, NewJobsDataSource, NewDriveDataSource, NewLibraryDriveDataSource, NewLicenseDataSource, NewLocationDataSource, NewSubscriptionDataSource, NewIPDataSource, NewVLANDataSource, NewTagDataSource, NewProfileDataSource}
 	for i, newDS := range factories {
 		t.Run(fmt.Sprintf("configure-%d", i), func(t *testing.T) {
 			d := newDS().(datasource.DataSourceWithConfigure)

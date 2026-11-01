@@ -204,6 +204,7 @@ func (p *cloudSigmaProvider) DataSources(_ context.Context) []func() datasource.
 		NewDailyBurstUsageDataSource,
 		NewPricingDataSource,
 		NewDiscountDataSource,
+		NewLedgerDataSource,
 		NewVirtualRoutersDataSource,
 		NewNotificationContactsDataSource,
 		NewNotificationPreferencesDataSource,
