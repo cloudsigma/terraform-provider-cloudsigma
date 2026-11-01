@@ -22,4 +22,4 @@ Reads the CloudSigma audit log collection as dynamic JSON.
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `json` (String)
+- `json` (String, Sensitive)
