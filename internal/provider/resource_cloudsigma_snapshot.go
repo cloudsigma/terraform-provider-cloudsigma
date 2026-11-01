@@ -326,17 +326,33 @@ func (r *snapshotResource) Update(ctx context.Context, request resource.UpdateRe
 	}
 
 	snapshotUUID := data.ID.ValueString()
-	updateRequest := &cloudsigma.SnapshotUpdateRequest{
-		Snapshot: &cloudsigma.Snapshot{
+	tflog.Trace(ctx, "Updating snapshot")
+	var snap *cloudsigma.Snapshot
+	if r.native != nil {
+		updated, nativeErr := r.native.UpdateSnapshot(ctx, snapshotUUID, cloudsigmaapi.SnapshotUpdateRequest{
+			Drive: cloudsigmaapi.SnapshotDriveRef{UUID: data.Drive.ValueString()},
+			Name:  data.Name.ValueString(),
+		})
+		if nativeErr != nil {
+			response.Diagnostics.AddError("Unable to update snapshot", nativeErr.Error())
+			return
+		}
+		if updated == nil || updated.Drive == nil {
+			response.Diagnostics.AddError("Unable to update snapshot", "Snapshot response is missing its drive.")
+			return
+		}
+		snap = &cloudsigma.Snapshot{Drive: &cloudsigma.Drive{UUID: updated.Drive.UUID}, Name: updated.Name, UUID: updated.UUID, ResourceURI: updated.ResourceURI, Status: updated.Status, Timestamp: updated.Timestamp}
+	} else {
+		updateRequest := &cloudsigma.SnapshotUpdateRequest{Snapshot: &cloudsigma.Snapshot{
 			Drive: &cloudsigma.Drive{UUID: data.Drive.ValueString()},
 			Name:  data.Name.ValueString(),
-		},
-	}
-	tflog.Trace(ctx, "Updating snapshot")
-	snap, _, err := r.client.Snapshots.Update(ctx, snapshotUUID, updateRequest)
-	if err != nil {
-		response.Diagnostics.AddError("Unable to update snapshot", err.Error())
-		return
+		}}
+		var err error
+		snap, _, err = r.client.Snapshots.Update(ctx, snapshotUUID, updateRequest)
+		if err != nil {
+			response.Diagnostics.AddError("Unable to update snapshot", err.Error())
+			return
+		}
 	}
 	tflog.Trace(ctx, "Updated snapshot")
 

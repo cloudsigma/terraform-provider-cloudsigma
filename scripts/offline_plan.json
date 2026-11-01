@@ -290,6 +290,8 @@
       "TestOfflineNativeSSHKey",
       "TestOfflineNativeSSHKeyStateBoundaries",
       "TestOfflineNativeSnapshot",
+      "TestOfflineNativeSnapshotUpdate",
+      "TestOfflineNativeSnapshotUpdateErrorPreservesState",
       "TestOfflineNativeTagConfigure",
       "TestOfflineTagCancel",
       "TestOfflineNativeTag",
@@ -322,7 +324,7 @@
       "TestOfflineDestroyStatus",
       "TestOfflineSnapshotDependencyCleanup"
     ],
-    "total": 463
+    "total": 465
   },
   {
     "package": "internal/provider",
