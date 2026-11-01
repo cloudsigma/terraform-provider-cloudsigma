@@ -134,6 +134,12 @@ func (r *schedulerAssignmentResource) Read(ctx context.Context, request resource
 		response.Diagnostics.AddError("Scheduler assignment drifted", "The drive no longer has a scheduler association.")
 		return
 	}
+	if data.SchedulerUUID.IsNull() || data.SchedulerUUID.IsUnknown() {
+		data.SchedulerUUID = types.StringValue(observed)
+		data.ID = types.StringValue(data.DriveUUID.ValueString())
+		response.Diagnostics.Append(response.State.Set(ctx, &data)...)
+		return
+	}
 	if observed != data.SchedulerUUID.ValueString() {
 		response.Diagnostics.AddError("Scheduler assignment drifted", "The drive is assigned to a different scheduler; refusing to replace it during refresh.")
 		return
@@ -190,5 +196,6 @@ func (r *schedulerAssignmentResource) Delete(ctx context.Context, request resour
 	}
 }
 func (r *schedulerAssignmentResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), request, response)
+	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("id"), request.ID)...)
+	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("drive_uuid"), request.ID)...)
 }
