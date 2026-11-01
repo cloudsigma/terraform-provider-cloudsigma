@@ -33,7 +33,7 @@ func (d *auditLogsDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 		MarkdownDescription: "Reads the CloudSigma audit log collection as dynamic JSON.",
 		Attributes: map[string]schema.Attribute{
 			"id":    schema.StringAttribute{Computed: true},
-			"json":  schema.StringAttribute{Computed: true},
+			"json":  schema.StringAttribute{Computed: true, Sensitive: true},
 			"limit": schema.Int64Attribute{Optional: true},
 		},
 	}

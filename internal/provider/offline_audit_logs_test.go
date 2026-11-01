@@ -48,6 +48,9 @@ func TestOfflineAuditLogsDataSource(t *testing.T) {
 	}
 	var schemaResponse datasource.SchemaResponse
 	d.Schema(context.Background(), datasource.SchemaRequest{}, &schemaResponse)
+	if !schemaResponse.Schema.Attributes["json"].IsSensitive() {
+		t.Fatal("audit-log JSON must be sensitive")
+	}
 	config := auditLogsDataSourceModel{Limit: types.Int64Value(5)}
 	out := datasource.ReadResponse{State: tfsdk.State{Schema: schemaResponse.Schema}}
 	if diags := out.State.Set(context.Background(), &config); diags.HasError() {
