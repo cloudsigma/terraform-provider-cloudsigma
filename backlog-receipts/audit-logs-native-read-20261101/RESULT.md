@@ -20,6 +20,7 @@ Validation:
 - `git diff --check` — passed.
 
 The offline semantic suite includes `TestOfflineAuditLogsDataSource`; its
-provider event count is qualified at 460.
+provider event count is qualified at 460. The fixture uses the in-memory
+transport seam used by the offline isolation suite and opens no listener.
 
 No live API calls or account mutations were performed.
