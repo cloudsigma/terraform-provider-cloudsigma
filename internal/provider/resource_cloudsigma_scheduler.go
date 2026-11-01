@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -59,11 +60,7 @@ func (r *schedulerResource) Configure(_ context.Context, request resource.Config
 }
 
 func schedulerDefinition(raw string) (cloudsigmaapi.SchedulerCreateRequest, error) {
-	var definition cloudsigmaapi.SchedulerCreateRequest
-	if err := json.Unmarshal([]byte(raw), &definition); err != nil {
-		return definition, err
-	}
-	return definition, nil
+	return cloudsigmaapi.DecodeSchedulerCreateRequest([]byte(raw))
 }
 
 func schedulerProjection(raw json.RawMessage) (string, error) {
@@ -84,7 +81,9 @@ func schedulerProjection(raw json.RawMessage) (string, error) {
 		if jsonErr != nil {
 			return "", jsonErr
 		}
-		definition, err = schedulerDefinition(string(filtered))
+		// Responses may include nested response-only fields. The typed read
+		// projection excludes these; configuration uses the strict decoder.
+		err = json.Unmarshal(filtered, &definition)
 		if err != nil {
 			return "", err
 		}
@@ -93,6 +92,63 @@ func schedulerProjection(raw json.RawMessage) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return string(encoded), err
+}
+
+// schedulerRefreshDefinition preserves the configured JSON representation and
+// omitted optional fields when the managed values have not changed. The full
+// detail response remains available in json. Imported definitions (no prior
+// value) acquire the complete writable projection.
+func schedulerRefreshDefinition(prior types.String, raw json.RawMessage) (string, error) {
+	projection, err := schedulerProjection(raw)
+	if err != nil || prior.IsNull() || prior.IsUnknown() {
+		return projection, err
+	}
+	definition, err := schedulerDefinition(prior.ValueString())
+	if err != nil {
+		return "", err
+	}
+	var configured, expected, observed map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(prior.ValueString()), &configured); err != nil {
+		return "", err
+	}
+	if err := json.Unmarshal(mustJSON(definition), &expected); err != nil {
+		return "", err
+	}
+	if err := json.Unmarshal([]byte(projection), &observed); err != nil {
+		return "", err
+	}
+	changed := false
+	for field := range configured {
+		// Empty backup destination explicitly selects the deployment default,
+		// which is hydrated to an alias on read. Keep that user intent.
+		if field == "remote_location" && definition.Type == "backup" && definition.RemoteLocation == "" {
+			continue
+		}
+		var want, got any
+		if value, ok := expected[field]; ok {
+			if err := json.Unmarshal(value, &want); err != nil {
+				return "", err
+			}
+		}
+		if value, ok := observed[field]; ok {
+			if err := json.Unmarshal(value, &got); err != nil {
+				return "", err
+			}
+		} else {
+			// Omitted optional response fields preserve the caller's complete
+			// PUT projection; absence is not a server clear signal.
+			continue
+		}
+		if !reflect.DeepEqual(want, got) {
+			changed = true
+			configured[field] = observed[field]
+		}
+	}
+	if !changed {
+		return prior.ValueString(), nil
+	}
+	encoded, err := json.Marshal(configured)
 	return string(encoded), err
 }
 
@@ -147,7 +203,7 @@ func (r *schedulerResource) Read(ctx context.Context, request resource.ReadReque
 		response.Diagnostics.AddError("Unable to read scheduler", err.Error())
 		return
 	}
-	projection, err := schedulerProjection(raw)
+	projection, err := schedulerRefreshDefinition(data.DefinitionJSON, raw)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to project scheduler state", err.Error())
 		return

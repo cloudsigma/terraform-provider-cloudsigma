@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -83,6 +84,25 @@ func TestOfflineSchedulerResourceCreateReadUpdateDelete(t *testing.T) {
 	if len(calls) != 4 || calls[0] != "POST /api/2.0/backupschedulers/" || calls[1] != "GET /api/2.0/backupschedulers/scheduler-1/" || calls[2] != "PUT /api/2.0/backupschedulers/scheduler-1/" || calls[3] != "DELETE /api/2.0/backupschedulers/scheduler-1/" {
 		t.Fatalf("calls=%v", calls)
 	}
+	// Refresh keeps the caller's canonical writable JSON when the detail read
+	// only adds response fields; this prevents formatting/default churn from
+	// scheduling a repeated full PUT.
+	prior := types.StringValue(schedulerDefinitionFixture())
+	var detail map[string]any
+	if err := json.Unmarshal([]byte(schedulerDefinitionFixture()), &detail); err != nil {
+		t.Fatal(err)
+	}
+	detail["uuid"] = "scheduler-1"
+	detail["resource_uri"] = "/api/2.0/backupschedulers/scheduler-1/"
+	detail["owner"] = map[string]any{"uuid": "response-only"}
+	raw, err := json.Marshal(detail)
+	if err != nil {
+		t.Fatal(err)
+	}
+	refreshed, err := schedulerRefreshDefinition(prior, raw)
+	if err != nil || refreshed != prior.ValueString() {
+		t.Fatalf("refresh=%s err=%v prior=%s", refreshed, err, prior.ValueString())
+	}
 }
 
 func TestOfflineSchedulerAssignmentReconcilesAndDoesNotBlindlyReplay(t *testing.T) {
@@ -130,11 +150,11 @@ func TestOfflineSchedulerAssignmentReconcilesAndDoesNotBlindlyReplay(t *testing.
 }
 
 func TestDriveSchedulerUUIDAcceptsResourceURIProjection(t *testing.T) {
-	got := driveSchedulerUUID(&cloudsigmaapi.Drive{BackupScheduler: &cloudsigmaapi.ResourceLink{ResourceURI: "/api/2.0/backupschedulers/scheduler-uri/"}})
-	if got != "scheduler-uri" {
+	got, err := driveSchedulerUUID(&cloudsigmaapi.Drive{BackupScheduler: &cloudsigmaapi.ResourceLink{ResourceURI: "/api/2.0/backupschedulers/scheduler-uri/"}})
+	if err != nil || got != "scheduler-uri" {
 		t.Fatalf("scheduler uuid=%q", got)
 	}
-	if got := driveSchedulerUUID(&cloudsigmaapi.Drive{BackupScheduler: &cloudsigmaapi.ResourceLink{ResourceURI: "/api/2.0/backupschedulers/../"}}); got != "" {
+	if got, err := driveSchedulerUUID(&cloudsigmaapi.Drive{BackupScheduler: &cloudsigmaapi.ResourceLink{ResourceURI: "/api/2.0/backupschedulers/../"}}); err == nil || got != "" {
 		t.Fatalf("accepted invalid scheduler uri=%q", got)
 	}
 }

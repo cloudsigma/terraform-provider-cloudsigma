@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"regexp"
+	"strings"
 )
 
 type Drive struct {
@@ -37,6 +38,16 @@ type DriveRuntime struct {
 
 type driveResponse Drive
 
+// UnmarshalJSON shares the native drive response decoder with action responses.
+func (r *Drive) UnmarshalJSON(data []byte) error {
+	var decoded driveResponse
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	*r = Drive(decoded)
+	return nil
+}
+
 func (r *driveResponse) UnmarshalJSON(data []byte) error {
 	type alias Drive
 	decoded := alias(*r)
@@ -49,10 +60,26 @@ func (r *driveResponse) UnmarshalJSON(data []byte) error {
 	}
 	wire := struct {
 		*alias
-		Licenses []driveLicenseResponse `json:"licenses"`
-	}{&decoded, nested}
+		Licenses        []driveLicenseResponse `json:"licenses"`
+		BackupScheduler json.RawMessage        `json:"backup_scheduler"`
+	}{alias: &decoded, Licenses: nested}
 	if err := json.Unmarshal(data, &wire); err != nil {
 		return err
+	}
+	decoded.BackupScheduler = nil
+	if len(wire.BackupScheduler) != 0 && !bytes.Equal(bytes.TrimSpace(wire.BackupScheduler), []byte("null")) {
+		var reference ResourceLink
+		if err := json.Unmarshal(wire.BackupScheduler, &reference.ResourceURI); err != nil {
+			if err := json.Unmarshal(wire.BackupScheduler, &reference); err != nil {
+				return &Error{Category: "decode_error"}
+			}
+		}
+		uuid, err := SchedulerAssociationUUID(&reference)
+		if err != nil {
+			return err
+		}
+		reference.UUID = uuid
+		decoded.BackupScheduler = &reference
 	}
 	decoded.Licenses = nil
 	if wire.Licenses != nil {
@@ -66,6 +93,37 @@ func (r *driveResponse) UnmarshalJSON(data []byte) error {
 }
 
 var driveSegment = regexp.MustCompile(`^[A-Za-z0-9-]+$`)
+
+// SchedulerAssociationUUID accepts the deployed URI projection and hydrated
+// references. A malformed nonempty reference is never treated as absence.
+func SchedulerAssociationUUID(reference *ResourceLink) (string, error) {
+	if reference == nil {
+		return "", nil
+	}
+	uuid := reference.UUID
+	if uuid != "" && !driveSegment.MatchString(uuid) {
+		return "", &Error{Category: "decode_error"}
+	}
+	if reference.ResourceURI != "" {
+		uri, err := url.Parse(reference.ResourceURI)
+		if err != nil || uri.IsAbs() || uri.Host != "" || uri.RawQuery != "" || uri.Fragment != "" || uri.Opaque != "" {
+			return "", &Error{Category: "decode_error"}
+		}
+		const prefix = "/api/2.0/backupschedulers/"
+		if !strings.HasPrefix(uri.Path, prefix) {
+			return "", &Error{Category: "decode_error"}
+		}
+		fromURI := strings.TrimSuffix(strings.TrimPrefix(uri.Path, prefix), "/")
+		if !driveSegment.MatchString(fromURI) || (uuid != "" && uuid != fromURI) {
+			return "", &Error{Category: "decode_error"}
+		}
+		uuid = fromURI
+	}
+	if uuid == "" {
+		return "", &Error{Category: "decode_error"}
+	}
+	return uuid, nil
+}
 
 // Drives preserves the registered datasource's explicit limit=0 request.
 func (c *Client) Drives(ctx context.Context, name string) ([]Drive, error) {

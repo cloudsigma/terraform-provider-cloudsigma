@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	pathpkg "path"
 	"sync"
 
 	tfpath "github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
@@ -38,8 +39,10 @@ func (r *schedulerAssignmentResource) Metadata(_ context.Context, _ resource.Met
 }
 func (r *schedulerAssignmentResource) Schema(_ context.Context, _ resource.SchemaRequest, response *resource.SchemaResponse) {
 	response.Schema = schema.Schema{MarkdownDescription: "Owns only the drive-to-scheduler association. Scheduler and drive resources do not write this association.", Attributes: map[string]schema.Attribute{
-		"id":             schema.StringAttribute{Computed: true},
-		"drive_uuid":     schema.StringAttribute{Required: true},
+		"id": schema.StringAttribute{Computed: true},
+		"drive_uuid": schema.StringAttribute{Required: true, PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		}},
 		"scheduler_uuid": schema.StringAttribute{Required: true},
 	}}
 }
@@ -56,27 +59,11 @@ func (r *schedulerAssignmentResource) Configure(_ context.Context, request resou
 	r.native = clients.Native
 }
 
-func driveSchedulerUUID(drive *cloudsigmaapi.Drive) string {
-	if drive == nil || drive.BackupScheduler == nil {
-		return ""
+func driveSchedulerUUID(drive *cloudsigmaapi.Drive) (string, error) {
+	if drive == nil {
+		return "", &cloudsigmaapi.Error{Category: "decode_error"}
 	}
-	if drive.BackupScheduler.UUID != "" {
-		return drive.BackupScheduler.UUID
-	}
-	uri := drive.BackupScheduler.ResourceURI
-	if uri == "" {
-		return ""
-	}
-	segment := pathpkg.Base(pathpkg.Clean(uri))
-	if segment == "." || segment == "/" || segment == "" {
-		return ""
-	}
-	for _, r := range segment {
-		if !(r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '-') {
-			return ""
-		}
-	}
-	return segment
+	return cloudsigmaapi.SchedulerAssociationUUID(drive.BackupScheduler)
 }
 
 func (r *schedulerAssignmentResource) reconcile(ctx context.Context, driveUUID, schedulerUUID string) error {
@@ -86,7 +73,11 @@ func (r *schedulerAssignmentResource) reconcile(ctx context.Context, driveUUID, 
 	if err != nil {
 		return err
 	}
-	if driveSchedulerUUID(drive) == schedulerUUID {
+	current, err := driveSchedulerUUID(drive)
+	if err != nil {
+		return err
+	}
+	if current == schedulerUUID {
 		return nil
 	}
 	_, actionErr := r.native.AssignDriveScheduler(ctx, driveUUID, schedulerUUID)
@@ -94,8 +85,11 @@ func (r *schedulerAssignmentResource) reconcile(ctx context.Context, driveUUID, 
 		// The request outcome is uncertain. Read before any retry; never replay
 		// the 202 action blindly.
 		observed, readErr := r.native.Drive(ctx, driveUUID)
-		if readErr == nil && driveSchedulerUUID(observed) == schedulerUUID {
-			return nil
+		if readErr == nil {
+			association, projectionErr := driveSchedulerUUID(observed)
+			if projectionErr == nil && association == schedulerUUID {
+				return nil
+			}
 		}
 		return actionErr
 	}
@@ -103,7 +97,11 @@ func (r *schedulerAssignmentResource) reconcile(ctx context.Context, driveUUID, 
 	if err != nil {
 		return err
 	}
-	if driveSchedulerUUID(observed) != schedulerUUID {
+	association, err := driveSchedulerUUID(observed)
+	if err != nil {
+		return err
+	}
+	if association != schedulerUUID {
 		return &cloudsigmaapi.Error{Category: "reconciliation"}
 	}
 	return nil
@@ -146,7 +144,11 @@ func (r *schedulerAssignmentResource) Read(ctx context.Context, request resource
 		response.Diagnostics.AddError("Unable to read scheduler assignment", err.Error())
 		return
 	}
-	observed := driveSchedulerUUID(drive)
+	observed, err := driveSchedulerUUID(drive)
+	if err != nil {
+		response.Diagnostics.AddError("Unable to read scheduler assignment", err.Error())
+		return
+	}
 	if observed == "" {
 		response.State.RemoveResource(ctx)
 		return
@@ -163,6 +165,16 @@ func (r *schedulerAssignmentResource) Read(ctx context.Context, request resource
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 func (r *schedulerAssignmentResource) Update(ctx context.Context, request resource.UpdateRequest, response *resource.UpdateResponse) {
+	var data, prior schedulerAssignmentModel
+	response.Diagnostics.Append(request.Plan.Get(ctx, &data)...)
+	response.Diagnostics.Append(request.State.Get(ctx, &prior)...)
+	if response.Diagnostics.HasError() {
+		return
+	}
+	if data.DriveUUID.IsNull() || data.DriveUUID.IsUnknown() || !data.DriveUUID.Equal(prior.DriveUUID) {
+		response.Diagnostics.AddError("Drive change requires replacement", "Replace the scheduler assignment to change drive_uuid so the previous drive association is removed.")
+		return
+	}
 	r.Create(ctx, resource.CreateRequest{Plan: request.Plan}, (*resource.CreateResponse)(response))
 }
 func (r *schedulerAssignmentResource) Delete(ctx context.Context, request resource.DeleteRequest, response *resource.DeleteResponse) {
@@ -186,17 +198,25 @@ func (r *schedulerAssignmentResource) Delete(ctx context.Context, request resour
 		response.Diagnostics.AddError("Unable to read scheduler assignment", err.Error())
 		return
 	}
-	observed := driveSchedulerUUID(drive)
+	observed, err := driveSchedulerUUID(drive)
+	if err != nil {
+		response.Diagnostics.AddError("Unable to read scheduler assignment", err.Error())
+		return
+	}
 	if observed == "" || observed != data.SchedulerUUID.ValueString() {
 		return
 	}
 	if _, err = r.native.UnassignDriveScheduler(ctx, data.DriveUUID.ValueString(), data.SchedulerUUID.ValueString()); err != nil {
-		// 404 is only success after a fresh read verifies absence.
+		// An uncertain outcome or 404 is only success after a fresh authorized
+		// read verifies that this association is gone. Never remove a replacement.
 		var apiErr *cloudsigmaapi.Error
-		if errors.As(err, &apiErr) && apiErr.Status == http.StatusNotFound {
+		if errors.As(err, &apiErr) && (apiErr.Status == http.StatusNotFound || apiErr.Category == "transport" || apiErr.Category == "timeout" || apiErr.Category == "cancelled") {
 			final, readErr := r.native.Drive(ctx, data.DriveUUID.ValueString())
-			if readErr == nil && driveSchedulerUUID(final) == "" {
-				return
+			if readErr == nil {
+				finalAssociation, projectionErr := driveSchedulerUUID(final)
+				if projectionErr == nil && finalAssociation != data.SchedulerUUID.ValueString() {
+					return
+				}
 			}
 			if readErr != nil {
 				var finalErr *cloudsigmaapi.Error
@@ -210,10 +230,19 @@ func (r *schedulerAssignmentResource) Delete(ctx context.Context, request resour
 	}
 	final, err := r.native.Drive(ctx, data.DriveUUID.ValueString())
 	if err != nil {
+		var apiErr *cloudsigmaapi.Error
+		if errors.As(err, &apiErr) && apiErr.Status == http.StatusNotFound {
+			return
+		}
 		response.Diagnostics.AddError("Unable to verify scheduler unassignment", err.Error())
 		return
 	}
-	if driveSchedulerUUID(final) != "" {
+	finalAssociation, err := driveSchedulerUUID(final)
+	if err != nil {
+		response.Diagnostics.AddError("Unable to verify scheduler unassignment", err.Error())
+		return
+	}
+	if finalAssociation == data.SchedulerUUID.ValueString() {
 		response.Diagnostics.AddError("Unable to verify scheduler unassignment", "The drive still has a scheduler association.")
 	}
 }
