@@ -3,6 +3,8 @@
 The Terraform snapshot resource now routes Basic-auth create through the
 provider-owned native `CreateSnapshot` transport. Bearer create remains on the
 legacy SDK path until bearer snapshot mutation parity is separately qualified.
+The broader Native28/Native29 matrix fixtures now explicitly qualify Basic native
+POST status/routing while preserving the bearer and legacy paths.
 The existing native waiter and caller-context final read remain in use, and the
 legacy path is unchanged. Native create failures require an acknowledged
 snapshot UUID before state is written.
