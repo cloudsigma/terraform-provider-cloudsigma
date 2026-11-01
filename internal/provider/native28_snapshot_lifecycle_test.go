@@ -18,8 +18,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Exercise the real Create callback, including both real waiter delays. POST is
-// intentionally still legacy: this test grants no mutation-contract authority.
+// Exercise the real Create callback, including both real waiter delays. Basic
+// credentials use the provider-owned native POST contract; bearer credentials
+// retain the legacy SDK path until bearer resource parity is separately qualified.
 func TestNative28SnapshotLifecycle(t *testing.T) {
 	for _, basic := range []bool{true, false} {
 		for _, fault := range []string{"", "wait404", "final500", "missingdrive", "progression", "malformed", "null", "invalidid", "privateprecision"} {
@@ -40,7 +41,7 @@ func TestNative28SnapshotLifecycle(t *testing.T) {
 							body = `{"uuid":"created","drive":{"uuid":"drive"},"status":"available","name":"done","timestamp":"time","resource_uri":"uri"}`
 							if q.Method == "POST" {
 								if native {
-									t.Fatal("native mutation")
+									code = http.StatusCreated
 								}
 								if fault == "invalidid" {
 									body = `{"uuid":"bad/id","drive":{"uuid":"drive"}}`
