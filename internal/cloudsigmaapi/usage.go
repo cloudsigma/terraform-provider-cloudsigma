@@ -99,6 +99,17 @@ func (c *Client) Ledger(ctx context.Context) (DynamicDocument, error) {
 	return c.dynamicDocument(ctx, ledgerEndpoint, "ledger/", nil)
 }
 
+// AuditLogs reads the account audit-log collection as dynamic JSON. The API
+// documents only the collection read and optional limit; log fields are kept
+// dynamic because deployments may add fields without changing the transport.
+func (c *Client) AuditLogs(ctx context.Context, limit int64) (DynamicDocument, error) {
+	values := url.Values{}
+	if limit > 0 {
+		values.Set("limit", formatInt(limit))
+	}
+	return c.dynamicDocument(ctx, logsEndpoint, "logs/", values)
+}
+
 func (c *Client) dynamicDocument(ctx context.Context, endpoint readEndpoint, route string, values url.Values) (DynamicDocument, error) {
 	if len(values) > 0 {
 		route += "?" + values.Encode()

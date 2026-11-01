@@ -314,11 +314,12 @@
       "TestOfflineConfigurePrivacy",
       "TestOfflineDatasourceReads",
       "TestOfflineRegisteredSchemas",
+      "TestOfflineAuditLogsDataSource",
       "TestOfflineSnapshotPrivacy",
       "TestOfflineDestroyStatus",
       "TestOfflineSnapshotDependencyCleanup"
     ],
-    "total": 458
+    "total": 460
   },
   {
     "package": "internal/provider",

@@ -82,6 +82,22 @@ func TestPricingAndDiscountNativeReads(t *testing.T) {
 	}
 }
 
+func TestAuditLogsNativeRead(t *testing.T) {
+	c := remoteSnapshotClient(func(req *http.Request) (*http.Response, error) {
+		if req.Method != http.MethodGet || req.URL.Path != "/api/2.0/logs/" || req.URL.Query().Get("limit") != "5" {
+			t.Fatalf("audit logs request=%s", req.URL.String())
+		}
+		if req.Header.Get("Authorization") != "Basic Zml4dHVyZS11c2VyOmZpeHR1cmUtcGFzc3dvcmQ=" {
+			t.Fatalf("audit logs auth=%q", req.Header.Get("Authorization"))
+		}
+		return remoteSnapshotResponse(http.StatusOK, `{"meta":{"limit":5},"objects":[{"action":"create","success":true}]}`), nil
+	})
+	got, err := c.AuditLogs(context.Background(), 5)
+	if err != nil || string(got["objects"]) != `[{"action":"create","success":true}]` {
+		t.Fatalf("audit logs=%s err=%v", got["objects"], err)
+	}
+}
+
 func TestLedgerNativeReadAndBearerAuth(t *testing.T) {
 	c := remoteSnapshotClient(func(req *http.Request) (*http.Response, error) {
 		if req.Method != http.MethodGet || req.URL.Path != "/api/2.0/ledger/" || req.URL.RawQuery != "" {
