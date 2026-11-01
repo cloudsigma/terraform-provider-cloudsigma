@@ -16,6 +16,8 @@ qualified by that contract:
   full PUT semantics are preserved rather than using PATCH behavior.
 - Import is identifier-only and refresh reads the authoritative detail/drive
   endpoints.
+- Assignment import accepts the drive UUID and fills the scheduler UUID from
+  the authoritative drive read before declaring state.
 
 Validation:
 
@@ -25,6 +27,9 @@ Validation:
 - provider and API vet/build — passed;
 - offline provider suite includes both resources and is qualified at 460 events;
 - no live API, account, or billable operation was performed.
+
+The implementation commits are `4b569a3` and `818cdd1`; the independent lint
+portability remediation is `ecce5e8`.
 
 The generated offline guard remains platform-specific and is addressed by the
 separate lint portability commit; no RemoteSnapshot lifecycle semantics are
