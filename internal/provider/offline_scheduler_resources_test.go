@@ -128,3 +128,13 @@ func TestOfflineSchedulerAssignmentReconcilesAndDoesNotBlindlyReplay(t *testing.
 		t.Fatal(state, d)
 	}
 }
+
+func TestDriveSchedulerUUIDAcceptsResourceURIProjection(t *testing.T) {
+	got := driveSchedulerUUID(&cloudsigmaapi.Drive{BackupScheduler: &cloudsigmaapi.ResourceLink{ResourceURI: "/api/2.0/backupschedulers/scheduler-uri/"}})
+	if got != "scheduler-uri" {
+		t.Fatalf("scheduler uuid=%q", got)
+	}
+	if got := driveSchedulerUUID(&cloudsigmaapi.Drive{BackupScheduler: &cloudsigmaapi.ResourceLink{ResourceURI: "/api/2.0/backupschedulers/../"}}); got != "" {
+		t.Fatalf("accepted invalid scheduler uri=%q", got)
+	}
+}

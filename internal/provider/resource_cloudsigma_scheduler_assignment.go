@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	pathpkg "path"
 	"sync"
 
-	"github.com/hashicorp/terraform-plugin-framework/path"
+	tfpath "github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -59,7 +60,23 @@ func driveSchedulerUUID(drive *cloudsigmaapi.Drive) string {
 	if drive == nil || drive.BackupScheduler == nil {
 		return ""
 	}
-	return drive.BackupScheduler.UUID
+	if drive.BackupScheduler.UUID != "" {
+		return drive.BackupScheduler.UUID
+	}
+	uri := drive.BackupScheduler.ResourceURI
+	if uri == "" {
+		return ""
+	}
+	segment := pathpkg.Base(pathpkg.Clean(uri))
+	if segment == "." || segment == "/" || segment == "" {
+		return ""
+	}
+	for _, r := range segment {
+		if !(r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '-') {
+			return ""
+		}
+	}
+	return segment
 }
 
 func (r *schedulerAssignmentResource) reconcile(ctx context.Context, driveUUID, schedulerUUID string) error {
@@ -181,6 +198,12 @@ func (r *schedulerAssignmentResource) Delete(ctx context.Context, request resour
 			if readErr == nil && driveSchedulerUUID(final) == "" {
 				return
 			}
+			if readErr != nil {
+				var finalErr *cloudsigmaapi.Error
+				if errors.As(readErr, &finalErr) && finalErr.Status == http.StatusNotFound {
+					return
+				}
+			}
 		}
 		response.Diagnostics.AddError("Unable to unassign scheduler", err.Error())
 		return
@@ -195,6 +218,6 @@ func (r *schedulerAssignmentResource) Delete(ctx context.Context, request resour
 	}
 }
 func (r *schedulerAssignmentResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {
-	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("id"), request.ID)...)
-	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("drive_uuid"), request.ID)...)
+	response.Diagnostics.Append(response.State.SetAttribute(ctx, tfpath.Root("id"), request.ID)...)
+	response.Diagnostics.Append(response.State.SetAttribute(ctx, tfpath.Root("drive_uuid"), request.ID)...)
 }

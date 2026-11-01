@@ -67,14 +67,32 @@ func schedulerDefinition(raw string) (cloudsigmaapi.SchedulerCreateRequest, erro
 }
 
 func schedulerProjection(raw json.RawMessage) (string, error) {
-	var object map[string]any
-	if err := json.Unmarshal(raw, &object); err != nil {
+	definition, err := cloudsigmaapi.DecodeSchedulerCreateRequest(raw)
+	if err != nil {
+		// Detail responses contain response-only fields. Decode through a
+		// permissive intermediate map, then retain only the typed writable
+		// projection so nested response fields cannot churn state or leak into
+		// later PUT requests.
+		var object map[string]any
+		if jsonErr := json.Unmarshal(raw, &object); jsonErr != nil {
+			return "", jsonErr
+		}
+		for _, key := range []string{"uuid", "owner", "resource_uri", "permissions", "grantees", "permission", "backup_scheduler"} {
+			delete(object, key)
+		}
+		filtered, jsonErr := json.Marshal(object)
+		if jsonErr != nil {
+			return "", jsonErr
+		}
+		definition, err = schedulerDefinition(string(filtered))
+		if err != nil {
+			return "", err
+		}
+	}
+	encoded, err := json.Marshal(definition)
+	if err != nil {
 		return "", err
 	}
-	for _, key := range []string{"uuid", "owner", "resource_uri", "permissions", "grantees", "permission", "backup_scheduler"} {
-		delete(object, key)
-	}
-	encoded, err := json.Marshal(object)
 	return string(encoded), err
 }
 
@@ -96,7 +114,12 @@ func (r *schedulerResource) Create(ctx context.Context, request resource.CreateR
 	}
 	created, err := r.native.CreateBackupScheduler(ctx, definition)
 	if err != nil {
-		response.Diagnostics.AddError("Unable to create scheduler", err.Error())
+		var apiErr *cloudsigmaapi.Error
+		if errors.As(err, &apiErr) && (apiErr.Category == "transport" || apiErr.Category == "timeout" || apiErr.Category == "cancelled") {
+			response.Diagnostics.AddError("Unable to create scheduler; outcome may be unknown", err.Error()+" Read the scheduler by UUID or reconcile through import before retrying; the API has no idempotency-key contract.")
+		} else {
+			response.Diagnostics.AddError("Unable to create scheduler", err.Error())
+		}
 		return
 	}
 	data.ID = types.StringValue(created.UUID)
@@ -154,7 +177,12 @@ func (r *schedulerResource) Update(ctx context.Context, request resource.UpdateR
 	}
 	updated, err := r.native.UpdateBackupScheduler(ctx, prior.ID.ValueString(), definition)
 	if err != nil {
-		response.Diagnostics.AddError("Unable to update scheduler", err.Error())
+		var apiErr *cloudsigmaapi.Error
+		if errors.As(err, &apiErr) && (apiErr.Category == "transport" || apiErr.Category == "timeout" || apiErr.Category == "cancelled") {
+			response.Diagnostics.AddError("Unable to update scheduler; outcome may be unknown", err.Error()+" Read the scheduler detail before retrying the full PUT.")
+		} else {
+			response.Diagnostics.AddError("Unable to update scheduler", err.Error())
+		}
 		return
 	}
 	data.ID = prior.ID
