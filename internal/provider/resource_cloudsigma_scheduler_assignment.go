@@ -131,7 +131,7 @@ func (r *schedulerAssignmentResource) Read(ctx context.Context, request resource
 	}
 	observed := driveSchedulerUUID(drive)
 	if observed == "" {
-		response.Diagnostics.AddError("Scheduler assignment drifted", "The drive no longer has a scheduler association.")
+		response.State.RemoveResource(ctx)
 		return
 	}
 	if data.SchedulerUUID.IsNull() || data.SchedulerUUID.IsUnknown() {
@@ -140,10 +140,9 @@ func (r *schedulerAssignmentResource) Read(ctx context.Context, request resource
 		response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 		return
 	}
-	if observed != data.SchedulerUUID.ValueString() {
-		response.Diagnostics.AddError("Scheduler assignment drifted", "The drive is assigned to a different scheduler; refusing to replace it during refresh.")
-		return
-	}
+	// Preserve the observed association in state so Terraform can plan the
+	// configured replacement; refresh never writes a competing association.
+	data.SchedulerUUID = types.StringValue(observed)
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 func (r *schedulerAssignmentResource) Update(ctx context.Context, request resource.UpdateRequest, response *resource.UpdateResponse) {
