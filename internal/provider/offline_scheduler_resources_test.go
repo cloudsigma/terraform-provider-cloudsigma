@@ -84,6 +84,7 @@ func TestOfflineSchedulerResourceCreateReadUpdateDelete(t *testing.T) {
 	if len(calls) != 4 || calls[0] != "POST /api/2.0/backupschedulers/" || calls[1] != "GET /api/2.0/backupschedulers/scheduler-1/" || calls[2] != "PUT /api/2.0/backupschedulers/scheduler-1/" || calls[3] != "DELETE /api/2.0/backupschedulers/scheduler-1/" {
 		t.Fatalf("calls=%v", calls)
 	}
+	schedulerRefreshDropsNestedResponseOnlyFields(t)
 	// Refresh keeps the caller's canonical writable JSON when the detail read
 	// only adds response fields; this prevents formatting/default churn from
 	// scheduling a repeated full PUT.
@@ -102,6 +103,37 @@ func TestOfflineSchedulerResourceCreateReadUpdateDelete(t *testing.T) {
 	refreshed, err := schedulerRefreshDefinition(prior, raw)
 	if err != nil || refreshed != prior.ValueString() {
 		t.Fatalf("refresh=%s err=%v prior=%s", refreshed, err, prior.ValueString())
+	}
+}
+
+func schedulerRefreshDropsNestedResponseOnlyFields(t *testing.T) {
+	prior := types.StringValue(schedulerDefinitionFixture())
+	var detail map[string]any
+	if err := json.Unmarshal([]byte(schedulerDefinitionFixture()), &detail); err != nil {
+		t.Fatal(err)
+	}
+	detail["uuid"] = "scheduler-1"
+	detail["tags"] = []any{map[string]any{"uuid": "tag-1", "name": "response-only", "resource_uri": "/api/2.0/tags/tag-1/", "owner": map[string]any{"uuid": "owner"}}}
+	detail["retention_policy"] = map[string]any{"name": "keep-three", "rules": []any{map[string]any{"period": "items", "quantity": 3, "resource_uri": "/api/2.0/rules/1/", "owner": map[string]any{"uuid": "owner"}}}}
+	raw, err := json.Marshal(detail)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := schedulerRefreshDefinition(prior, raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded map[string]any
+	if err := json.Unmarshal([]byte(got), &decoded); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"name", "resource_uri", "owner"} {
+		if _, ok := decoded["tags"].([]any)[0].(map[string]any)[key]; ok {
+			t.Fatalf("nested tag response field leaked: %s", key)
+		}
+		if _, ok := decoded["retention_policy"].(map[string]any)["rules"].([]any)[0].(map[string]any)[key]; ok {
+			t.Fatalf("nested retention response field leaked: %s", key)
+		}
 	}
 }
 
@@ -147,6 +179,9 @@ func TestOfflineSchedulerAssignmentReconcilesAndDoesNotBlindlyReplay(t *testing.
 	if d := out.State.Get(context.Background(), &state); d.HasError() || state.ID.ValueString() != "drive-1" {
 		t.Fatal(state, d)
 	}
+	schedulerAssignmentReplacementRegression(t)
+	schedulerAssignmentImportReadRegression(t)
+	schedulerAssignmentDeleteRegression(t)
 }
 
 func TestDriveSchedulerUUIDAcceptsResourceURIProjection(t *testing.T) {
