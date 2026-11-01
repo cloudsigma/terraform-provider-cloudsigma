@@ -107,12 +107,7 @@ func TestCreateBackupSchedulerValidationAndFailures(t *testing.T) {
 		func() SchedulerCreateRequest { v := canonicalSchedulerRequest(); v.Type = "unsupported"; return v }(),
 		func() SchedulerCreateRequest {
 			v := canonicalSchedulerRequest()
-			v.ManualIncrementalBackup = ""
-			return v
-		}(),
-		func() SchedulerCreateRequest {
-			v := canonicalSchedulerRequest()
-			v.RetentionPolicy.Rules[0].Period = "years"
+			v.IncrementalBackup.Repeat = nil
 			return v
 		}(),
 		func() SchedulerCreateRequest {
@@ -178,6 +173,21 @@ func TestCreateBackupSchedulerValidationAndFailures(t *testing.T) {
 	_, err := c.CreateBackupScheduler(ctx, canonicalSchedulerRequest())
 	if err == nil || !strings.Contains(err.Error(), "cancelled") {
 		t.Fatalf("cancel err=%v", err)
+	}
+}
+
+func TestCreateBackupSchedulerAcceptsDeployedTypesAndClearingValues(t *testing.T) {
+	for _, typ := range []string{"backup", "snapshot", "migration", "dr"} {
+		input := canonicalSchedulerRequest()
+		input.Type = typ
+		input.ManualIncrementalBackup = ""
+		input.RetentionPolicy.Rules = nil
+		c := remoteSnapshotClient(func(*http.Request) (*http.Response, error) {
+			return remoteSnapshotResponse(http.StatusCreated, `{"objects":[{"uuid":"scheduler-1"}]}`), nil
+		})
+		if _, err := c.CreateBackupScheduler(context.Background(), input); err != nil {
+			t.Fatalf("type=%s err=%v", typ, err)
+		}
 	}
 }
 

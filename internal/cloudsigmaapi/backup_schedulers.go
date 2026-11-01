@@ -97,9 +97,9 @@ type SchedulerRepeat struct {
 // SchedulerInitialBackup contains the documented optional initial backup
 // window. Response-only fields are intentionally absent.
 type SchedulerInitialBackup struct {
-	DayOfWeek []string        `json:"day_of_week,omitempty"`
-	StartTime *SchedulerClock `json:"start_time,omitempty"`
-	EndTime   *SchedulerClock `json:"end_time,omitempty"`
+	DayOfWeek any `json:"day_of_week,omitempty"`
+	StartTime any `json:"start_time,omitempty"`
+	EndTime   any `json:"end_time,omitempty"`
 }
 
 // SchedulerIncrementalBackup contains the documented recurring schedule
@@ -371,10 +371,10 @@ func (c *Client) DeleteBackupScheduler(ctx context.Context, uuid string) error {
 }
 
 func validateSchedulerCreate(input SchedulerCreateRequest) error {
-	if input.Type != "snapshot" && input.Type != "backup" {
+	if input.Type != "backup" && input.Type != "snapshot" && input.Type != "migration" && input.Type != "dr" {
 		return &Error{Category: "transport"}
 	}
-	if input.Name == "" || input.UserTimezone == "" || input.ManualIncrementalBackup == "" || len(input.RetentionPolicy.Rules) == 0 {
+	if input.Name == "" || input.UserTimezone == "" || input.IncrementalBackup.Repeat == nil {
 		return &Error{Category: "transport"}
 	}
 	for _, tag := range input.Tags {
@@ -393,7 +393,7 @@ func validateSchedulerCreate(input SchedulerCreateRequest) error {
 		}
 	}
 	for _, rule := range input.RetentionPolicy.Rules {
-		if rule.Period != "days" && rule.Period != "weeks" && rule.Period != "months" {
+		if rule.Period != "items" && rule.Period != "minutes" && rule.Period != "hours" && rule.Period != "days" && rule.Period != "weeks" && rule.Period != "months" && rule.Period != "years" {
 			return &Error{Category: "transport"}
 		}
 		if rule.Quantity <= 0 {

@@ -315,11 +315,13 @@
       "TestOfflineDatasourceReads",
       "TestOfflineRegisteredSchemas",
       "TestOfflineAuditLogsDataSource",
+      "TestOfflineSchedulerAssignmentReconcilesAndDoesNotBlindlyReplay",
+      "TestOfflineSchedulerResourceCreateReadUpdateDelete",
       "TestOfflineSnapshotPrivacy",
       "TestOfflineDestroyStatus",
       "TestOfflineSnapshotDependencyCleanup"
     ],
-    "total": 460
+    "total": 462
   },
   {
     "package": "internal/provider",

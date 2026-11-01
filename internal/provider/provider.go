@@ -226,6 +226,8 @@ func (p *cloudSigmaProvider) DataSources(_ context.Context) []func() datasource.
 func (p *cloudSigmaProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewSnapshotResource,
+		NewSchedulerResource,
+		NewSchedulerAssignmentResource,
 		NewSSHKeyResource,
 		NewTagResource,
 	}
