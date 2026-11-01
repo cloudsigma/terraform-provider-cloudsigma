@@ -147,6 +147,9 @@ func TestOfflineSchedulerAssignmentReconcilesAndDoesNotBlindlyReplay(t *testing.
 	if d := out.State.Get(context.Background(), &state); d.HasError() || state.ID.ValueString() != "drive-1" {
 		t.Fatal(state, d)
 	}
+	schedulerAssignmentReplacementRegression(t)
+	schedulerAssignmentImportReadRegression(t)
+	schedulerAssignmentDeleteRegression(t)
 }
 
 func TestDriveSchedulerUUIDAcceptsResourceURIProjection(t *testing.T) {
