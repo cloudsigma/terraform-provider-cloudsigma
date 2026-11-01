@@ -154,24 +154,41 @@ func (r *snapshotResource) Create(ctx context.Context, request resource.CreateRe
 		return
 	}
 
-	createRequest := &cloudsigma.SnapshotCreateRequest{
-		Snapshots: []cloudsigma.Snapshot{{
-			Drive: &cloudsigma.Drive{UUID: driveUUID},
-			Name:  data.Name.ValueString(),
-		}},
-	}
 	tflog.Trace(ctx, "Creating snapshot")
-	snapshots, _, err := r.client.Snapshots.Create(ctx, createRequest)
-	if err != nil {
-		response.Diagnostics.AddError("Unable to create snapshot", err.Error())
-		return
+	var snap *cloudsigma.Snapshot
+	if r.native != nil {
+		created, nativeErr := r.native.CreateSnapshot(ctx, cloudsigmaapi.SnapshotCreateRequest{
+			Drive: cloudsigmaapi.SnapshotDriveRef{UUID: driveUUID},
+			Name:  data.Name.ValueString(),
+		})
+		if nativeErr != nil {
+			response.Diagnostics.AddError("Unable to create snapshot", nativeErr.Error())
+			return
+		}
+		if created == nil || !regexp.MustCompile(`^[a-zA-Z0-9-]+$`).MatchString(created.UUID) {
+			response.Diagnostics.AddError("Unable to create snapshot", "Snapshot acknowledgement is missing a usable identity.")
+			return
+		}
+		snap = &cloudsigma.Snapshot{UUID: created.UUID, Drive: &cloudsigma.Drive{UUID: driveUUID}, Name: data.Name.ValueString()}
+	} else {
+		createRequest := &cloudsigma.SnapshotCreateRequest{
+			Snapshots: []cloudsigma.Snapshot{{
+				Drive: &cloudsigma.Drive{UUID: driveUUID},
+				Name:  data.Name.ValueString(),
+			}},
+		}
+		snapshots, _, legacyErr := r.client.Snapshots.Create(ctx, createRequest)
+		if legacyErr != nil {
+			response.Diagnostics.AddError("Unable to create snapshot", legacyErr.Error())
+			return
+		}
+		// A successful POST without a usable identity cannot establish ownership.
+		if len(snapshots) == 0 || !regexp.MustCompile(`^[a-zA-Z0-9-]+$`).MatchString(snapshots[0].UUID) {
+			response.Diagnostics.AddError("Unable to create snapshot", "Snapshot acknowledgement is missing a usable identity.")
+			return
+		}
+		snap = &snapshots[0]
 	}
-	// A successful POST without a usable identity cannot establish ownership.
-	if len(snapshots) == 0 || !regexp.MustCompile(`^[a-zA-Z0-9-]+$`).MatchString(snapshots[0].UUID) {
-		response.Diagnostics.AddError("Unable to create snapshot", "Snapshot acknowledgement is missing a usable identity.")
-		return
-	}
-	snap := &snapshots[0]
 	// Preserve only acknowledged identity and known plan inputs before any
 	// fallible read. Null computed fields deliberately assert no server values.
 	// State.Set is local and remains usable when the caller is cancelled.

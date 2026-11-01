@@ -111,7 +111,7 @@ func TestNative29DriveReadiness(t *testing.T) {
 							if req.Method == "POST" {
 								posts++
 								if native {
-									t.Fatal("native mutation")
+									code = http.StatusCreated
 								}
 								text = `{"objects":[` + text + `]}`
 							} else {
@@ -185,7 +185,7 @@ func TestNative29DriveReadiness(t *testing.T) {
 					want = append(want, want[0])
 				}
 				if !failure {
-					want = append(want, "false:POST:/api/2.0/snapshots/", fmt.Sprintf("%t:GET:/api/2.0/snapshots/created/", bits == 3), fmt.Sprintf("%t:GET:/api/2.0/snapshots/created/", bits == 3))
+					want = append(want, fmt.Sprintf("%t:POST:/api/2.0/snapshots/", bits == 3), fmt.Sprintf("%t:GET:/api/2.0/snapshots/created/", bits == 3), fmt.Sprintf("%t:GET:/api/2.0/snapshots/created/", bits == 3))
 				}
 				if !reflect.DeepEqual(order, want) || nc+lc != len(want) {
 					t.Fatal("wire order", order, want)

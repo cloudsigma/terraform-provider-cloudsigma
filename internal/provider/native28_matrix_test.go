@@ -93,6 +93,7 @@ func TestNative28Matrix(t *testing.T) {
 							order = append(order, fmt.Sprintf("%t:%s:%s", n, req.Method, req.URL.Path))
 							stateMu.Unlock()
 							text := `{"uuid":"drive","status":"unmounted"}`
+							code := http.StatusOK
 							var body io.ReadCloser
 							if strings.Contains(req.URL.Path, "snapshots") {
 								text = `{"uuid":"created","drive":{"uuid":"drive"},"name":"done","status":"available","resource_uri":"uri","timestamp":"time","meta":{"exact":9007199254740993,"private":"PRIVATE_METADATA_CANARY"},"allocated_size":9007199254740993}`
@@ -104,7 +105,10 @@ func TestNative28Matrix(t *testing.T) {
 										text = `{"uuid":"PRIVATE_ID_CANARY","drive":{"uuid":"drive"},"status":"available"}`
 									}
 									if n {
-										t.Fatal("native mutation")
+										if bits != 3 {
+											t.Fatal("native mutation with incomplete credentials")
+										}
+										code = http.StatusCreated
 									}
 									if phase == "unknown-post" {
 										return nil, fmt.Errorf("commit outcome unknown")
@@ -195,7 +199,7 @@ func TestNative28Matrix(t *testing.T) {
 							if body == nil {
 								body = io.NopCloser(strings.NewReader(text))
 							}
-							return &http.Response{StatusCode: 200, Header: make(http.Header), Body: body, Request: req}, nil
+							return &http.Response{StatusCode: code, Header: make(http.Header), Body: body, Request: req}, nil
 						}
 					}
 					http.DefaultClient = &http.Client{Transport: transport(false)}
@@ -325,7 +329,7 @@ func TestNative28Matrix(t *testing.T) {
 					if (strings.HasPrefix(phase, "wait-") || strings.HasPrefix(phase, "private-")) && wantErr {
 						wantReads = 1
 					}
-					want := []string{fmt.Sprintf("%t:GET:/api/2.0/drives/drive/", useNative), "false:POST:/api/2.0/snapshots/"}
+					want := []string{fmt.Sprintf("%t:GET:/api/2.0/drives/drive/", useNative), fmt.Sprintf("%t:POST:/api/2.0/snapshots/", useNative)}
 					for i := 0; i < wantReads; i++ {
 						want = append(want, fmt.Sprintf("%t:GET:/api/2.0/snapshots/created/", useNative))
 					}
@@ -342,7 +346,7 @@ func TestNative28Matrix(t *testing.T) {
 						t.Fatalf("wire oracle got=%v want=%v posts=%d reads=%d", currentOrder, want, currentPosts, currentReads)
 					}
 					if wantErr {
-						recoverable := candidate && phase != "unknown-post" && phase != "private-id"
+						recoverable := candidate && phase != "unknown-post" && phase != "private-id" && !(useNative && strings.HasPrefix(phase, "ack-"))
 						if recoverable {
 							var got snapshotResourceModel
 							if d := out.State.Get(context.Background(), &got); d.HasError() {
