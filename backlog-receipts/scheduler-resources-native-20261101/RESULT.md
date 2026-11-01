@@ -18,6 +18,9 @@ qualified by that contract:
   endpoints.
 - Assignment import accepts the drive UUID and fills the scheduler UUID from
   the authoritative drive read before declaring state.
+- Refresh removes state for verified absence and preserves an observed
+  replacement scheduler in state so Terraform can plan the configured change;
+  refresh itself never writes a competing association.
 
 Validation:
 
@@ -28,8 +31,8 @@ Validation:
 - offline provider suite includes both resources and is qualified at 460 events;
 - no live API, account, or billable operation was performed.
 
-The implementation commits are `4b569a3` and `818cdd1`; the independent lint
-portability remediation is `ecce5e8`.
+The implementation commits are `4b569a3`, `818cdd1`, `242f3bf`, and `256d214`;
+the independent lint portability remediation is `ecce5e8`.
 
 The generated offline guard remains platform-specific and is addressed by the
 separate lint portability commit; no RemoteSnapshot lifecycle semantics are
