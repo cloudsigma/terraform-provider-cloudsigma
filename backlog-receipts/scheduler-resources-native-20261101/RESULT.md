@@ -32,7 +32,7 @@ Validation:
 - no live API, account, or billable operation was performed.
 
 The implementation commits are `5e6b1b2`, `a9aacff`, `5a15392`, `b7391f6`,
-`4943a04`, `dc9a2b2`, `fe890dc`, and `c0f73fa`; the independent lint
+`4943a04`, `dc9a2b2`, `fe890dc`, `c0f73fa`, `378915b`, and `011bf8f`; the independent lint
 portability remediation is already merged into `main` as `3c75500`.
 
 The generated offline guard remains platform-specific and is addressed by the
