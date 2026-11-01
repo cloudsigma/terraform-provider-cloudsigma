@@ -107,12 +107,7 @@ func TestCreateBackupSchedulerValidationAndFailures(t *testing.T) {
 		func() SchedulerCreateRequest { v := canonicalSchedulerRequest(); v.Type = "unsupported"; return v }(),
 		func() SchedulerCreateRequest {
 			v := canonicalSchedulerRequest()
-			v.ManualIncrementalBackup = ""
-			return v
-		}(),
-		func() SchedulerCreateRequest {
-			v := canonicalSchedulerRequest()
-			v.RetentionPolicy.Rules[0].Period = "years"
+			v.IncrementalBackup.Repeat = nil
 			return v
 		}(),
 		func() SchedulerCreateRequest {
@@ -178,6 +173,21 @@ func TestCreateBackupSchedulerValidationAndFailures(t *testing.T) {
 	_, err := c.CreateBackupScheduler(ctx, canonicalSchedulerRequest())
 	if err == nil || !strings.Contains(err.Error(), "cancelled") {
 		t.Fatalf("cancel err=%v", err)
+	}
+}
+
+func TestCreateBackupSchedulerAcceptsDeployedTypesAndClearingValues(t *testing.T) {
+	for _, typ := range []string{"backup", "snapshot", "migration", "dr"} {
+		input := canonicalSchedulerRequest()
+		input.Type = typ
+		input.ManualIncrementalBackup = ""
+		input.RetentionPolicy.Rules = nil
+		c := remoteSnapshotClient(func(*http.Request) (*http.Response, error) {
+			return remoteSnapshotResponse(http.StatusCreated, `{"objects":[{"uuid":"scheduler-1"}]}`), nil
+		})
+		if _, err := c.CreateBackupScheduler(context.Background(), input); err != nil {
+			t.Fatalf("type=%s err=%v", typ, err)
+		}
 	}
 }
 
@@ -252,6 +262,51 @@ func TestUpdateBackupSchedulerProjectsWritableFieldsAndAuth(t *testing.T) {
 	c.username, c.password, c.token = "", "", "fixture-token"
 	if got, err := c.UpdateBackupScheduler(context.Background(), "scheduler-token", input); err != nil || got.UUID != "scheduler-token" {
 		t.Fatalf("scheduler=%+v err=%v", got, err)
+	}
+}
+
+func TestSchedulerClearProjectionAndStrictDecode(t *testing.T) {
+	input := canonicalSchedulerRequest()
+	input.ManualIncrementalBackup = ""
+	input.OrchestratorTimezone = ""
+	input.RemoteLocation = ""
+	input.InitialBackup = &SchedulerInitialBackup{DayOfWeek: "", StartTime: "", EndTime: ""}
+	input.RetentionPolicy.Rules = []SchedulerRetentionRule{}
+	input.Tags = []SchedulerTagRef{}
+	input.Meta = map[string]any{}
+	payload, err := json.Marshal(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var object map[string]any
+	if err := json.Unmarshal(payload, &object); err != nil {
+		t.Fatal(err)
+	}
+	for key, want := range map[string]string{"manual_incremental_backup": "", "orchestrator_timezone": "", "remote_location": ""} {
+		if _, ok := object[key]; !ok {
+			t.Fatalf("missing explicit clear %s: %#v", key, object)
+		}
+		if object[key] != want {
+			t.Fatalf("clear %s=%#v", key, object[key])
+		}
+	}
+	if _, ok := object["tags"].([]any); !ok {
+		t.Fatalf("tags clear missing: %#v", object["tags"])
+	}
+	if _, ok := object["meta"].(map[string]any); !ok {
+		t.Fatalf("meta clear missing: %#v", object["meta"])
+	}
+	if _, ok := object["initial_backup"].(map[string]any); !ok {
+		t.Fatalf("initial clear missing: %#v", object["initial_backup"])
+	}
+	if _, ok := object["retention_policy"].(map[string]any); !ok {
+		t.Fatalf("retention missing: %#v", object["retention_policy"])
+	}
+	if _, ok := object["retention_policy"].(map[string]any)["rules"].([]any); !ok {
+		t.Fatalf("retention clear missing: %#v", object["retention_policy"])
+	}
+	if _, err := DecodeSchedulerCreateRequest([]byte(`{"uuid":"response-only"}`)); err == nil {
+		t.Fatal("accepted response-only field")
 	}
 }
 

@@ -102,6 +102,43 @@ func TestDriveSchedulerActionsRejectInvalidAcknowledgements(t *testing.T) {
 	}
 }
 
+func TestDriveSchedulerActionsDecodeSchedulerURIProjection(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		body string
+		want string
+		err  bool
+	}{
+		{name: "literal URI", body: `{"uuid":"drive-1","backup_scheduler":"/api/2.0/backupschedulers/scheduler-1/"}`, want: "scheduler-1"},
+		{name: "object URI", body: `{"uuid":"drive-1","backup_scheduler":{"resource_uri":"/api/2.0/backupschedulers/scheduler-1/"}}`, want: "scheduler-1"},
+		{name: "null", body: `{"uuid":"drive-1","backup_scheduler":null}`},
+		{name: "wrong route", body: `{"uuid":"drive-1","backup_scheduler":"/api/2.0/drives/scheduler-1/"}`, err: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := remoteSnapshotClient(func(*http.Request) (*http.Response, error) {
+				return remoteSnapshotResponse(http.StatusAccepted, tc.body), nil
+			})
+			got, err := c.AssignDriveScheduler(context.Background(), "drive-1", "scheduler-1")
+			if tc.err {
+				if err == nil {
+					t.Fatal("accepted malformed scheduler URI")
+				}
+				return
+			}
+			if err != nil || got == nil {
+				t.Fatalf("drive=%+v err=%v", got, err)
+			}
+			if tc.want == "" {
+				if got.BackupScheduler != nil {
+					t.Fatalf("expected absent association: %+v", got.BackupScheduler)
+				}
+			} else if got.BackupScheduler == nil || got.BackupScheduler.UUID != tc.want {
+				t.Fatalf("drive association=%+v want=%s", got.BackupScheduler, tc.want)
+			}
+		})
+	}
+}
+
 func TestDriveSchedulerActionTransportAndCancellation(t *testing.T) {
 	c := remoteSnapshotClient(func(*http.Request) (*http.Response, error) { return nil, errors.New("unknown outcome") })
 	if _, err := c.AssignDriveScheduler(context.Background(), "drive-1", "scheduler-1"); err == nil || !strings.Contains(err.Error(), "transport") {

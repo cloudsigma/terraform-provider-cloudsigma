@@ -315,11 +315,14 @@
       "TestOfflineDatasourceReads",
       "TestOfflineRegisteredSchemas",
       "TestOfflineAuditLogsDataSource",
+      "TestOfflineSchedulerResourceCreateReadUpdateDelete",
+      "TestOfflineSchedulerAssignmentReconcilesAndDoesNotBlindlyReplay",
+      "TestDriveSchedulerUUIDAcceptsResourceURIProjection",
       "TestOfflineSnapshotPrivacy",
       "TestOfflineDestroyStatus",
       "TestOfflineSnapshotDependencyCleanup"
     ],
-    "total": 460
+    "total": 463
   },
   {
     "package": "internal/provider",

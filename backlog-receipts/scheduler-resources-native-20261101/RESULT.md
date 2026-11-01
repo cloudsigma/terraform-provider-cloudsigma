@@ -1,0 +1,40 @@
+# Native scheduler resources — 2026-11-01
+
+DevOps supplied the pinned Turlo revision for `next.cloudsigma.com`:
+`f42d7a8d381805c9d397cec44e50269171f59679`.
+
+This slice implements the smallest provider-owned Terraform lifecycle directly
+qualified by that contract:
+
+- `cloudsigma_scheduler` owns scheduler CRUD using the complete writable JSON
+  projection; response-only fields are removed from update state.
+- `cloudsigma_scheduler_assignment` exclusively owns the drive-to-scheduler
+  association. It reconciles through `drive.backup_scheduler`, serializes
+  mutations per process, reads before retrying uncertain actions, and refuses
+  to replace a different concurrent association during refresh.
+- Scheduler CRUD accepts the pinned deployment's types and clearing values;
+  full PUT semantics are preserved rather than using PATCH behavior.
+- Import is identifier-only and refresh reads the authoritative detail/drive
+  endpoints.
+- Assignment import accepts the drive UUID and fills the scheduler UUID from
+  the authoritative drive read before declaring state.
+- Refresh removes state for verified absence and preserves an observed
+  replacement scheduler in state so Terraform can plan the configured change;
+  refresh itself never writes a competing association.
+
+Validation:
+
+- scheduler native transport tests, resource lifecycle tests, assignment
+  reconciliation tests — passed;
+- matching race tests — passed;
+- provider and API vet/build — passed;
+- offline provider suite includes both resources and is qualified at 463 events;
+- no live API, account, or billable operation was performed.
+
+The implementation commits are `5e6b1b2`, `a9aacff`, `5a15392`, `b7391f6`,
+`4943a04`, `dc9a2b2`, `fe890dc`, `c0f73fa`, `378915b`, and `011bf8f`; the independent lint
+portability remediation is already merged into `main` as `3c75500`.
+
+The generated offline guard remains platform-specific and is addressed by the
+separate lint portability commit; no RemoteSnapshot lifecycle semantics are
+introduced here.
