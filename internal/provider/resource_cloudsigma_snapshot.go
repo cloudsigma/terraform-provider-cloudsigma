@@ -187,7 +187,11 @@ func (r *snapshotResource) Create(ctx context.Context, request resource.CreateRe
 	tflog.Trace(ctx, "Created snapshot")
 
 	tflog.Info(ctx, "Waiting for snapshot to be available")
-	err = snapshot.WaitSnapshotStatusAvailable(ctx, r.client, snap.UUID, r.native)
+	if r.native != nil {
+		_, err = r.native.WaitSnapshotAvailable(ctx, snap.UUID, 0, 0)
+	} else {
+		err = snapshot.WaitSnapshotStatusAvailable(ctx, r.client, snap.UUID)
+	}
 	if err != nil {
 		response.Diagnostics.AddError(
 			"Invalid snapshot status",

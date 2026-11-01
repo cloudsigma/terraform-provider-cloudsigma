@@ -24,6 +24,7 @@ func libraryFixture(t *testing.T, code int, body string, calls *int, path, query
 	t.Helper()
 	useToken := len(tokenAuth) > 0 && tokenAuth[0]
 	old := http.DefaultTransport
+	oldClient := http.DefaultClient
 	tr := old.(*http.Transport).Clone()
 	tr.Proxy = nil
 	tr.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
@@ -57,6 +58,9 @@ func libraryFixture(t *testing.T, code int, body string, calls *int, path, query
 	}
 	tr.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12}
 	http.DefaultTransport = tr
+	clientClone := *oldClient
+	clientClone.Transport = tr
+	http.DefaultClient = &clientClone
 	var c *cloudsigmaapi.Client
 	var e error
 	if useToken {
@@ -65,6 +69,7 @@ func libraryFixture(t *testing.T, code int, body string, calls *int, path, query
 		c, e = cloudsigmaapi.New("zrh", "fixture", "fixture", "")
 	}
 	http.DefaultTransport = old
+	http.DefaultClient = oldClient
 	if e != nil {
 		t.Fatal(e)
 	}

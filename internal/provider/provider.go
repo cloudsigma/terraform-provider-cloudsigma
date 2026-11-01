@@ -195,6 +195,20 @@ func (p *cloudSigmaProvider) Configure(ctx context.Context, request provider.Con
 
 func (p *cloudSigmaProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewBackupSchedulersDataSource,
+		NewCapabilitiesDataSource,
+		NewCurrentUsageDataSource,
+		NewUsageDataSource,
+		NewBalanceDataSource,
+		NewBurstUsageDataSource,
+		NewDailyBurstUsageDataSource,
+		NewPricingDataSource,
+		NewDiscountDataSource,
+		NewVirtualRoutersDataSource,
+		NewNotificationContactsDataSource,
+		NewNotificationPreferencesDataSource,
+		NewACLsDataSource,
+		NewJobsDataSource,
 		NewDriveDataSource,
 		NewIPDataSource,
 		NewLibraryDriveDataSource,

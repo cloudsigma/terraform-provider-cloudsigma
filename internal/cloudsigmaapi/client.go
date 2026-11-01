@@ -29,8 +29,8 @@ func New(location, username, password, userAgent string) (*Client, error) {
 	return newClient(location, username, password, "", userAgent)
 }
 
-// NewToken constructs a fixed-policy bearer-token client for native read
-// paths. It shares the same endpoint and redirect policy as Basic clients.
+// NewToken constructs a fixed-policy bearer-token client for native API paths.
+// It shares the same endpoint and redirect policy as Basic clients.
 func NewToken(location, token, userAgent string) (*Client, error) {
 	if token == "" {
 		return nil, &Error{Category: "transport"}
@@ -101,6 +101,22 @@ const (
 	pubkeyEndpoint
 	keypairEndpoint
 	serverEndpoint
+	capabilitiesEndpoint
+	jobsEndpoint
+	jobEndpoint
+	backupSchedulersEndpoint
+	backupSchedulerEndpoint
+	currentUsageEndpoint
+	usageEndpoint
+	balanceEndpoint
+	burstUsageEndpoint
+	dailyBurstUsageEndpoint
+	pricingEndpoint
+	discountEndpoint
+	virtualRoutersEndpoint
+	notificationContactsEndpoint
+	notificationPreferencesEndpoint
+	aclsEndpoint
 )
 
 func (c *Client) get(ctx context.Context, endpoint readEndpoint) (any, error) {
@@ -115,10 +131,13 @@ func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, li
 func (c *Client) getLibraryDrivesContext(ctx context.Context, endpoint readEndpoint, libraryRoute string, bounded bool) (any, error) {
 	route := ""
 	switch endpoint {
-	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint, ipsEndpoint, ipEndpoint, vlansEndpoint, vlanEndpoint, snapshotEndpoint, pubkeyEndpoint, keypairEndpoint, serverEndpoint:
+	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint, ipsEndpoint, ipEndpoint, vlansEndpoint, vlanEndpoint, snapshotEndpoint, pubkeyEndpoint, keypairEndpoint, serverEndpoint, capabilitiesEndpoint, jobsEndpoint, jobEndpoint, backupSchedulersEndpoint, backupSchedulerEndpoint, currentUsageEndpoint, usageEndpoint, balanceEndpoint, burstUsageEndpoint, dailyBurstUsageEndpoint, pricingEndpoint, discountEndpoint, virtualRoutersEndpoint, notificationContactsEndpoint, notificationPreferencesEndpoint, aclsEndpoint:
 		route = libraryRoute
 	case tagsEndpoint:
 		route = "tags/"
+		if libraryRoute != "" {
+			route = libraryRoute
+		}
 	case profileEndpoint:
 		route = "profile/"
 	case locationsEndpoint:
@@ -213,7 +232,11 @@ func (c *Client) getLibraryDrivesContext(ctx context.Context, endpoint readEndpo
 	case snapshotEndpoint:
 		result, err = decodeSnapshot(body)
 	case tagsEndpoint:
-		result, err = decodeTags(body)
+		if libraryRoute != "" {
+			result, err = decodeTag(body)
+		} else {
+			result, err = decodeTags(body)
+		}
 	case vlansEndpoint:
 		result, err = decodeVLANs(body)
 	case vlanEndpoint:
@@ -238,6 +261,20 @@ func (c *Client) getLibraryDrivesContext(ctx context.Context, endpoint readEndpo
 		result, err = decodeSubscriptions(body)
 	case licensesEndpoint:
 		result, err = decodeLicenses(body)
+	case capabilitiesEndpoint:
+		result, err = decodeCapabilities(body)
+	case jobsEndpoint:
+		result, err = decodeJobs(body)
+	case jobEndpoint:
+		result, err = decodeJob(body)
+	case backupSchedulersEndpoint:
+		result, err = decodeRawCollection(body)
+	case backupSchedulerEndpoint:
+		result, err = decodeRawObject(body)
+	case currentUsageEndpoint:
+		result, err = decodeCurrentUsage(body)
+	case usageEndpoint, balanceEndpoint, burstUsageEndpoint, dailyBurstUsageEndpoint, pricingEndpoint, discountEndpoint, virtualRoutersEndpoint, notificationContactsEndpoint, notificationPreferencesEndpoint, aclsEndpoint:
+		result, err = decodeDynamicDocument(body)
 	}
 	if err != nil {
 		return nil, failure("decode_error")

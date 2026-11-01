@@ -176,10 +176,17 @@ func TestOfflineNativeTagConfigure(t *testing.T) {
 	native, _ := cloudsigmaapi.New("zrh", "fixture", "fixture", "")
 	legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture"))
 	good := &ProviderClients{Auth: authBasic, Native: native, Legacy: legacy}
-	for _, input := range []any{nil, "wrong", (*ProviderClients)(nil), &ProviderClients{Auth: authBasic, Native: native}, &ProviderClients{Auth: authBasic, Legacy: legacy}, &ProviderClients{Auth: authToken}, &ProviderClients{Auth: 0, Native: native, Legacy: legacy}} {
+	inputs := []any{nil, "wrong", (*ProviderClients)(nil), &ProviderClients{Auth: authBasic, Native: native}, &ProviderClients{Auth: authBasic, Legacy: legacy}, &ProviderClients{Auth: authToken}, &ProviderClients{Auth: 0, Native: native, Legacy: legacy}}
+	for i, input := range inputs {
 		d := &tagDataSource{clients: good}
 		var response datasource.ConfigureResponse
 		d.Configure(ctx, datasource.ConfigureRequest{ProviderData: input}, &response)
+		if i == 3 {
+			if d.clients == nil || response.Diagnostics.HasError() {
+				t.Fatal(input, response.Diagnostics)
+			}
+			continue
+		}
 		if d.clients != nil || (input != nil && !response.Diagnostics.HasError()) {
 			t.Fatal(input, response.Diagnostics)
 		}

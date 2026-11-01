@@ -1,0 +1,27 @@
+timestamp=2026-10-28T00:53:35Z
+base=e8c6938ace29cd865a5e64b26f6e73b4ba55ca24
+working_tree_status="untracked preserved candidate plus native qualification receipt"
+
+command=gofmt -d internal/cloudsigmaapi/remote_snapshots.go internal/cloudsigmaapi/remote_snapshots_test.go internal/provider/offline_remote_snapshot_test.go internal/provider/resource_cloudsigma_remote_snapshot.go
+exit=0
+output=empty
+command=git diff --check
+exit=0
+command=GOPROXY=off go test ./internal/cloudsigmaapi ./internal/provider -run 'RemoteSnapshot|remoteSnapshot|TestOfflineRemoteSnapshotNativeCreate' -count=1 -timeout=120s
+exit=0
+output=ok internal/cloudsigmaapi 0.151s; ok internal/provider 0.315s
+command=GOPROXY=off go test -race ./internal/cloudsigmaapi ./internal/provider -run 'RemoteSnapshot|remoteSnapshot|TestOfflineRemoteSnapshotNativeCreate' -count=1 -timeout=180s
+exit=0
+output=ok internal/cloudsigmaapi 1.274s; ok internal/provider 1.385s
+command=GOPROXY=off go test ./internal/provider -run '^TestOffline' -count=1 -timeout=180s
+exit=0
+output=ok internal/provider 6.395s
+command=GOPROXY=off go vet ./internal/cloudsigmaapi ./internal/provider
+exit=0
+command=GOPROXY=off go build ./...
+exit=0
+command=make lint
+exit=2
+output="repository-local tools/bin/golangci-lint is absent; no install/download attempted"
+network=not_requested
+live_cloud=not_requested

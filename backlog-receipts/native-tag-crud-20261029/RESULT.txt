@@ -1,0 +1,22 @@
+date=2026-10-29
+base=160845a69d5481394d15ee6ecbbece8007ca3da4
+scope=provider-owned native Tag data-source UUID read and Tag resource CRUD
+
+contract=https://docs.cloudsigma.com/en/latest/tags.html
+contract_evidence="GET /tags/{uuid}/; POST /tags/ 201; PUT /tags/{uuid}/ 200; DELETE /tags/{uuid}/ 204 (deletion started)"
+request_projection="POST emits only objects[].name; PUT emits only name"
+response_only="owner, resource_uri, uuid, resources are decoded only; no response object is echoed into requests"
+auth="Basic and bearer native clients use provider-owned authentication"
+
+commands:
+- GOPROXY=off go test ./internal/cloudsigmaapi ./internal/provider -run 'Tag|tag|OfflineDatasourceReads' -count=1 -timeout=180s PASS
+- GOPROXY=off go test -race ./internal/cloudsigmaapi ./internal/provider -run 'Tag|tag|OfflineDatasourceReads' -count=1 -timeout=180s PASS
+- GOPROXY=off go test ./internal/provider -run '^TestOffline' -count=1 -timeout=180s PASS
+- GOPROXY=off go test ./internal/cloudsigmaapi -count=1 -timeout=180s PASS
+- GOPROXY=off go vet ./internal/cloudsigmaapi ./internal/provider PASS
+- GOPROXY=off go build ./... PASS
+- git diff --check PASS
+
+remaining_scope="Tag resource assignment via resources remains unsupported in Terraform schema and is tracked separately; full SDK removal still requires native Snapshot create/update and removal of the SDKv2 mux/legacy drive-server resources."
+network=not_requested
+live_cloud=not_requested

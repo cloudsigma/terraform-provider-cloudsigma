@@ -43,7 +43,7 @@ func (c *Client) serverPower(ctx context.Context, uuid, action string) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept-Encoding", "identity")
 	req.Header.Set("User-Agent", c.userAgent)
-	req.SetBasicAuth(c.username, c.password)
+	c.authenticate(req)
 	// Legacy power sends are bounded by their supplied context, not a new timeout.
 	transport := c.transport
 	if h, ok := transport.(*http.Client); ok {

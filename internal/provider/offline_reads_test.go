@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -15,8 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflogtest"
-
-	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 )
 
 type fixtureRT func(*http.Request) (*http.Response, error)
@@ -67,18 +64,11 @@ func TestOfflineDatasourceReads(t *testing.T) {
 					}
 					providerData = &ProviderClients{Auth: authToken, Native: libraryFixture(t, code, body, &calls, path, "", true)}
 				} else {
-					c := cs.NewClient(cs.NewTokenCredentialsProvider("synthetic"), cs.WithLocation("next"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(q *http.Request) (*http.Response, error) {
-						calls++
-						if q.Method != "GET" || q.URL.RequestURI() != path {
-							t.Fatal("wire", q.URL.RequestURI())
-						}
-						body := `{"uuid":"fixture","name":"PRIVATE-CANARY","address":"PRIVATE-CANARY","company":"PRIVATE-CANARY","meta":{"s":"PRIVATE-CANARY"},"netmask":24}`
-						if code != 200 {
-							body = `[]`
-						}
-						return &http.Response{StatusCode: code, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: q}, nil
-					})}))
-					providerData = &ProviderClients{Legacy: c, Auth: authToken}
+					body := `{"uuid":"fixture","name":"PRIVATE-CANARY","resource_uri":"/api/2.0/tags/fixture/"}`
+					if code != 200 {
+						body = `[]`
+					}
+					providerData = &ProviderClients{Auth: authToken, Native: libraryFixture(t, code, body, &calls, path, "", true)}
 				}
 				var sc datasource.SchemaResponse
 				d.Schema(ctx, datasource.SchemaRequest{}, &sc)

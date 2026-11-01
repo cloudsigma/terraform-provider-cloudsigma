@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 	"unsafe"
@@ -74,21 +75,31 @@ func TestNative28Matrix(t *testing.T) {
 					native, legacy, reads, posts := 0, 0, 0, 0
 					blocked := false
 					reconciling := false
+					var stateMu sync.Mutex
+					snapshotState := func() ([]string, int, int, int, int, bool, bool) {
+						stateMu.Lock()
+						defer stateMu.Unlock()
+						return append([]string(nil), order...), native, legacy, reads, posts, blocked, reconciling
+					}
 					bodyDone := make(chan struct{}, 1)
 					transport := func(n bool) n28RT {
 						return func(req *http.Request) (*http.Response, error) {
+							stateMu.Lock()
 							if n {
 								native++
 							} else {
 								legacy++
 							}
 							order = append(order, fmt.Sprintf("%t:%s:%s", n, req.Method, req.URL.Path))
+							stateMu.Unlock()
 							text := `{"uuid":"drive","status":"unmounted"}`
 							var body io.ReadCloser
 							if strings.Contains(req.URL.Path, "snapshots") {
 								text = `{"uuid":"created","drive":{"uuid":"drive"},"name":"done","status":"available","resource_uri":"uri","timestamp":"time","meta":{"exact":9007199254740993,"private":"PRIVATE_METADATA_CANARY"},"allocated_size":9007199254740993}`
 								if req.Method == "POST" {
+									stateMu.Lock()
 									posts++
+									stateMu.Unlock()
 									if phase == "private-id" {
 										text = `{"uuid":"PRIVATE_ID_CANARY","drive":{"uuid":"drive"},"status":"available"}`
 									}
@@ -115,8 +126,11 @@ func TestNative28Matrix(t *testing.T) {
 										<-ctx.Done()
 									}
 								} else {
+									stateMu.Lock()
 									reads++
-									if phase != "deadline-policy" && !reconciling {
+									currentReads, currentReconciling := reads, reconciling
+									stateMu.Unlock()
+									if phase != "deadline-policy" && !currentReconciling {
 										want, _ := ctx.Deadline()
 										got, ok := req.Context().Deadline()
 										if !ok || !got.Equal(want) {
@@ -134,17 +148,17 @@ func TestNative28Matrix(t *testing.T) {
 											t.Fatal("legacy unexpectedly capped")
 										}
 									}
-									if phase == "private-body" && !reconciling {
+									if phase == "private-body" && !currentReconciling {
 										text = `{"PRIVATE_BODY_CANARY":`
 									}
-									if phase == "private-status" && !reconciling {
+									if phase == "private-status" && !currentReconciling {
 										text = `{"uuid":"created","status":"PRIVATE_STATUS_CANARY"}`
 									}
 									if phase == "private-id" {
 										text = `{`
 									}
-									target := !reconciling && (strings.HasPrefix(phase, "wait-") && reads == 1 || strings.HasPrefix(phase, "final-") && reads == 2)
-									if phase == "pending" && reads == 1 {
+									target := !currentReconciling && (strings.HasPrefix(phase, "wait-") && currentReads == 1 || strings.HasPrefix(phase, "final-") && currentReads == 2)
+									if phase == "pending" && currentReads == 1 {
 										text = `{"uuid":"created","status":"creating"}`
 									}
 									if target && strings.HasSuffix(phase, "null") {
@@ -160,7 +174,9 @@ func TestNative28Matrix(t *testing.T) {
 										body = &n28Partial{text: text}
 									}
 									if target && (strings.HasSuffix(phase, "cancel") || strings.HasSuffix(phase, "deadline")) {
+										stateMu.Lock()
 										blocked = true
+										stateMu.Unlock()
 										reader, writer := io.Pipe()
 										body = reader
 										// Real pipe-backed Body.Read: no bytes are written; release only after context cancellation/deadline.
@@ -254,23 +270,24 @@ func TestNative28Matrix(t *testing.T) {
 						}()
 						r.Create(ctx, resource.CreateRequest{Plan: plan}, &out)
 					}()
+					currentOrder, _, _, currentReads, currentPosts, currentBlocked, _ := snapshotState()
 					invalidAck := phase == "empty-ack" || phase == "null-ack" || phase == "invalid-ack"
 					if invalidAck || phase == "pre-cancel" || phase == "pre-deadline" {
 						if candidate && (panicked || !out.Diagnostics.HasError() || !out.State.Raw.IsNull()) {
 							t.Fatal("invalid/unacknowledged state", panicked, out.Diagnostics, out.State.Raw)
 						}
-						if reads != 0 && candidate {
-							t.Fatal("read after unusable acknowledgement", order)
+						if currentReads != 0 && candidate {
+							t.Fatal("read after unusable acknowledgement", currentOrder)
 						}
-						if posts > 1 {
+						if currentPosts > 1 {
 							t.Fatal("retried POST")
 						}
-						t.Logf("RESULT boundary phase=%s panic=%v posts=%d reads=%d state=%s", phase, panicked, posts, reads, out.State.Raw.String())
+						t.Logf("RESULT boundary phase=%s panic=%v posts=%d reads=%d state=%s", phase, panicked, currentPosts, currentReads, out.State.Raw.String())
 						return
 					}
 					if !candidate && phase == "final-null" {
-						if !panicked || posts != 1 || reads != 2 || !out.State.Raw.IsNull() {
-							t.Fatal("baseline null final oracle", panicked, order, out.State.Raw)
+						if !panicked || currentPosts != 1 || currentReads != 2 || !out.State.Raw.IsNull() {
+							t.Fatal("baseline null final oracle", panicked, currentOrder, out.State.Raw)
 						}
 						t.Log("RESULT baseline final-null panic absent-state")
 						return
@@ -278,7 +295,7 @@ func TestNative28Matrix(t *testing.T) {
 					if panicked {
 						t.Fatal("unexpected callback panic")
 					}
-					if blocked {
+					if currentBlocked {
 						select {
 						case <-bodyDone:
 						case <-time.After(time.Second):
@@ -286,8 +303,8 @@ func TestNative28Matrix(t *testing.T) {
 						}
 					}
 					if raw && bits < 3 {
-						if !out.Diagnostics.HasError() || len(order) != 0 || !out.State.Raw.IsNull() {
-							t.Fatal("SDK incomplete credential oracle", out.Diagnostics, order, out.State.Raw)
+						if !out.Diagnostics.HasError() || len(currentOrder) != 0 || !out.State.Raw.IsNull() {
+							t.Fatal("SDK incomplete credential oracle", out.Diagnostics, currentOrder, out.State.Raw)
 						}
 						t.Log("RESULT raw-SDK-credential-refusal zero-dispatch")
 						return
@@ -296,7 +313,7 @@ func TestNative28Matrix(t *testing.T) {
 					partial := strings.HasSuffix(phase, "partial")
 					wantErr := phase != "success" && phase != "pending" && phase != "deadline-policy" && !(partial && !useNative)
 					if out.Diagnostics.HasError() != wantErr {
-						t.Fatalf("diagnostic oracle wantError=%v actual=%v order=%v", wantErr, out.Diagnostics, order)
+						t.Fatalf("diagnostic oracle wantError=%v actual=%v order=%v", wantErr, out.Diagnostics, currentOrder)
 					}
 					wantReads := 2
 					if phase == "pending" {
@@ -321,8 +338,8 @@ func TestNative28Matrix(t *testing.T) {
 							want[i] = strings.ReplaceAll(want[i], "/created/", "/PRIVATE_ID_CANARY/")
 						}
 					}
-					if !reflect.DeepEqual(order, want) || posts != 1 || reads != wantReads {
-						t.Fatalf("wire oracle got=%v want=%v posts=%d reads=%d", order, want, posts, reads)
+					if !reflect.DeepEqual(currentOrder, want) || currentPosts != 1 || currentReads != wantReads {
+						t.Fatalf("wire oracle got=%v want=%v posts=%d reads=%d", currentOrder, want, currentPosts, currentReads)
 					}
 					if wantErr {
 						recoverable := candidate && phase != "unknown-post" && phase != "private-id"
@@ -339,14 +356,17 @@ func TestNative28Matrix(t *testing.T) {
 								t.Fatal("unknown values cannot persist")
 							}
 							// Actual ordinary Read reconciles the saved identity without any mutation.
+							stateMu.Lock()
 							reconciling = true
+							stateMu.Unlock()
 							refreshed := resource.ReadResponse{State: out.State}
 							r.Read(context.Background(), resource.ReadRequest{State: out.State}, &refreshed)
 							if refreshed.Diagnostics.HasError() {
 								t.Fatal(refreshed.Diagnostics)
 							}
-							if d := refreshed.State.Get(context.Background(), &got); d.HasError() || got.ID.ValueString() != "created" || got.Name.ValueString() != "done" || got.Status.ValueString() != "available" || posts != 1 {
-								t.Fatal("refresh failed", got, d, order)
+							currentOrder, _, _, _, currentPosts, _, _ = snapshotState()
+							if d := refreshed.State.Get(context.Background(), &got); d.HasError() || got.ID.ValueString() != "created" || got.Name.ValueString() != "done" || got.Status.ValueString() != "available" || currentPosts != 1 {
+								t.Fatal("refresh failed", got, d, currentOrder)
 							}
 						} else if !out.State.Raw.IsNull() {
 							t.Fatal("fabricated state", out.State.Raw)
@@ -364,7 +384,8 @@ func TestNative28Matrix(t *testing.T) {
 					if strings.HasPrefix(phase, "private-") {
 						t.Logf("PRIVACY phase=%s exact=%v", phase, out.Diagnostics)
 					}
-					record := map[string]interface{}{"side": "candidate", "bits": bits, "raw": raw, "phase": phase, "order": order, "native": native, "legacy": legacy, "posts": posts, "diagnostics": fmt.Sprint(out.Diagnostics), "state": out.State.Raw.String(), "blocked": blocked}
+					currentOrder, currentNative, currentLegacy, _, currentPosts, currentBlocked, _ := snapshotState()
+					record := map[string]interface{}{"side": "candidate", "bits": bits, "raw": raw, "phase": phase, "order": currentOrder, "native": currentNative, "legacy": currentLegacy, "posts": currentPosts, "diagnostics": fmt.Sprint(out.Diagnostics), "state": out.State.Raw.String(), "blocked": currentBlocked}
 					b, _ := json.Marshal(record)
 					t.Log("RESULT " + string(b))
 				})

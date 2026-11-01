@@ -42,7 +42,7 @@ func (c *Client) PutDriveAttachment(ctx context.Context, id string, payload []by
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept-Encoding", "identity")
 	req.Header.Set("User-Agent", c.userAgent)
-	req.SetBasicAuth(c.username, c.password)
+	c.authenticate(req)
 	resp, err := transport.Do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
