@@ -346,7 +346,7 @@ func TestNative28Matrix(t *testing.T) {
 						t.Fatalf("wire oracle got=%v want=%v posts=%d reads=%d", currentOrder, want, currentPosts, currentReads)
 					}
 					if wantErr {
-						recoverable := candidate && phase != "unknown-post" && phase != "private-id" && !strings.HasPrefix(phase, "ack-")
+							recoverable := candidate && phase != "unknown-post" && phase != "private-id" && !(useNative && strings.HasPrefix(phase, "ack-"))
 						if recoverable {
 							var got snapshotResourceModel
 							if d := out.State.Get(context.Background(), &got); d.HasError() {
