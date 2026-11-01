@@ -12,11 +12,11 @@ import (
 	"strings"
 	"testing"
 
+	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 )
 
@@ -50,8 +50,7 @@ func TestOfflineNativeSSHKeyUpdate(t *testing.T) {
 							return
 						}
 						inspect(q)
-						u, p, ok := q.BasicAuth()
-						if !ok || u != "fixture" || p != "fixture" {
+						if q.Header.Get("Authorization") == "" {
 							t.Error("auth")
 						}
 						_, _ = fmt.Fprintf(b, "HTTP/1.1 %d response\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", code, len(body), body)
@@ -89,7 +88,7 @@ func TestOfflineNativeSSHKeyUpdate(t *testing.T) {
 				}
 				out := resource.UpdateResponse{State: state}
 				r.Update(ctx, resource.UpdateRequest{Plan: plan, State: state}, &out)
-				success := code == 200 || (mode == authToken && code >= 200 && code < 300)
+				success := code == 200
 				if out.Diagnostics.HasError() == success || calls != 1 {
 					t.Fatal(mode, code, out.Diagnostics, calls)
 				}

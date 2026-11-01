@@ -1,0 +1,18 @@
+date=2026-10-29
+base=160845a69d5481394d15ee6ecbbece8007ca3da4
+scope=remove the remaining Framework license data-source SDK fallback
+
+The license data source now requires ProviderClients.Native and dispatches all
+Basic and bearer reads through the provider-owned Licenses transport. The
+legacy SDK list path and its provider production import are removed. Existing
+numeric/string quantity compatibility remains covered by the native decoder.
+
+commands:
+- GOPROXY=off go test ./internal/provider -run 'License|license|OfflineDatasourceReads' -count=1 -timeout=180s PASS
+- GOPROXY=off go test ./internal/provider -run '^TestOffline' -count=1 -timeout=180s PASS
+- GOPROXY=off go vet ./internal/cloudsigmaapi ./internal/provider PASS
+- GOPROXY=off go build ./... PASS
+- git diff --check PASS
+
+network=not_requested
+live_cloud=not_requested

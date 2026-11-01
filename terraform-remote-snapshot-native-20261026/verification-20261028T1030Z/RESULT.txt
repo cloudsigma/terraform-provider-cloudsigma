@@ -1,0 +1,35 @@
+timestamp=2026-10-28T10:30Z
+base=e8c6938ace29cd865a5e64b26f6e73b4ba55ca24
+working_tree_status="?? internal/cloudsigmaapi/remote_snapshots.go;?? internal/cloudsigmaapi/remote_snapshots_test.go;?? internal/provider/offline_remote_snapshot_test.go;?? internal/provider/resource_cloudsigma_remote_snapshot.go;?? terraform-remote-snapshot-native-20261026/"
+original_registration_patch=preserved at outputs/dirty-main.patch
+
+command=GOPROXY=off go test ./internal/provider -run '^TestOffline' -count=1 -timeout=180s
+exit=0
+output=ok github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider 6.468s
+
+command=GOPROXY=off go test ./internal/cloudsigmaapi ./internal/provider -run 'RemoteSnapshot|remoteSnapshot|TestOfflineRemoteSnapshotNativeCreate' -count=1 -timeout=120s
+exit=0
+output=ok internal/cloudsigmaapi 0.129s; ok internal/provider 0.376s
+
+command=GOPROXY=off go test -race ./internal/cloudsigmaapi ./internal/provider -run 'RemoteSnapshot|remoteSnapshot|TestOfflineRemoteSnapshotNativeCreate' -count=1 -timeout=180s
+exit=0
+output=ok internal/cloudsigmaapi 1.268s; ok internal/provider 1.503s
+
+command=GOPROXY=off go vet ./internal/cloudsigmaapi ./internal/provider
+exit=0
+
+command=GOPROXY=off go build ./...
+exit=0
+
+command=gofmt -d internal/cloudsigmaapi/remote_snapshots.go internal/cloudsigmaapi/remote_snapshots_test.go internal/provider/offline_remote_snapshot_test.go internal/provider/resource_cloudsigma_remote_snapshot.go
+exit=0
+output=empty
+
+command=git diff --check
+exit=0
+
+command=make lint
+exit=2
+output="==> Linting code with 'golangci-lint'...; make: tools/bin/golangci-lint: No such file or directory; make: *** [lint] Error 1"
+network=not_requested
+live_cloud=not_requested

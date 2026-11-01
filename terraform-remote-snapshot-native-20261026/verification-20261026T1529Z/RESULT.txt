@@ -1,0 +1,11 @@
+timestamp=2026-10-26T15:32:01Z
+base=e8c6938ace29cd865a5e64b26f6e73b4ba55ca24
+tree=08fb3c68dc96d2e9d79418bb26568e3d6f6f875a
+--- git diff check ---
+--- gofmt check ---
+--- focused race test ---
+ok  	github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi	1.047s [no tests to run]
+ok  	github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider	1.118s
+--- vet ---
+--- build ---
+exit=0

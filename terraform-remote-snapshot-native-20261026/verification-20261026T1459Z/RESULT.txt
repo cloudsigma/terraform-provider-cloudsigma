@@ -1,0 +1,9 @@
+timestamp=2026-10-26T15:01:35Z
+base=e8c6938ace29cd865a5e64b26f6e73b4ba55ca24
+tree=08fb3c68dc96d2e9d79418bb26568e3d6f6f875a
+--- git diff --check ---
+--- gofmt ---
+--- go test ./... ---
+?   	github.com/cloudsigma/terraform-provider-cloudsigma	[no test files]
+?   	github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/drive	[no test files]
+?   	github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/snapshot	[no test files]

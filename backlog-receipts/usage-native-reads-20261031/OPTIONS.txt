@@ -1,0 +1,6 @@
+# OPTIONS probes — 2026-10-31
+
+usage: 200 allow: GET
+balance: 200 allow: GET
+burstusage: 200 allow: GET
+dailyburstusage: 200 allow: GET

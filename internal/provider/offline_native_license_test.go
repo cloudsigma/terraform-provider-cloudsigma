@@ -6,14 +6,12 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/migration"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -74,14 +72,10 @@ func TestOfflineNativeTokenLicense(t *testing.T) {
 	const body = `{"objects":[{"name":"win","burstable":true,"long_name":"Windows","resource_uri":"uri","type":"instance","user_metric":"smp","free":9007199254740993}]}`
 	calls := 0
 	native := licenseFixture(t, http.StatusOK, body, &calls, true)
-	legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture-token"), cloudsigma.WithHTTPClient(&http.Client{Transport: fixtureRT(func(*http.Request) (*http.Response, error) {
-		t.Fatal("token license read fell back to the Go SDK")
-		return nil, errors.New("unexpected fallback")
-	})}))
 	d := &licenseDataSource{}
 	ctx := context.Background()
 	var conf datasource.ConfigureResponse
-	d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authToken, Native: native, Legacy: legacy}}, &conf)
+	d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authToken, Native: native}}, &conf)
 	if conf.Diagnostics.HasError() {
 		t.Fatal(conf.Diagnostics)
 	}
@@ -106,17 +100,11 @@ func TestOfflineNativeTokenLicense(t *testing.T) {
 func TestOfflineTokenLicenseNumericQuantity(t *testing.T) {
 	const body = `{"objects":[{"name":"win","free":9007199254740993,"initial_purchase_requirement":1.20e3,"subsequent_purchase_requirement":-0}]}`
 	var calls int
-	legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture-token"), cloudsigma.WithLocation("zrh"), cloudsigma.WithHTTPClient(&http.Client{Transport: fixtureRT(func(r *http.Request) (*http.Response, error) {
-		calls++
-		if r.Method != http.MethodGet || r.URL.Path != "/api/2.0/licenses/" || r.URL.RawQuery != "" || r.Header.Get("Authorization") != "Bearer fixture-token" {
-			t.Fatalf("unexpected token license request: %s %s auth=%q", r.Method, r.URL, r.Header.Get("Authorization"))
-		}
-		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: r}, nil
-	})}))
+	native := licenseFixture(t, http.StatusOK, body, &calls, true)
 	d := &licenseDataSource{}
 	ctx := context.Background()
 	var conf datasource.ConfigureResponse
-	d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authToken, Legacy: legacy}}, &conf)
+	d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authToken, Native: native}}, &conf)
 	if conf.Diagnostics.HasError() {
 		t.Fatal(conf.Diagnostics)
 	}
@@ -178,13 +166,9 @@ func TestOfflineNativeLicense(t *testing.T) {
 			ctx := context.Background()
 			calls := 0
 			native := licenseFixture(t, tc.code, tc.body, &calls)
-			legacy := cloudsigma.NewClient(cloudsigma.NewTokenCredentialsProvider("fixture"), cloudsigma.WithHTTPClient(&http.Client{Transport: fixtureRT(func(*http.Request) (*http.Response, error) {
-				t.Error("legacy fallback")
-				return nil, errors.New("unexpected fallback")
-			})}))
 			d := &licenseDataSource{}
 			var conf datasource.ConfigureResponse
-			d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authBasic, Native: native, Legacy: legacy}}, &conf)
+			d.Configure(ctx, datasource.ConfigureRequest{ProviderData: &ProviderClients{Auth: authBasic, Native: native}}, &conf)
 			if conf.Diagnostics.HasError() {
 				t.Fatal(conf.Diagnostics)
 			}

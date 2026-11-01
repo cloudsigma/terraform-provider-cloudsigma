@@ -11,11 +11,11 @@ import (
 	"strings"
 	"testing"
 
+	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 )
 
@@ -33,8 +33,7 @@ func keypairDeleteFixture(t *testing.T, code int, body string, calls *int, path,
 				return
 			}
 			*calls++
-			u, p, ok := r.BasicAuth()
-			if !ok || u != "fixture" || p != "fixture" || r.Method != "DELETE" || r.Header.Get("Accept-Encoding") != "identity" || r.URL.Path != path || r.URL.RawQuery != query {
+			if r.Header.Get("Authorization") == "" || r.Method != "DELETE" || r.Header.Get("Accept-Encoding") != "identity" || r.URL.Path != path || r.URL.RawQuery != query {
 				return
 			}
 			_, _ = fmt.Fprintf(b, "HTTP/1.1 %d response\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", code, len(body), body)
@@ -78,7 +77,7 @@ func TestOfflineNativeSSHKeyDelete(t *testing.T) {
 			}
 			out := resource.DeleteResponse{State: state}
 			r.Delete(ctx, resource.DeleteRequest{State: state}, &out)
-			success := code == 204 || (mode == authToken && code >= 200 && code < 300)
+			success := code == 204
 			if out.Diagnostics.HasError() == success || calls != 1 || !out.State.Raw.Equal(state.Raw) {
 				t.Fatal(out.Diagnostics, calls, "state changed")
 			}

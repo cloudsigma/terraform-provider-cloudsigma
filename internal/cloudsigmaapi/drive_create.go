@@ -53,7 +53,7 @@ func (c *Client) CreateDrive(ctx context.Context, input DriveCreateRequest) (*Dr
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept-Encoding", "identity")
 	req.Header.Set("User-Agent", c.userAgent)
-	req.SetBasicAuth(c.username, c.password)
+	c.authenticate(req)
 	resp, err := transport.Do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()

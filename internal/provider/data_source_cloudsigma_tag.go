@@ -94,7 +94,7 @@ func (d *tagDataSource) Configure(_ context.Context, request datasource.Configur
 	}
 
 	clients, ok := request.ProviderData.(*ProviderClients)
-	if !ok || clients == nil || clients.Legacy == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Auth == authBasic && clients.Native == nil) {
+	if !ok || clients == nil || clients.Native == nil || (clients.Auth != authBasic && clients.Auth != authToken) {
 		response.Diagnostics.AddError(
 			"Unconfigured CloudSigma client",
 			"Please report this issue to the provider developers.",
@@ -172,9 +172,7 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 
 		if tagUUID != "" {
 			tflog.Trace(ctx, "Getting tag using UUID")
-			// Explicit legacy identifier path: public singular GET heading conflicts
-			// with the plural example and SDK. This is not an error fallback.
-			tag, _, err := d.clients.Legacy.Tags.Get(ctx, tagUUID)
+			tag, err := d.clients.Native.Tag(ctx, tagUUID)
 			if err != nil {
 				response.Diagnostics.AddError("Unable to get tag", err.Error())
 				return
@@ -227,8 +225,7 @@ func (d *tagDataSource) Read(ctx context.Context, request datasource.ReadRequest
 	response.Diagnostics.Append(diags...)
 }
 
-// List reads are native for both auth modes. Identifier reads remain legacy
-// because the public singular tag route is not contract-qualified here.
+// Tag reads are native for both authentication modes.
 func (d *tagDataSource) tags(ctx context.Context) ([]cloudsigmaapi.Tag, error) {
 	return d.clients.Native.Tags(ctx)
 }

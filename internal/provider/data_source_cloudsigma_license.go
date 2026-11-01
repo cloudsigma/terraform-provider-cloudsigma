@@ -112,7 +112,7 @@ func (d *licenseDataSource) Configure(_ context.Context, request datasource.Conf
 		return
 	}
 	clients, ok := request.ProviderData.(*ProviderClients)
-	if !ok || clients == nil || (clients.Auth != authBasic && clients.Auth != authToken) || (clients.Native == nil && clients.Legacy == nil) {
+	if !ok || clients == nil || clients.Native == nil || (clients.Auth != authBasic && clients.Auth != authToken) {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -224,16 +224,5 @@ func (d *licenseDataSource) Read(ctx context.Context, request datasource.ReadReq
 
 // licenses selects auth mode at configuration, never as an error fallback.
 func (d *licenseDataSource) licenses(ctx context.Context) ([]cloudsigmaapi.License, error) {
-	if d.clients.Native != nil {
-		return d.clients.Native.Licenses(ctx)
-	}
-	legacy, _, err := d.clients.Legacy.Licenses.List(ctx)
-	if err != nil {
-		return nil, err
-	}
-	licenses := make([]cloudsigmaapi.License, len(legacy))
-	for i, l := range legacy {
-		licenses[i] = cloudsigmaapi.License(l)
-	}
-	return licenses, nil
+	return d.clients.Native.Licenses(ctx)
 }

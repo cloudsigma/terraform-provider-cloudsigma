@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"net/http"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
+	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 )
 
 var (
@@ -23,7 +23,7 @@ var (
 
 // tagResource is the tag resource implementation.
 type tagResource struct {
-	client *cloudsigma.Client
+	native *cloudsigmaapi.Client
 }
 
 // tagResourceModel maps the tag resource schema data.
@@ -75,16 +75,16 @@ in your configurations via their IDs.
 }
 
 func (r *tagResource) Configure(_ context.Context, request resource.ConfigureRequest, response *resource.ConfigureResponse) {
-	r.client = nil
+	r.native = nil
 	if request.ProviderData == nil {
 		return
 	}
-	client, ok := legacyClient(request.ProviderData)
-	if !ok {
+	clients, ok := request.ProviderData.(*ProviderClients)
+	if !ok || clients == nil || clients.Native == nil || (clients.Auth != authBasic && clients.Auth != authToken) {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
-	r.client = client
+	r.native = clients.Native
 }
 
 func (r *tagResource) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
@@ -97,18 +97,12 @@ func (r *tagResource) Create(ctx context.Context, request resource.CreateRequest
 		return
 	}
 
-	createRequest := &cloudsigma.TagCreateRequest{
-		Tags: []cloudsigma.Tag{{
-			Name: data.Name.ValueString(),
-		}},
-	}
 	tflog.Trace(ctx, "Creating tag")
-	tags, _, err := r.client.Tags.Create(ctx, createRequest)
+	tag, err := r.native.CreateTag(ctx, cloudsigmaapi.TagCreateRequest{Name: data.Name.ValueString()})
 	if err != nil {
 		response.Diagnostics.AddError("Unable to create tag", err.Error())
 		return
 	}
-	tag := tags[0]
 	tflog.Trace(ctx, "Created tag")
 
 	// map response body to attributes
@@ -121,7 +115,7 @@ func (r *tagResource) Create(ctx context.Context, request resource.CreateRequest
 }
 
 func (r *tagResource) Read(ctx context.Context, request resource.ReadRequest, response *resource.ReadResponse) {
-	if r.client == nil {
+	if r.native == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -136,9 +130,10 @@ func (r *tagResource) Read(ctx context.Context, request resource.ReadRequest, re
 
 	tagUUID := data.ID.ValueString()
 	tflog.Trace(ctx, "Getting tag")
-	tag, resp, err := r.client.Tags.Get(ctx, tagUUID)
+	tag, err := r.native.Tag(ctx, tagUUID)
 	if err != nil {
-		if resp != nil && resp.StatusCode == http.StatusNotFound {
+		var apiErr *cloudsigmaapi.Error
+		if errors.As(err, &apiErr) && apiErr.Status == 404 {
 			// if the tag is somehow already destroyed, mark as successfully gone
 			response.State.RemoveResource(ctx)
 			return
@@ -168,13 +163,8 @@ func (r *tagResource) Update(ctx context.Context, request resource.UpdateRequest
 	}
 
 	tagUUID := data.ID.ValueString()
-	updateRequest := &cloudsigma.TagUpdateRequest{
-		Tag: &cloudsigma.Tag{
-			Name: data.Name.ValueString(),
-		},
-	}
 	tflog.Trace(ctx, "Updating tag")
-	tag, _, err := r.client.Tags.Update(ctx, tagUUID, updateRequest)
+	tag, err := r.native.UpdateTag(ctx, tagUUID, cloudsigmaapi.TagUpdateRequest{Name: data.Name.ValueString()})
 	if err != nil {
 		response.Diagnostics.AddError("Unable to update tag", err.Error())
 		return
@@ -202,7 +192,7 @@ func (r *tagResource) Delete(ctx context.Context, request resource.DeleteRequest
 
 	tagUUID := data.ID.ValueString()
 	tflog.Trace(ctx, "Deleting tag")
-	_, err := r.client.Tags.Delete(ctx, tagUUID)
+	err := r.native.DeleteTag(ctx, tagUUID)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to delete tag", err.Error())
 		return

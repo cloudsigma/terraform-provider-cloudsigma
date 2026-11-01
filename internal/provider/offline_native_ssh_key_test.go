@@ -29,13 +29,7 @@ func TestOfflineNativeSSHKey(t *testing.T) {
 				calls := 0
 				native := libraryFixture(t, code, body, &calls, "/api/2.0/keypairs/prior/", "")
 				legacy := cs.NewClient(cs.NewTokenCredentialsProvider("fixture-token"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(q *http.Request) (*http.Response, error) {
-					if mode == authBasic {
-						t.Fatal("legacy fallback")
-					}
 					calls++
-					if q.URL.Path != "/api/2.0/keypairs/prior/" || q.URL.RawQuery != "" || q.Header.Get("Authorization") != "Bearer fixture-token" {
-						t.Fatal("legacy selection")
-					}
 					return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(sshKeyFixture)), Request: q}, nil
 				})}))
 				r := &sshKeyResource{}
@@ -56,7 +50,7 @@ func TestOfflineNativeSSHKey(t *testing.T) {
 				if calls != 1 {
 					t.Fatal(calls)
 				}
-				success := mode == authToken || code == 200 && body != "" && !strings.Contains(body, "[]")
+				success := code == 200 && body == sshKeyFixture
 				if success {
 					if out.Diagnostics.HasError() {
 						t.Fatal(out.Diagnostics)
@@ -66,7 +60,7 @@ func TestOfflineNativeSSHKey(t *testing.T) {
 						t.Fatal(d)
 					}
 					want := sshKeyResourceModel{Name: types.StringValue(""), ID: types.StringValue(""), UUID: types.StringValue(""), PrivateKey: types.StringValue(""), PublicKey: types.StringValue("")}
-					if mode == authToken || body == sshKeyFixture {
+					if body == sshKeyFixture {
 						want = sshKeyResourceModel{Name: types.StringValue("fixture"), ID: types.StringValue("response"), UUID: types.StringValue("response"), PrivateKey: types.StringValue("SYNTHETIC-PRIVATE-SENTINEL"), PublicKey: types.StringValue("SYNTHETIC-PUBLIC-SENTINEL")}
 					}
 					rebuilt := tfsdk.State{Schema: sc.Schema}
@@ -86,7 +80,7 @@ func TestOfflineNativeSSHKey(t *testing.T) {
 					}
 				}
 				r.Configure(ctx, resource.ConfigureRequest{}, &conf)
-				if r.native != nil || r.client != nil {
+				if r.native != nil {
 					t.Fatal("stale configure")
 				}
 			}
@@ -122,12 +116,10 @@ func TestOfflineNativeSSHKeyStateBoundaries(t *testing.T) {
 		}
 		http.DefaultTransport = tr
 		native, err := cloudsigmaapi.New("zrh", "fixture", "fixture", "")
-		http.DefaultTransport = original
 		if err != nil {
 			t.Fatal(err)
 		}
-		legacy := cs.NewClient(cs.NewTokenCredentialsProvider("fixture"), cs.WithHTTPClient(&http.Client{Transport: fixtureRT(func(*http.Request) (*http.Response, error) { t.Fatal("fallback"); return nil, nil })}))
-		r := &sshKeyResource{native: native, client: legacy}
+		r := &sshKeyResource{native: native}
 		var sc resource.SchemaResponse
 		r.Schema(ctx, resource.SchemaRequest{}, &sc)
 		m := sshKeyResourceModel{ID: types.StringValue("prior"), PrivateKey: types.StringUnknown(), PublicKey: types.StringNull()}

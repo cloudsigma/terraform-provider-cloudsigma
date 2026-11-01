@@ -1,0 +1,375 @@
+timestamp=2026-10-26T15:04:08Z
+base=e8c6938ace29cd865a5e64b26f6e73b4ba55ca24
+tree=08fb3c68dc96d2e9d79418bb26568e3d6f6f875a
+--- focused native verification ---
+ok  	github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi	0.007s [no tests to run]
+ok  	github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider	0.022s
+--- repository-wide tests with 45s package timeout ---
+?   	github.com/cloudsigma/terraform-provider-cloudsigma	[no test files]
+?   	github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/drive	[no test files]
+?   	github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/snapshot	[no test files]
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [DEBUG] Drive clone configuration
+2026/10/26 15:04:11 [INFO] Drive ID
+2026/10/26 15:04:11 [DEBUG] Waiting for state to become: [mounted unmounted]
+2026/10/26 15:04:16 [DEBUG] Drive clone configuration
+2026/10/26 15:04:16 [INFO] Drive ID
+2026/10/26 15:04:16 [DEBUG] Waiting for state to become: [mounted unmounted]
+2026/10/26 15:04:21 [DEBUG] Drive clone configuration
+2026/10/26 15:04:21 [INFO] Drive ID
+2026/10/26 15:04:21 [DEBUG] Waiting for state to become: [mounted unmounted]
+2026/10/26 15:04:26 [DEBUG] Drive clone configuration
+2026/10/26 15:04:26 [INFO] Drive ID
+2026/10/26 15:04:26 [DEBUG] Waiting for state to become: [mounted unmounted]
+2026/10/26 15:04:31 [DEBUG] Drive clone configuration
+2026/10/26 15:04:31 [INFO] Drive ID
+2026/10/26 15:04:31 [DEBUG] Waiting for state to become: [mounted unmounted]
+2026/10/26 15:04:36 [DEBUG] Drive clone configuration
+2026/10/26 15:04:36 [INFO] Drive ID
+2026/10/26 15:04:36 [DEBUG] Waiting for state to become: [mounted unmounted]
+2026/10/26 15:04:41 [DEBUG] Drive clone configuration
+2026/10/26 15:04:41 [INFO] Drive ID
+2026/10/26 15:04:41 [DEBUG] Waiting for state to become: [mounted unmounted]
+2026/10/26 15:04:46 [DEBUG] Drive clone configuration
+2026/10/26 15:04:46 [INFO] Drive ID
+2026/10/26 15:04:46 [DEBUG] Waiting for state to become: [mounted unmounted]
+2026/10/26 15:04:51 [DEBUG] Drive clone configuration
+2026/10/26 15:04:51 [INFO] Drive ID
+2026/10/26 15:04:51 [DEBUG] Waiting for state to become: [mounted unmounted]
+panic: test timed out after 45s
+running tests:
+	TestNative26AttachmentFaults (45s)
+	TestNative26AttachmentFaults/4/401 (5s)
+
+goroutine 264 [running]:
+testing.(*M).startAlarm.func1()
+	/usr/lib/go-1.22/src/testing/testing.go:2366 +0x385
+created by time.goFunc
+	/usr/lib/go-1.22/src/time/sleep.go:177 +0x2d
+
+goroutine 1 [chan receive]:
+testing.(*T).Run(0xc0001df6c0, {0x107b62b?, 0x0?}, 0x10ddf40)
+	/usr/lib/go-1.22/src/testing/testing.go:1750 +0x3ab
+testing.runTests.func1(0xc0001df6c0)
+	/usr/lib/go-1.22/src/testing/testing.go:2161 +0x37
+testing.tRunner(0xc0001df6c0, 0xc00031fc70)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+testing.runTests(0xc00019db90, {0x1927140, 0x40, 0x40}, {0x1?, 0xc000346c30?, 0x19323a0?})
+	/usr/lib/go-1.22/src/testing/testing.go:2159 +0x445
+testing.(*M).Run(0xc000334d20)
+	/usr/lib/go-1.22/src/testing/testing.go:2027 +0x68b
+main.main()
+	_testmain.go:173 +0x16c
+
+goroutine 58 [chan receive]:
+testing.(*T).Run(0xc00041c000, {0xc000466568?, 0xc0000a8ea8?}, 0xc0003cc280)
+	/usr/lib/go-1.22/src/testing/testing.go:1750 +0x3ab
+github.com/cloudsigma/terraform-provider-cloudsigma/cloudsigma.TestNative26AttachmentFaults(0xc00041c000)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/cloudsigma/native26_attachment_test.go:22 +0x1b2
+testing.tRunner(0xc00041c000, 0x10ddf40)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 283 [select]:
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.(*StateChangeConf).WaitForStateContext(0xc0001d47e0, {0x121e4e8, 0xc00046c280})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-sdk/v2@v2.34.0/helper/retry/state.go:212 +0x365
+github.com/cloudsigma/terraform-provider-cloudsigma/cloudsigma.resourceCloudSigmaDriveCreate({0x121e4e8, 0xc00046c280}, 0xc0003e6400, {0xe85720, 0xc0003cc2a0?})
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/cloudsigma/resource_cloudsigma_drive.go:221 +0xfce
+github.com/cloudsigma/terraform-provider-cloudsigma/cloudsigma.TestNative26AttachmentFaults.func1(0xc000300000)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/cloudsigma/native26_attachment_test.go:123 +0xa4e
+testing.tRunner(0xc000300000, 0xc0003cc280)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 58
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 284 [select]:
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.(*StateChangeConf).WaitForStateContext.func1()
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-sdk/v2@v2.34.0/helper/retry/state.go:89 +0xfc
+created by github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.(*StateChangeConf).WaitForStateContext in goroutine 283
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-sdk/v2@v2.34.0/helper/retry/state.go:86 +0x23b
+FAIL	github.com/cloudsigma/terraform-provider-cloudsigma/cloudsigma	45.024s
+ok  	github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi	3.279s
+panic: test timed out after 45s
+running tests:
+	TestNative28Matrix (45s)
+	TestNative28Matrix/credentials1/rawtrue/null-ack (3s)
+
+goroutine 119 [running]:
+testing.(*M).startAlarm.func1()
+	/usr/lib/go-1.22/src/testing/testing.go:2366 +0x385
+created by time.goFunc
+	/usr/lib/go-1.22/src/time/sleep.go:177 +0x2d
+
+goroutine 1 [chan receive]:
+testing.(*T).Run(0xc00032c000, {0x1109609?, 0x0?}, 0x117c228)
+	/usr/lib/go-1.22/src/testing/testing.go:1750 +0x3ab
+testing.runTests.func1(0xc00032c000)
+	/usr/lib/go-1.22/src/testing/testing.go:2161 +0x37
+testing.tRunner(0xc00032c000, 0xc00029fbe0)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+testing.runTests(0xc000125ba8, {0x1a2b7c0, 0x46, 0x46}, {0x3ff0000000000000?, 0x1?, 0x1a34f40?})
+	/usr/lib/go-1.22/src/testing/testing.go:2159 +0x445
+testing.(*M).Run(0xc0002c9360)
+	/usr/lib/go-1.22/src/testing/testing.go:2027 +0x68b
+github.com/hashicorp/terraform-plugin-testing/helper/resource.TestMain({0x12c55e0, 0xc0002c9360})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:133 +0x10f
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestMain(...)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/cloudsigma_sweeper_test.go:14
+main.main()
+	_testmain.go:187 +0x1a5
+
+goroutine 19 [chan receive]:
+testing.(*T).Parallel(0xc00032c1a0)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00032c1a0}, {0x0, 0xc0002d6a30, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaDrive_basic(0xc00032c1a0)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_drive_test.go:17 +0x72a
+testing.tRunner(0xc00032c1a0, 0x117c148)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 20 [chan receive]:
+testing.(*T).Parallel(0xc00032c4e0)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00032c4e0}, {0x0, 0xc0002d6ac0, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaDrive_name(0xc00032c4e0)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_drive_test.go:42 +0x72a
+testing.tRunner(0xc00032c4e0, 0x117c160)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 21 [chan receive]:
+testing.(*T).Parallel(0xc00032c820)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00032c820}, {0x0, 0xc0002d6b60, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaDrive_uuid(0xc00032c820)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_drive_test.go:67 +0x72a
+testing.tRunner(0xc00032c820, 0x117c168)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 22 [chan receive]:
+testing.(*T).Parallel(0xc00032cb60)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00032cb60}, {0x0, 0xc0002d6bf0, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaDrive_filter(0xc00032cb60)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_drive_test.go:92 +0x72a
+testing.tRunner(0xc00032cb60, 0x117c158)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 23 [chan receive]:
+testing.(*T).Parallel(0xc00032cea0)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00032cea0}, {0x0, 0xc0002d6c90, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaDrive_expectError(0xc00032cea0)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_drive_test.go:114 +0x147
+testing.tRunner(0xc00032cea0, 0x117c150)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 24 [chan receive]:
+testing.(*T).Parallel(0xc00032d1e0)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00032d1e0}, {0x0, 0xc0002d6d30, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaLibraryDrive_expectError(0xc00032d1e0)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_library_drive_test.go:11 +0x147
+testing.tRunner(0xc00032d1e0, 0x117c170)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 25 [chan receive]:
+testing.(*T).Parallel(0xc00032d520)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00032d520}, {0x0, 0xc0002d6dd0, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaLicense_expectError(0xc00032d520)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_license_test.go:11 +0x147
+testing.tRunner(0xc00032d520, 0x117c178)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 26 [chan receive]:
+testing.(*T).Parallel(0xc00032d860)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00032d860}, {0x0, 0xc0002d6e40, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaLocation_basic(0xc00032d860)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_location_test.go:12 +0x6c7
+testing.tRunner(0xc00032d860, 0x117c180)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 28 [chan receive]:
+testing.(*T).Parallel(0xc00033c000)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00033c000}, {0x0, 0xc0002d70d0, {0x0, 0x0, 0x0}, 0x0, 0x0, 0x0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaLocation_upgradeFromSDK(0xc00033c000)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_location_test.go:46 +0x3d2
+testing.tRunner(0xc00033c000, 0x117c190)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 29 [chan receive]:
+testing.(*T).Parallel(0xc00033c340)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00033c340}, {0x0, 0xc0002d7160, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaProfile_basic(0xc00033c340)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_profile_test.go:11 +0x327
+testing.tRunner(0xc00033c340, 0x117c198)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 30 [chan receive]:
+testing.(*T).Parallel(0xc00033c680)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00033c680}, {0x0, 0xc0002d7200, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaSubscription_expectError(0xc00033c680)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_subscription_test.go:11 +0x147
+testing.tRunner(0xc00033c680, 0x117c1a0)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 31 [chan receive]:
+testing.(*T).Parallel(0xc00033c9c0)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00033c9c0}, {0x0, 0xc0002d7290, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaTag_basic(0xc00033c9c0)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_tag_test.go:17 +0x687
+testing.tRunner(0xc00033c9c0, 0x117c1a8)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 32 [chan receive]:
+testing.(*T).Parallel(0xc00033cd00)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00033cd00}, {0x0, 0xc0002d7320, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaTag_uuid(0xc00033cd00)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_tag_test.go:41 +0x687
+testing.tRunner(0xc00033cd00, 0x117c1c0)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 33 [chan receive]:
+testing.(*T).Parallel(0xc00033d040)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00033d040}, {0x0, 0xc0002d73b0, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaTag_filter(0xc00033d040)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_tag_test.go:65 +0x687
+testing.tRunner(0xc00033d040, 0x117c1b8)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 34 [chan receive]:
+testing.(*T).Parallel(0xc00033d380)
+	/usr/lib/go-1.22/src/testing/testing.go:1483 +0x215
+github.com/hashicorp/terraform-plugin-testing/helper/resource.ParallelTest({0x12da7e0, 0xc00033d380}, {0x0, 0xc0002d7450, {0x0, 0x0, 0x0}, 0x0, 0x0, 0xc0003285a0, ...})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-testing@v1.9.0/helper/resource/testing.go:817 +0x49
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestAccDataSourceCloudSigmaTag_expectError(0xc00033d380)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/data_source_cloudsigma_tag_test.go:86 +0x167
+testing.tRunner(0xc00033d380, 0x117c1b0)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 35 [chan receive]:
+testing.(*T).Run(0xc00033d6c0, {0xc000580c80?, 0xc000345f20?}, 0xc000468090)
+	/usr/lib/go-1.22/src/testing/testing.go:1750 +0x3ab
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestNative28Matrix(0xc00033d6c0)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/native28_matrix_test.go:50 +0x236
+testing.tRunner(0xc00033d6c0, 0x117c228)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 1
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 89 [select]:
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.(*StateChangeConf).WaitForStateContext(0xc00024f8f0, {0x12cf9a8, 0xc00022aee0})
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-sdk/v2@v2.34.0/helper/retry/state.go:212 +0x365
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/drive.WaitDriveStatusMountedOrUnmounted({0x12cf9a8, 0xc00022aee0}, 0xc00001e0f0, {0x10fc17b, 0x5}, {0xc000000120, 0x1, 0x1})
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/drive/wait.go:24 +0x26c
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.(*snapshotResource).Create(0xc0000dfbc0, {0x12cf9a8, 0xc00022aee0}, {{{{0x0, 0x0}, {0x0, 0x0}}, {0x0, 0x0}}, {{{0x12d5c78, ...}, ...}, ...}, ...}, ...)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/resource_cloudsigma_snapshot.go:148 +0x30f
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestNative28Matrix.func1.3(0x10d3bc0?, 0xc0000df5d0?, {0x12cf9a8?, 0xc00022aee0?}, 0xc000494d10?, 0x0?)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/native28_matrix_test.go:255 +0xee
+github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider.TestNative28Matrix.func1(0xc00049c4e0)
+	/home/cloudsigma/snowcrash/terraform-provider-cloudsigma/internal/provider/native28_matrix_test.go:256 +0x16e9
+testing.tRunner(0xc00049c4e0, 0xc000468090)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*T).Run in goroutine 35
+	/usr/lib/go-1.22/src/testing/testing.go:1742 +0x390
+
+goroutine 90 [select]:
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.(*StateChangeConf).WaitForStateContext.func1()
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-sdk/v2@v2.34.0/helper/retry/state.go:89 +0xfc
+created by github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.(*StateChangeConf).WaitForStateContext in goroutine 89
+	/home/cloudsigma/go/pkg/mod/github.com/hashicorp/terraform-plugin-sdk/v2@v2.34.0/helper/retry/state.go:86 +0x23b
+FAIL	github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider	45.024s
+ok  	github.com/cloudsigma/terraform-provider-cloudsigma/internal/provider/migration	0.007s
+ok  	github.com/cloudsigma/terraform-provider-cloudsigma/readonly	0.007s
+FAIL

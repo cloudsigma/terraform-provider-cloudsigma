@@ -125,7 +125,10 @@ func libraryListLateCancel(t *testing.T) {
 }
 
 func libraryListDeadline(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+	// Leave enough time for the synthetic transport to start before the
+	// deadline reader blocks; a 1ms timeout made this boundary test flaky under
+	// the full package suite.
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 	b := &trackedBody{Reader: &reviewCancelReader{cancel: func() { <-ctx.Done() }}}
 	c := reviewNativeNew(func(*http.Request) (*http.Response, error) { return &http.Response{StatusCode: 200, Body: b}, nil })

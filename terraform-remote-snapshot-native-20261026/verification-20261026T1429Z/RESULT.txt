@@ -1,0 +1,11 @@
+timestamp=2026-10-26T14:29Z
+base=e8c6938ace29cd865a5e64b26f6e73b4ba55ca24
+tree=08fb3c68dc96d2e9d79418bb26568e3d6f6f875a
+status= M internal/provider/provider.go;?? internal/cloudsigmaapi/remote_snapshots.go;?? internal/provider/offline_remote_snapshot_test.go;?? internal/provider/resource_cloudsigma_remote_snapshot.go;?? terraform-remote-snapshot-native-20261026/;
+command=git diff --check; gofmt -d internal/cloudsigmaapi/remote_snapshots.go internal/provider/resource_cloudsigma_remote_snapshot.go internal/provider/offline_remote_snapshot_test.go; go test ./internal/cloudsigmaapi ./internal/provider -run TestOfflineRemoteSnapshotNativeCreate|^$
+git_diff_check=0
+gofmt_diff=empty
+go_test=0
+packages=internal/cloudsigmaapi,internal/provider
+network=not_requested
+live_cloud=not_requested

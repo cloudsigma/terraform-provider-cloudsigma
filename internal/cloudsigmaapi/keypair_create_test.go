@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"reflect"
 	"strings"
@@ -74,5 +75,26 @@ func TestKeypairCreateBoundaries(t *testing.T) {
 	c = reviewNativeNew(func(*http.Request) (*http.Response, error) { return nil, errors.New("PRIVATE transport") })
 	if _, err := c.CreateKeypair(context.Background(), KeypairCreateRequest{}); err == nil || err.Error() != "transport" {
 		t.Fatal(err)
+	}
+}
+
+func TestKeypairCreateUsesBearerAuthentication(t *testing.T) {
+	c := reviewNativeNew(func(req *http.Request) (*http.Response, error) {
+		if got := req.Header.Get("Authorization"); got != "Bearer fixture-token" {
+			t.Fatalf("authorization=%q", got)
+		}
+		if _, _, ok := req.BasicAuth(); ok {
+			t.Fatal("bearer request unexpectedly carried basic credentials")
+		}
+		return &http.Response{
+			StatusCode: http.StatusCreated,
+			Header:     make(http.Header),
+			Body:       io.NopCloser(strings.NewReader(`{"objects":[{"uuid":"token-key"}]}`)),
+		}, nil
+	})
+	c.username, c.password, c.token = "", "", "fixture-token"
+	got, err := c.CreateKeypair(context.Background(), KeypairCreateRequest{Name: "token-key"})
+	if err != nil || got.UUID != "token-key" {
+		t.Fatalf("keypair=%+v err=%v", got, err)
 	}
 }

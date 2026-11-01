@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
 )
 
@@ -26,7 +25,6 @@ var (
 
 // sshKeyResource is the SSH key resource implementation.
 type sshKeyResource struct {
-	client *cloudsigma.Client
 	native *cloudsigmaapi.Client
 }
 
@@ -97,23 +95,23 @@ configuration via their IDs.
 }
 
 func (r *sshKeyResource) Configure(_ context.Context, request resource.ConfigureRequest, response *resource.ConfigureResponse) {
-	r.client = nil
 	r.native = nil
 	if request.ProviderData == nil {
 		return
 	}
-	client, ok := legacyClient(request.ProviderData)
-	if !ok {
+	clients, ok := request.ProviderData.(*ProviderClients)
+	if !ok || clients == nil || clients.Native == nil || (clients.Auth != authBasic && clients.Auth != authToken) {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
-	r.client = client
-	if clients := request.ProviderData.(*ProviderClients); clients.Auth == authBasic {
-		r.native = clients.Native
-	}
+	r.native = clients.Native
 }
 
 func (r *sshKeyResource) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
+	if r.native == nil {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
+		return
+	}
 	var data sshKeyResourceModel
 
 	// read plan data into the model
@@ -133,26 +131,12 @@ func (r *sshKeyResource) Create(ctx context.Context, request resource.CreateRequ
 		createInput.PublicKey = publicKey
 	}
 	tflog.Trace(ctx, "Creating SSH key")
-	var keypair *cloudsigmaapi.Keypair
-	var err error
-	if r.native != nil {
-		keypair, err = r.native.CreateKeypair(ctx, createInput)
-	} else {
-		keypairs, _, legacyErr := r.client.Keypairs.Create(ctx, &cloudsigma.KeypairCreateRequest{Keypairs: []cloudsigma.Keypair{{
-			Name: data.Name.ValueString(), PrivateKey: privateKey, PublicKey: publicKey,
-		}}})
-		err = legacyErr
-		if err == nil {
-			if len(keypairs) != 1 || keypairs[0].UUID == "" {
-				err = errors.New("SSH key acknowledgement is missing a usable identity")
-			} else {
-				keypair = &cloudsigmaapi.Keypair{
-					Name: keypairs[0].Name, UUID: keypairs[0].UUID, PrivateKey: keypairs[0].PrivateKey, PublicKey: keypairs[0].PublicKey,
-				}
-			}
-		}
-	}
+	keypair, err := r.native.CreateKeypair(ctx, createInput)
 	if keypair != nil {
+		if keypair.UUID == "" {
+			response.Diagnostics.AddError("Unable to get SSH key", "SSH key response is missing a usable identity.")
+			return
+		}
 		data.Name = types.StringValue(keypair.Name)
 		data.ID = types.StringValue(keypair.UUID)
 		data.PrivateKey = types.StringValue(keypair.PrivateKey)
@@ -168,7 +152,7 @@ func (r *sshKeyResource) Create(ctx context.Context, request resource.CreateRequ
 }
 
 func (r *sshKeyResource) Read(ctx context.Context, request resource.ReadRequest, response *resource.ReadResponse) {
-	if r.client == nil {
+	if r.native == nil {
 		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
 		return
 	}
@@ -181,36 +165,19 @@ func (r *sshKeyResource) Read(ctx context.Context, request resource.ReadRequest,
 		return
 	}
 
-	if r.native != nil {
-		keypair, err := r.native.Keypair(ctx, data.ID.ValueString())
-		if err != nil {
-			var failure *cloudsigmaapi.Error
-			if errors.As(err, &failure) && failure.Status == http.StatusNotFound {
-				response.State.RemoveResource(ctx)
-				return
-			}
-			response.Diagnostics.AddError("Unable to get SSH key", err.Error())
-			return
-		}
-		data.Name = types.StringValue(keypair.Name)
-		data.ID = types.StringValue(keypair.UUID)
-		data.PrivateKey = types.StringValue(keypair.PrivateKey)
-		data.PublicKey = types.StringValue(keypair.PublicKey)
-		data.UUID = types.StringValue(keypair.UUID)
-		response.Diagnostics.Append(response.State.Set(ctx, &data)...)
-		return
-	}
-
-	keypairUUID := data.ID.ValueString()
 	tflog.Trace(ctx, "Getting SSH key")
-	keypair, resp, err := r.client.Keypairs.Get(ctx, keypairUUID)
+	keypair, err := r.native.Keypair(ctx, data.ID.ValueString())
 	if err != nil {
-		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			// if the tag is somehow already destroyed, mark as successfully gone
+		var failure *cloudsigmaapi.Error
+		if errors.As(err, &failure) && failure.Status == http.StatusNotFound {
 			response.State.RemoveResource(ctx)
 			return
 		}
 		response.Diagnostics.AddError("Unable to get SSH key", err.Error())
+		return
+	}
+	if keypair.UUID == "" {
+		response.Diagnostics.AddError("Unable to get SSH key", "SSH key response is missing a usable identity.")
 		return
 	}
 	tflog.Trace(ctx, "Got SSH key")
@@ -227,6 +194,10 @@ func (r *sshKeyResource) Read(ctx context.Context, request resource.ReadRequest,
 }
 
 func (r *sshKeyResource) Update(ctx context.Context, request resource.UpdateRequest, response *resource.UpdateResponse) {
+	if r.native == nil {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
+		return
+	}
 	var plan sshKeyResourceModel
 	var oldPrivateKey, oldPublicKey types.String
 
@@ -239,42 +210,15 @@ func (r *sshKeyResource) Update(ctx context.Context, request resource.UpdateRequ
 		return
 	}
 
-	if r.native != nil {
-		input := cloudsigmaapi.KeypairUpdateRequest{Name: plan.Name.ValueString(), UUID: plan.ID.ValueString()}
-		if !plan.PrivateKey.Equal(oldPrivateKey) {
-			input.PrivateKey = plan.PrivateKey.ValueString()
-		}
-		if !plan.PublicKey.Equal(oldPublicKey) {
-			input.PublicKey = plan.PublicKey.ValueString()
-		}
-		updated, err := r.native.UpdateKeypair(ctx, plan.ID.ValueString(), input)
-		if err != nil {
-			response.Diagnostics.AddError("Unable to update SSH key", err.Error())
-			return
-		}
-		plan.Name = types.StringValue(updated.Name)
-		plan.ID = types.StringValue(updated.UUID)
-		plan.PrivateKey = types.StringValue(updated.PrivateKey)
-		plan.PublicKey = types.StringValue(updated.PublicKey)
-		plan.UUID = types.StringValue(updated.UUID)
-		response.Diagnostics.Append(response.State.Set(ctx, &plan)...)
-		return
-	}
-
-	keypairUUID := plan.ID.ValueString()
-	keypair := &cloudsigma.Keypair{
-		Name: plan.Name.ValueString(),
-		UUID: keypairUUID,
-	}
+	input := cloudsigmaapi.KeypairUpdateRequest{Name: plan.Name.ValueString(), UUID: plan.ID.ValueString()}
 	if !plan.PrivateKey.Equal(oldPrivateKey) {
-		keypair.PrivateKey = plan.PrivateKey.ValueString()
+		input.PrivateKey = plan.PrivateKey.ValueString()
 	}
 	if !plan.PublicKey.Equal(oldPublicKey) {
-		keypair.PublicKey = plan.PublicKey.ValueString()
+		input.PublicKey = plan.PublicKey.ValueString()
 	}
-	updateRequest := &cloudsigma.KeypairUpdateRequest{Keypair: keypair}
 	tflog.Trace(ctx, "Updating SSH key")
-	updatedKeypair, _, err := r.client.Keypairs.Update(ctx, keypairUUID, updateRequest)
+	updatedKeypair, err := r.native.UpdateKeypair(ctx, plan.ID.ValueString(), input)
 	if err != nil {
 		response.Diagnostics.AddError("Unable to update SSH key", err.Error())
 		return
@@ -293,6 +237,10 @@ func (r *sshKeyResource) Update(ctx context.Context, request resource.UpdateRequ
 }
 
 func (r *sshKeyResource) Delete(ctx context.Context, request resource.DeleteRequest, response *resource.DeleteResponse) {
+	if r.native == nil {
+		response.Diagnostics.AddError("Unconfigured CloudSigma client", "Please report this issue to the provider developers.")
+		return
+	}
 	var data sshKeyResourceModel
 
 	// read state data into the model
@@ -302,16 +250,8 @@ func (r *sshKeyResource) Delete(ctx context.Context, request resource.DeleteRequ
 		return
 	}
 
-	if r.native != nil {
-		if err := r.native.DeleteKeypair(ctx, data.ID.ValueString()); err != nil {
-			response.Diagnostics.AddError("Unable to delete SSH key", err.Error())
-		}
-		return
-	}
-
-	keypairUUID := data.ID.ValueString()
 	tflog.Trace(ctx, "Deleting SSH key")
-	_, err := r.client.Keypairs.Delete(ctx, keypairUUID)
+	err := r.native.DeleteKeypair(ctx, data.ID.ValueString())
 	if err != nil {
 		response.Diagnostics.AddError("Unable to delete SSH key", err.Error())
 		return

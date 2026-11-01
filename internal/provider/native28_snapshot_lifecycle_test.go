@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	cs "github.com/cloudsigma/cloudsigma-sdk-go/cloudsigma"
 	"github.com/cloudsigma/terraform-provider-cloudsigma/internal/cloudsigmaapi"
@@ -23,7 +24,11 @@ func TestNative28SnapshotLifecycle(t *testing.T) {
 	for _, basic := range []bool{true, false} {
 		for _, fault := range []string{"", "wait404", "final500", "missingdrive", "progression", "malformed", "null", "invalidid", "privateprecision"} {
 			t.Run(fmt.Sprintf("basic%v/%s", basic, fault), func(t *testing.T) {
-				ctx := context.Background()
+				// Production waiters retain their ten-minute deadline. Synthetic
+				// fault cases must use a bounded caller deadline so a deliberately
+				// unavailable status cannot stall the entire package test.
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer cancel()
 				order := []string{}
 				reads := 0
 				transport := func(native bool) fixtureRT {

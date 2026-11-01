@@ -10,6 +10,7 @@ import (
 
 type Drive struct {
 	AllowMultimount bool                   `json:"allow_multimount,omitempty"`
+	BackupScheduler *ResourceLink          `json:"backup_scheduler,omitempty"`
 	Licenses        []DriveLicense         `json:"licenses,omitempty"`
 	Media           string                 `json:"media,omitempty"`
 	Meta            map[string]interface{} `json:"meta,omitempty"`

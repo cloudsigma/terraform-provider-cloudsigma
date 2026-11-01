@@ -52,7 +52,7 @@ func (c *Client) UpdateKeypair(ctx context.Context, uuid string, input KeypairUp
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept-Encoding", "identity")
 	req.Header.Set("User-Agent", c.userAgent)
-	req.SetBasicAuth(c.username, c.password)
+	c.authenticate(req)
 	resp, err := c.transport.Do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()

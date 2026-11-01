@@ -62,7 +62,11 @@ func TestOfflineNativeConfigure(t *testing.T) {
 			if out.Diagnostics.HasError() != (input != nil) {
 				t.Fatalf("%T: %v", r, out.Diagnostics)
 			}
-			if !reflect.ValueOf(r).Elem().FieldByName("client").IsNil() {
+			field := reflect.ValueOf(r).Elem().FieldByName("client")
+			if !field.IsValid() {
+				field = reflect.ValueOf(r).Elem().FieldByName("native")
+			}
+			if field.IsValid() && !field.IsNil() {
 				t.Fatalf("%T stale selection", r)
 			}
 		}
