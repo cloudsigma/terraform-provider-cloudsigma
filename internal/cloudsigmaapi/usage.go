@@ -93,6 +93,12 @@ func (c *Client) Discount(ctx context.Context) (DynamicDocument, error) {
 	return c.dynamicDocument(ctx, discountEndpoint, "discount/", nil)
 }
 
+// Ledger reads the account transaction collection as dynamic JSON. Transaction
+// fields are deployment-specific and the response is paginated by the API.
+func (c *Client) Ledger(ctx context.Context) (DynamicDocument, error) {
+	return c.dynamicDocument(ctx, ledgerEndpoint, "ledger/", nil)
+}
+
 func (c *Client) dynamicDocument(ctx context.Context, endpoint readEndpoint, route string, values url.Values) (DynamicDocument, error) {
 	if len(values) > 0 {
 		route += "?" + values.Encode()

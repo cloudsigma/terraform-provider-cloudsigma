@@ -22,7 +22,7 @@ func TestOfflineRegisteredSchemas(t *testing.T) {
 	p := New("offline")()
 	ds := p.DataSources(context.Background())
 	rs := p.Resources(context.Background())
-	if len(ds) != 23 || len(rs) != 3 {
+	if len(ds) != 24 || len(rs) != 3 {
 		t.Fatal("registration drift")
 	}
 	for _, newDS := range ds {

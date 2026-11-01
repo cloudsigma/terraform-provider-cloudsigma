@@ -113,6 +113,7 @@ const (
 	dailyBurstUsageEndpoint
 	pricingEndpoint
 	discountEndpoint
+	ledgerEndpoint
 	virtualRoutersEndpoint
 	notificationContactsEndpoint
 	notificationPreferencesEndpoint
@@ -131,7 +132,7 @@ func (c *Client) getLibraryDrives(ctx context.Context, endpoint readEndpoint, li
 func (c *Client) getLibraryDrivesContext(ctx context.Context, endpoint readEndpoint, libraryRoute string, bounded bool) (any, error) {
 	route := ""
 	switch endpoint {
-	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint, ipsEndpoint, ipEndpoint, vlansEndpoint, vlanEndpoint, snapshotEndpoint, pubkeyEndpoint, keypairEndpoint, serverEndpoint, capabilitiesEndpoint, jobsEndpoint, jobEndpoint, backupSchedulersEndpoint, backupSchedulerEndpoint, currentUsageEndpoint, usageEndpoint, balanceEndpoint, burstUsageEndpoint, dailyBurstUsageEndpoint, pricingEndpoint, discountEndpoint, virtualRoutersEndpoint, notificationContactsEndpoint, notificationPreferencesEndpoint, aclsEndpoint:
+	case libraryDrivesEndpoint, libraryDriveEndpoint, drivesEndpoint, driveEndpoint, ipsEndpoint, ipEndpoint, vlansEndpoint, vlanEndpoint, snapshotEndpoint, pubkeyEndpoint, keypairEndpoint, serverEndpoint, capabilitiesEndpoint, jobsEndpoint, jobEndpoint, backupSchedulersEndpoint, backupSchedulerEndpoint, currentUsageEndpoint, usageEndpoint, balanceEndpoint, burstUsageEndpoint, dailyBurstUsageEndpoint, pricingEndpoint, discountEndpoint, ledgerEndpoint, virtualRoutersEndpoint, notificationContactsEndpoint, notificationPreferencesEndpoint, aclsEndpoint:
 		route = libraryRoute
 	case tagsEndpoint:
 		route = "tags/"
@@ -273,7 +274,7 @@ func (c *Client) getLibraryDrivesContext(ctx context.Context, endpoint readEndpo
 		result, err = decodeRawObject(body)
 	case currentUsageEndpoint:
 		result, err = decodeCurrentUsage(body)
-	case usageEndpoint, balanceEndpoint, burstUsageEndpoint, dailyBurstUsageEndpoint, pricingEndpoint, discountEndpoint, virtualRoutersEndpoint, notificationContactsEndpoint, notificationPreferencesEndpoint, aclsEndpoint:
+	case usageEndpoint, balanceEndpoint, burstUsageEndpoint, dailyBurstUsageEndpoint, pricingEndpoint, discountEndpoint, ledgerEndpoint, virtualRoutersEndpoint, notificationContactsEndpoint, notificationPreferencesEndpoint, aclsEndpoint:
 		result, err = decodeDynamicDocument(body)
 	}
 	if err != nil {

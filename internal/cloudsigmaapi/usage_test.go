@@ -82,6 +82,23 @@ func TestPricingAndDiscountNativeReads(t *testing.T) {
 	}
 }
 
+func TestLedgerNativeReadAndBearerAuth(t *testing.T) {
+	c := remoteSnapshotClient(func(req *http.Request) (*http.Response, error) {
+		if req.Method != http.MethodGet || req.URL.Path != "/api/2.0/ledger/" || req.URL.RawQuery != "" {
+			t.Fatalf("ledger request=%s %s", req.Method, req.URL.String())
+		}
+		if req.Header.Get("Authorization") != "Bearer fixture-token" {
+			t.Fatalf("ledger auth=%q", req.Header.Get("Authorization"))
+		}
+		return remoteSnapshotResponse(http.StatusOK, `{"meta":{"limit":20,"offset":0,"total_count":1},"objects":[{"id":"tx-1","amount":"0.01","reason":"fixture"}]}`), nil
+	})
+	c.username, c.password, c.token = "", "", "fixture-token"
+	got, err := c.Ledger(context.Background())
+	if err != nil || string(got["meta"]) != `{"limit":20,"offset":0,"total_count":1}` {
+		t.Fatalf("ledger=%s err=%v", got["meta"], err)
+	}
+}
+
 func TestDynamicUsageFailures(t *testing.T) {
 	for _, tc := range []struct {
 		name, body, want string
