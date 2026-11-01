@@ -28,7 +28,14 @@ func (c *Client) BackupScheduler(ctx context.Context, uuid string) (json.RawMess
 	if err != nil {
 		return nil, err
 	}
-	return v.(json.RawMessage), nil
+	raw := v.(json.RawMessage)
+	var identity struct {
+		UUID string `json:"uuid"`
+	}
+	if err := json.Unmarshal(raw, &identity); err != nil || identity.UUID != uuid {
+		return nil, &Error{Category: "decode_error"}
+	}
+	return raw, nil
 }
 
 func decodeRawCollection(body []byte) ([]json.RawMessage, error) {
@@ -102,15 +109,29 @@ type SchedulerInitialBackup struct {
 	EndTime   any `json:"end_time,omitempty"`
 }
 
+func (v SchedulerInitialBackup) MarshalJSON() ([]byte, error) {
+	object := map[string]any{}
+	if v.DayOfWeek != nil {
+		object["day_of_week"] = v.DayOfWeek
+	}
+	if v.StartTime != nil {
+		object["start_time"] = v.StartTime
+	}
+	if v.EndTime != nil {
+		object["end_time"] = v.EndTime
+	}
+	return json.Marshal(object)
+}
+
 // SchedulerIncrementalBackup contains the documented recurring schedule
 // fields. Month accepts either the documented string form (for example "*")
 // or a []string form used by the public examples.
 type SchedulerIncrementalBackup struct {
-	DayOfMonth string           `json:"day_of_month,omitempty"`
-	DayOfWeek  []string         `json:"day_of_week,omitempty"`
+	DayOfMonth any              `json:"day_of_month,omitempty"`
+	DayOfWeek  any              `json:"day_of_week,omitempty"`
 	Month      any              `json:"month,omitempty"`
-	Hour       string           `json:"hour,omitempty"`
-	Minute     string           `json:"minute,omitempty"`
+	Hour       any              `json:"hour,omitempty"`
+	Minute     any              `json:"minute,omitempty"`
 	Repeat     *SchedulerRepeat `json:"repeat,omitempty"`
 	StartTime  *SchedulerClock  `json:"start_time,omitempty"`
 	EndTime    *SchedulerClock  `json:"end_time,omitempty"`
@@ -118,9 +139,13 @@ type SchedulerIncrementalBackup struct {
 
 // SchedulerRetentionRule is one documented retention period.
 type SchedulerRetentionRule struct {
-	Period     string `json:"period,omitempty"`
-	Quantity   int    `json:"quantity,omitempty"`
-	TimeOption *int   `json:"time_option,omitempty"`
+	Period         string         `json:"period,omitempty"`
+	Quantity       int            `json:"quantity,omitempty"`
+	TimeOption     *int           `json:"time_option,omitempty"`
+	TimeWindows    any            `json:"time_windows,omitempty"`
+	Tier           any            `json:"tier,omitempty"`
+	RecoveryPoints any            `json:"recovery_points,omitempty"`
+	Meta           map[string]any `json:"meta,omitempty"`
 }
 
 // SchedulerRetentionPolicy defines the documented retention rules.
@@ -146,15 +171,56 @@ type SchedulerCreateRequest struct {
 	EnableRetentionPolicyNotifications bool                       `json:"enable_retention_policy_notifications"`
 	IsEnabled                          bool                       `json:"is_enabled"`
 	IsDefault                          bool                       `json:"is_default"`
-	ManualIncrementalBackup            string                     `json:"manual_incremental_backup,omitempty"`
+	ManualIncrementalBackup            string                     `json:"manual_incremental_backup"`
 	RetentionPolicy                    SchedulerRetentionPolicy   `json:"retention_policy"`
 	InitialBackup                      *SchedulerInitialBackup    `json:"initial_backup,omitempty"`
 	IncrementalBackup                  SchedulerIncrementalBackup `json:"incremental_backup"`
 	UserTimezone                       string                     `json:"user_timezone"`
-	OrchestratorTimezone               string                     `json:"orchestrator_timezone,omitempty"`
-	RemoteLocation                     string                     `json:"remote_location,omitempty"`
+	OrchestratorTimezone               string                     `json:"orchestrator_timezone"`
+	RemoteLocation                     string                     `json:"remote_location"`
 	Tags                               []SchedulerTagRef          `json:"tags,omitempty"`
 	Meta                               map[string]any             `json:"meta,omitempty"`
+}
+
+// MarshalJSON preserves explicit empty values required by full PUT semantics.
+// Nil tags/meta remain omitted (preserve); non-nil empty values encode []/{}.
+func (v SchedulerCreateRequest) MarshalJSON() ([]byte, error) {
+	object := map[string]any{
+		"type": v.Type, "name": v.Name,
+		"enable_backup_policy_notifications":    v.EnableBackupPolicyNotifications,
+		"enable_retention_policy_notifications": v.EnableRetentionPolicyNotifications,
+		"is_enabled":                            v.IsEnabled, "is_default": v.IsDefault,
+		"manual_incremental_backup": v.ManualIncrementalBackup,
+		"retention_policy":          v.RetentionPolicy, "incremental_backup": v.IncrementalBackup,
+		"user_timezone": v.UserTimezone, "orchestrator_timezone": v.OrchestratorTimezone,
+		"remote_location": v.RemoteLocation,
+	}
+	if v.InitialBackup != nil {
+		object["initial_backup"] = v.InitialBackup
+	}
+	if v.Tags != nil {
+		object["tags"] = v.Tags
+	}
+	if v.Meta != nil {
+		object["meta"] = v.Meta
+	}
+	return json.Marshal(object)
+}
+
+// DecodeSchedulerCreateRequest rejects response-only or unknown fields before
+// callers construct a writable projection.
+func DecodeSchedulerCreateRequest(data []byte) (SchedulerCreateRequest, error) {
+	var value SchedulerCreateRequest
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&value); err != nil {
+		return value, &Error{Category: "decode_error"}
+	}
+	var trailing json.RawMessage
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		return value, &Error{Category: "decode_error"}
+	}
+	return value, nil
 }
 
 // Scheduler is the acknowledged identity and state returned by create. The
