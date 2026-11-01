@@ -28,11 +28,12 @@ Validation:
   reconciliation tests — passed;
 - matching race tests — passed;
 - provider and API vet/build — passed;
-- offline provider suite includes both resources and is qualified at 460 events;
+- offline provider suite includes both resources and is qualified at 462 events;
 - no live API, account, or billable operation was performed.
 
-The implementation commits are `4b569a3`, `818cdd1`, `242f3bf`, and `256d214`;
-the independent lint portability remediation is `ecce5e8`.
+The implementation commits are `5e6b1b2`, `a9aacff`, `5a15392`, `b7391f6`,
+`4943a04`, `dc9a2b2`, and `fe890dc`; the independent lint portability
+remediation is already merged into `main` as `3c75500`.
 
 The generated offline guard remains platform-specific and is addressed by the
 separate lint portability commit; no RemoteSnapshot lifecycle semantics are
