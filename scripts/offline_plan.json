@@ -315,9 +315,9 @@
       "TestOfflineDatasourceReads",
       "TestOfflineRegisteredSchemas",
       "TestOfflineAuditLogsDataSource",
+      "TestOfflineSchedulerResourceCreateReadUpdateDelete",
       "TestOfflineSchedulerAssignmentReconcilesAndDoesNotBlindlyReplay",
       "TestDriveSchedulerUUIDAcceptsResourceURIProjection",
-      "TestOfflineSchedulerResourceCreateReadUpdateDelete",
       "TestOfflineSnapshotPrivacy",
       "TestOfflineDestroyStatus",
       "TestOfflineSnapshotDependencyCleanup"
