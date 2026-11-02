@@ -22,7 +22,7 @@ func TestUpdateDriveProjectsWritableFieldsAndChecksIdentity(t *testing.T) {
 		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"uuid":"drive-1","name":"updated","status":"unmounted","owner":{"uuid":"owner"},"runtime":{"storage_type":"nvme"},"tags":[{"uuid":"tag"}]}`)), Request: req}, nil
 	})
 	got, err := c.UpdateDrive(context.Background(), "drive-1", DriveUpdateRequest{
-		AllowMultimount: true,
+		AllowMultimount: boolPtr(true),
 		Media:           "disk",
 		Meta:            map[string]interface{}{"managed": true},
 		Name:            "updated",
@@ -38,6 +38,32 @@ func TestUpdateDriveProjectsWritableFieldsAndChecksIdentity(t *testing.T) {
 	}
 	if got == nil || got.UUID != "drive-1" || got.Name != "updated" || got.Status != "unmounted" || got.Owner == nil || got.Owner.UUID != "owner" {
 		t.Fatalf("response=%+v", got)
+	}
+}
+
+func TestUpdateDrivePreservesExplicitFalseAndEmptyClears(t *testing.T) {
+	var body map[string]any
+	c := reviewNativeNew(func(req *http.Request) (*http.Response, error) {
+		if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"uuid":"drive-1"}`)), Request: req}, nil
+	})
+	emptyMeta := map[string]interface{}{}
+	emptyTags := []Tag{}
+	if _, err := c.UpdateDrive(context.Background(), "drive-1", DriveUpdateRequest{
+		AllowMultimount: boolPtr(false), Meta: emptyMeta, Tags: emptyTags,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if value, ok := body["allow_multimount"]; !ok || value != false {
+		t.Fatalf("explicit false omitted: %#v", body)
+	}
+	if value, ok := body["meta"]; !ok || value == nil {
+		t.Fatalf("explicit metadata clear omitted: %#v", body)
+	}
+	if value, ok := body["tags"]; !ok || value == nil {
+		t.Fatalf("explicit tag clear omitted: %#v", body)
 	}
 }
 
@@ -63,6 +89,8 @@ func TestUpdateDriveRejectsUnexpectedStatusesAndMalformedResponses(t *testing.T)
 		})
 	}
 }
+
+func boolPtr(value bool) *bool { return &value }
 
 func TestUpdateDriveRejectsInvalidUUIDAndHonorsCancellation(t *testing.T) {
 	calls := 0

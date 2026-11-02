@@ -14,13 +14,37 @@ import (
 // Response-only identity, ownership, runtime, status, attachment and snapshot
 // projections are deliberately not representable here.
 type DriveUpdateRequest struct {
-	AllowMultimount bool                   `json:"allow_multimount,omitempty"`
+	// AllowMultimount is a pointer so callers can distinguish omitted from an
+	// explicit false value. This matters when clearing an existing setting.
+	AllowMultimount *bool                  `json:"allow_multimount,omitempty"`
 	Media           string                 `json:"media,omitempty"`
 	Meta            map[string]interface{} `json:"meta,omitempty"`
 	Name            string                 `json:"name,omitempty"`
 	Size            int                    `json:"size,omitempty"`
 	StorageType     string                 `json:"storage_type,omitempty"`
 	Tags            []Tag                  `json:"tags,omitempty"`
+}
+
+// MarshalJSON preserves explicit empty maps/slices for clearing metadata and
+// tags while omitting nil values. The API treats these as distinct operations.
+func (r DriveUpdateRequest) MarshalJSON() ([]byte, error) {
+	type wire struct {
+		AllowMultimount *bool                   `json:"allow_multimount,omitempty"`
+		Media           string                  `json:"media,omitempty"`
+		Meta            *map[string]interface{} `json:"meta,omitempty"`
+		Name            string                  `json:"name,omitempty"`
+		Size            int                     `json:"size,omitempty"`
+		StorageType     string                  `json:"storage_type,omitempty"`
+		Tags            *[]Tag                  `json:"tags,omitempty"`
+	}
+	out := wire{AllowMultimount: r.AllowMultimount, Media: r.Media, Name: r.Name, Size: r.Size, StorageType: r.StorageType}
+	if r.Meta != nil {
+		out.Meta = &r.Meta
+	}
+	if r.Tags != nil {
+		out.Tags = &r.Tags
+	}
+	return json.Marshal(out)
 }
 
 // UpdateDrive performs one documented ordinary drive PUT. It does not invoke
