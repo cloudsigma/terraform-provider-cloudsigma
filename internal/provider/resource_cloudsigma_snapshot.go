@@ -29,8 +29,9 @@ var (
 
 // snapshotResource is the snapshot resource implementation.
 type snapshotResource struct {
-	client *cloudsigma.Client
-	native *cloudsigmaapi.Client
+	client       *cloudsigma.Client
+	native       *cloudsigmaapi.Client
+	nativeCreate *cloudsigmaapi.Client
 }
 
 // snapshotResourceModel maps the snapshot resource schema data.
@@ -114,6 +115,7 @@ which makes it possible to restore an older version of a VM image.
 func (r *snapshotResource) Configure(_ context.Context, request resource.ConfigureRequest, response *resource.ConfigureResponse) {
 	r.client = nil
 	r.native = nil
+	r.nativeCreate = nil
 	if request.ProviderData == nil {
 		return
 	}
@@ -128,9 +130,22 @@ func (r *snapshotResource) Configure(_ context.Context, request resource.Configu
 	}
 
 	r.client = client
-	if clients := request.ProviderData.(*ProviderClients); clients.Auth == authBasic {
+	clients := request.ProviderData.(*ProviderClients)
+	if clients.Auth == authBasic {
 		r.native = clients.Native
 	}
+	// Native snapshot creation supports both Basic and bearer authentication.
+	// Keep update, read, delete and waiter dispatch on their existing paths.
+	r.nativeCreate = clients.Native
+}
+
+func (r *snapshotResource) snapshotCreateClient() *cloudsigmaapi.Client {
+	if r.nativeCreate != nil {
+		return r.nativeCreate
+	}
+	// Preserve direct test seams and pre-migration callers that populate only
+	// the existing native field.
+	return r.native
 }
 
 func (r *snapshotResource) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
@@ -156,8 +171,8 @@ func (r *snapshotResource) Create(ctx context.Context, request resource.CreateRe
 
 	tflog.Trace(ctx, "Creating snapshot")
 	var snap *cloudsigma.Snapshot
-	if r.native != nil {
-		created, nativeErr := r.native.CreateSnapshot(ctx, cloudsigmaapi.SnapshotCreateRequest{
+	if native := r.snapshotCreateClient(); native != nil {
+		created, nativeErr := native.CreateSnapshot(ctx, cloudsigmaapi.SnapshotCreateRequest{
 			Drive: cloudsigmaapi.SnapshotDriveRef{UUID: driveUUID},
 			Name:  data.Name.ValueString(),
 		})

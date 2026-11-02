@@ -67,7 +67,7 @@ func TestOfflineNativeSnapshot(t *testing.T) {
 				}
 				// Reconfiguration must discard the native selection as well as legacy.
 				r.Configure(ctx, resource.ConfigureRequest{}, &conf)
-				if r.native != nil || r.client != nil {
+				if r.native != nil || r.nativeCreate != nil || r.client != nil {
 					t.Fatal("stale client")
 				}
 			}

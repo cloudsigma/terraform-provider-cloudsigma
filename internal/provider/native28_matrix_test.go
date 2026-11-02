@@ -105,7 +105,7 @@ func TestNative28Matrix(t *testing.T) {
 										text = `{"uuid":"PRIVATE_ID_CANARY","drive":{"uuid":"drive"},"status":"available"}`
 									}
 									if n {
-										if bits != 3 {
+										if bits != 3 && !(bits == 4 && !raw) {
 											t.Fatal("native mutation with incomplete credentials")
 										}
 										code = http.StatusCreated
@@ -241,7 +241,7 @@ func TestNative28Matrix(t *testing.T) {
 					}
 					clients := data.(*ProviderClients)
 					// Preserve framework selection: raw incomplete Basic must not gain a native client.
-					if clients.Auth == authBasic && u != "" && p != "" {
+					if clients.Auth == authBasic && u != "" && p != "" || !raw && bits == 4 {
 						clients.Native = n28Client(t, transport(true))
 					}
 					r := &snapshotResource{}
@@ -314,6 +314,7 @@ func TestNative28Matrix(t *testing.T) {
 						return
 					}
 					useNative := candidate && bits == 3
+					useNativeWrite := useNative || !raw && bits == 4
 					partial := strings.HasSuffix(phase, "partial")
 					wantErr := phase != "success" && phase != "pending" && phase != "deadline-policy" && !(partial && !useNative)
 					if out.Diagnostics.HasError() != wantErr {
@@ -329,7 +330,7 @@ func TestNative28Matrix(t *testing.T) {
 					if (strings.HasPrefix(phase, "wait-") || strings.HasPrefix(phase, "private-")) && wantErr {
 						wantReads = 1
 					}
-					want := []string{fmt.Sprintf("%t:GET:/api/2.0/drives/drive/", useNative), fmt.Sprintf("%t:POST:/api/2.0/snapshots/", useNative)}
+					want := []string{fmt.Sprintf("%t:GET:/api/2.0/drives/drive/", useNative), fmt.Sprintf("%t:POST:/api/2.0/snapshots/", useNativeWrite)}
 					for i := 0; i < wantReads; i++ {
 						want = append(want, fmt.Sprintf("%t:GET:/api/2.0/snapshots/created/", useNative))
 					}
@@ -346,7 +347,7 @@ func TestNative28Matrix(t *testing.T) {
 						t.Fatalf("wire oracle got=%v want=%v posts=%d reads=%d", currentOrder, want, currentPosts, currentReads)
 					}
 					if wantErr {
-						recoverable := candidate && phase != "unknown-post" && phase != "private-id" && !(useNative && strings.HasPrefix(phase, "ack-"))
+						recoverable := candidate && phase != "unknown-post" && phase != "private-id" && !(useNativeWrite && strings.HasPrefix(phase, "ack-"))
 						if recoverable {
 							var got snapshotResourceModel
 							if d := out.State.Get(context.Background(), &got); d.HasError() {
