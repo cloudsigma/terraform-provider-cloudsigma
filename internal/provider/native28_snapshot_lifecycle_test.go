@@ -18,9 +18,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Exercise the real Create callback, including both real waiter delays. Basic
-// credentials use the provider-owned native POST contract; bearer credentials
-// retain the legacy SDK path until bearer resource parity is separately qualified.
+// Exercise the real Create callback, including both real waiter delays. Both
+// credential modes use provider-owned native POST; bearer reads remain legacy.
 func TestNative28SnapshotLifecycle(t *testing.T) {
 	for _, basic := range []bool{true, false} {
 		for _, fault := range []string{"", "wait404", "final500", "missingdrive", "progression", "malformed", "null", "invalidid", "privateprecision"} {
@@ -35,6 +34,9 @@ func TestNative28SnapshotLifecycle(t *testing.T) {
 				transport := func(native bool) fixtureRT {
 					return fixtureRT(func(q *http.Request) (*http.Response, error) {
 						order = append(order, fmt.Sprintf("%v:%s:%s", native, q.Method, q.URL.Path))
+						if native && !basic && q.Header.Get("Authorization") != "Bearer fixture-token" {
+							t.Fatal("missing bearer authorization")
+						}
 						code := 200
 						body := `{"uuid":"drive","status":"unmounted"}`
 						if strings.Contains(q.URL.Path, "snapshots") {
@@ -102,7 +104,13 @@ func TestNative28SnapshotLifecycle(t *testing.T) {
 				}
 				http.DefaultTransport = tr
 				defer func() { http.DefaultTransport = old }()
-				native, e := cloudsigmaapi.New("zrh", "fixture", "fixture", "")
+				var native *cloudsigmaapi.Client
+				var e error
+				if basic {
+					native, e = cloudsigmaapi.New("zrh", "fixture", "fixture", "")
+				} else {
+					native, e = cloudsigmaapi.NewToken("zrh", "fixture-token", "")
+				}
 				if e != nil {
 					t.Fatal(e)
 				}
