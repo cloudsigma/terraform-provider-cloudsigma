@@ -63,7 +63,7 @@ func (c *Client) WaitDriveMountedOrUnmounted(ctx context.Context, uuid string, t
 		}
 		drive, err := c.DriveWithCallerContext(waitCtx, uuid)
 		if err != nil {
-			return nil, err
+			return nil, lifecycleReadError(timedOut, err)
 		}
 		if drive == nil || drive.UUID != uuid {
 			return nil, &Error{Category: "decode_error"}
@@ -124,7 +124,7 @@ func (c *Client) waitServerStatus(ctx context.Context, uuid, target string, time
 		}
 		server, err := c.ServerWithCallerContext(waitCtx, uuid)
 		if err != nil {
-			return nil, err
+			return nil, lifecycleReadError(timedOut, err)
 		}
 		if server == nil || server.UUID != uuid {
 			return nil, &Error{Category: "decode_error"}
@@ -162,5 +162,14 @@ func lifecycleContextError(ctx context.Context, timedOut <-chan struct{}, err er
 		return &Error{Category: "timeout"}
 	default:
 		return remoteContextError(ctx, err)
+	}
+}
+
+func lifecycleReadError(timedOut <-chan struct{}, err error) error {
+	select {
+	case <-timedOut:
+		return &Error{Category: "timeout"}
+	default:
+		return err
 	}
 }
