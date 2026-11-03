@@ -89,9 +89,16 @@
       "TestReviewReadError",
       "TestReviewEarlierDeadline",
       "TestReviewCancellationDuringRead",
-      "TestReviewDeadlineDuringRead"
+      "TestReviewDeadlineDuringRead",
+      "TestWaitDriveMountedOrUnmountedProgressionAndTerminalErrors",
+      "TestWaitDriveMountedOrUnmountedCancellationTimeoutAndReadFailure",
+      "TestWaitServerRunningAndStoppedProgression",
+      "TestWaitServerStatusRejectsUnknownAndHonorsUnavailablePolicy",
+      "TestStartServerAndWaitRunningStrictActionAndReadReconciliation",
+      "TestStopServerAndWaitStoppedRejectsUnqualifiedActions",
+      "TestServerPowerAndWaitContextFailures"
     ],
-    "total": 748
+    "total": 778
   },
   {
     "package": "internal/cloudsigmaapi",
