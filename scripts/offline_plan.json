@@ -106,10 +106,11 @@
       "TestStartServerAndWaitRunningStrictActionAndReadReconciliation",
       "TestShutdownServerAndWaitStoppedStrictActionAndReadReconciliation",
       "TestShutdownServerAndWaitStoppedDoesNotReplayOnUncertainOutcome",
+      "TestShutdownServerAndWaitStoppedReportsGuestFailureWhenRunning",
       "TestStopServerAndWaitStoppedRejectsUnqualifiedActions",
       "TestServerPowerAndWaitContextFailures"
     ],
-    "total": 784
+    "total": 785
   },
   {
     "package": "internal/cloudsigmaapi",

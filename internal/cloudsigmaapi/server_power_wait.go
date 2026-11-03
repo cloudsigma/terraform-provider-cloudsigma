@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -38,7 +39,64 @@ func (c *Client) ShutdownServerAndWaitStopped(ctx context.Context, uuid string, 
 	if err := c.serverPowerStrict(ctx, uuid, "shutdown"); err != nil {
 		return nil, err
 	}
-	return c.WaitServerStopped(ctx, uuid, timeout, delay)
+	return c.waitShutdownStopped(ctx, uuid, timeout, delay)
+}
+
+// ShutdownIncompleteError reports the documented shutdown outcome where the
+// guest did not power off and the backend returned the server to running.
+type ShutdownIncompleteError struct {
+	UUID   string
+	Status string
+}
+
+func (e *ShutdownIncompleteError) Error() string {
+	return fmt.Sprintf("server %s shutdown did not complete; status %q", e.UUID, e.Status)
+}
+
+func (c *Client) waitShutdownStopped(ctx context.Context, uuid string, timeout, delay time.Duration) (*Server, error) {
+	if timeout <= 0 {
+		timeout = defaultLifecycleWaitTimeout
+	}
+	if delay <= 0 {
+		delay = defaultLifecycleWaitDelay
+	}
+	waitCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	timedOut := make(chan struct{})
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	go func() {
+		select {
+		case <-timer.C:
+			close(timedOut)
+			cancel()
+		case <-waitCtx.Done():
+		}
+	}()
+	for {
+		if err := waitCtx.Err(); err != nil {
+			return nil, lifecycleContextError(waitCtx, timedOut, err)
+		}
+		server, err := c.ServerWithCallerContext(waitCtx, uuid)
+		if err != nil {
+			return nil, err
+		}
+		if server == nil || server.UUID != uuid {
+			return nil, &Error{Category: "decode_error"}
+		}
+		switch server.Status {
+		case "stopped":
+			return server, nil
+		case "stopping":
+			if err := lifecycleWait(waitCtx, timedOut, delay); err != nil {
+				return nil, err
+			}
+		case "running":
+			return nil, &ShutdownIncompleteError{UUID: uuid, Status: server.Status}
+		default:
+			return nil, &ServerStatusError{UUID: uuid, Status: server.Status}
+		}
+	}
 }
 
 // serverPowerStrict is a separate seam from serverPower so existing SDK

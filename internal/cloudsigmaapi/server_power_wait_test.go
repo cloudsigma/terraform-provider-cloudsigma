@@ -35,7 +35,7 @@ func TestStartServerAndWaitRunningStrictActionAndReadReconciliation(t *testing.T
 }
 
 func TestShutdownServerAndWaitStoppedStrictActionAndReadReconciliation(t *testing.T) {
-	statuses := []string{"stopping", "running", "stopped"}
+	statuses := []string{"stopping", "stopped"}
 	calls := 0
 	c := reviewNativeNew(func(req *http.Request) (*http.Response, error) {
 		calls++
@@ -52,7 +52,7 @@ func TestShutdownServerAndWaitStoppedStrictActionAndReadReconciliation(t *testin
 		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(fmt.Sprintf(`{"uuid":"server-1","status":%q}`, status))), Request: req}, nil
 	})
 	got, err := c.ShutdownServerAndWaitStopped(context.Background(), "server-1", time.Second, time.Millisecond)
-	if err != nil || got == nil || got.Status != "stopped" || calls != 4 {
+	if err != nil || got == nil || got.Status != "stopped" || calls != 3 {
 		t.Fatalf("server=%+v err=%v calls=%d", got, err, calls)
 	}
 }
@@ -69,6 +69,22 @@ func TestShutdownServerAndWaitStoppedDoesNotReplayOnUncertainOutcome(t *testing.
 	})
 	if _, err := c.ShutdownServerAndWaitStopped(context.Background(), "server-1", time.Second, time.Millisecond); err == nil || posts != 1 {
 		t.Fatalf("err=%v posts=%d", err, posts)
+	}
+}
+
+func TestShutdownServerAndWaitStoppedReportsGuestFailureWhenRunning(t *testing.T) {
+	calls := 0
+	c := reviewNativeNew(func(req *http.Request) (*http.Response, error) {
+		calls++
+		if calls == 1 {
+			return &http.Response{StatusCode: http.StatusAccepted, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"action":"shutdown","result":"success","uuid":"job-1"}`)), Request: req}, nil
+		}
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"uuid":"server-1","status":"running"}`)), Request: req}, nil
+	})
+	_, err := c.ShutdownServerAndWaitStopped(context.Background(), "server-1", time.Second, time.Millisecond)
+	var incomplete *ShutdownIncompleteError
+	if !errors.As(err, &incomplete) || incomplete.Status != "running" || calls != 2 {
+		t.Fatalf("err=%v calls=%d", err, calls)
 	}
 }
 
