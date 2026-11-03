@@ -98,7 +98,7 @@
       "TestStopServerAndWaitStoppedRejectsUnqualifiedActions",
       "TestServerPowerAndWaitContextFailures"
     ],
-    "total": 764
+    "total": 763
   },
   {
     "package": "internal/cloudsigmaapi",
