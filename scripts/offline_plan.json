@@ -95,10 +95,12 @@
       "TestWaitServerRunningAndStoppedProgression",
       "TestWaitServerStatusRejectsUnknownAndHonorsUnavailablePolicy",
       "TestStartServerAndWaitRunningStrictActionAndReadReconciliation",
+      "TestShutdownServerAndWaitStoppedStrictActionAndReadReconciliation",
+      "TestShutdownServerAndWaitStoppedDoesNotReplayOnUncertainOutcome",
       "TestStopServerAndWaitStoppedRejectsUnqualifiedActions",
       "TestServerPowerAndWaitContextFailures"
     ],
-    "total": 763
+    "total": 765
   },
   {
     "package": "internal/cloudsigmaapi",

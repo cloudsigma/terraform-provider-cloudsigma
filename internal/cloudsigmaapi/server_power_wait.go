@@ -30,11 +30,22 @@ func (c *Client) StopServerAndWaitStopped(ctx context.Context, uuid string, time
 	return c.WaitServerStopped(ctx, uuid, timeout, delay)
 }
 
+// ShutdownServerAndWaitStopped sends the documented ACPI shutdown action and
+// reconciles the server through native reads until it reports stopped. The
+// backend may return to running when the guest does not complete shutdown;
+// that outcome remains subject to the bounded waiter timeout.
+func (c *Client) ShutdownServerAndWaitStopped(ctx context.Context, uuid string, timeout, delay time.Duration) (*Server, error) {
+	if err := c.serverPowerStrict(ctx, uuid, "shutdown"); err != nil {
+		return nil, err
+	}
+	return c.WaitServerStopped(ctx, uuid, timeout, delay)
+}
+
 // serverPowerStrict is a separate seam from serverPower so existing SDK
 // compatibility behavior remains unchanged. The API's action UUID identifies
 // the accepted operation, not the target server UUID.
 func (c *Client) serverPowerStrict(ctx context.Context, uuid, action string) error {
-	if !driveSegment.MatchString(uuid) || (action != "start" && action != "stop") {
+	if !driveSegment.MatchString(uuid) || (action != "start" && action != "stop" && action != "shutdown") {
 		return &Error{Category: "transport"}
 	}
 	if err := ctx.Err(); err != nil {
