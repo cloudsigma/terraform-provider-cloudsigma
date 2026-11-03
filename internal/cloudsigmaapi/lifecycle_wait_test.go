@@ -76,6 +76,19 @@ func TestWaitDriveMountedOrUnmountedCancellationTimeoutAndReadFailure(t *testing
 	}
 }
 
+func TestWaitersReportTimeoutWhenReadIsInFlight(t *testing.T) {
+	c := reviewNativeNew(func(req *http.Request) (*http.Response, error) {
+		<-req.Context().Done()
+		return nil, req.Context().Err()
+	})
+	if _, err := c.WaitDriveMountedOrUnmounted(context.Background(), "drive-1", 10*time.Millisecond, time.Millisecond); err == nil || err.Error() != "timeout" {
+		t.Fatalf("in-flight timeout err=%v", err)
+	}
+	if _, err := c.WaitServerRunning(context.Background(), "server-1", 10*time.Millisecond, time.Millisecond); err == nil || err.Error() != "timeout" {
+		t.Fatalf("server in-flight timeout err=%v", err)
+	}
+}
+
 func TestWaitServerRunningAndStoppedProgression(t *testing.T) {
 	for _, tc := range []struct {
 		name   string

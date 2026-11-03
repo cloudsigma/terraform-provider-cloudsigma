@@ -99,6 +99,7 @@
       "TestUpdateServerContextAndTransportFailures",
       "TestUpdateServerCanExplicitlyClearMetadataAndSetZeroValues",
       "TestWaitersRejectResponseIdentityMismatch",
+      "TestWaitersReportTimeoutWhenReadIsInFlight",
       "TestWaitDriveMountedOrUnmountedProgressionAndTerminalErrors",
       "TestWaitDriveMountedOrUnmountedCancellationTimeoutAndReadFailure",
       "TestWaitServerRunningAndStoppedProgression",
@@ -110,7 +111,7 @@
       "TestStopServerAndWaitStoppedRejectsUnqualifiedActions",
       "TestServerPowerAndWaitContextFailures"
     ],
-    "total": 785
+    "total": 786
   },
   {
     "package": "internal/cloudsigmaapi",
