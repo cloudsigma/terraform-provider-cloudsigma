@@ -90,15 +90,27 @@
       "TestReviewEarlierDeadline",
       "TestReviewCancellationDuringRead",
       "TestReviewDeadlineDuringRead",
+      "TestUpdateDriveProjectsWritableFieldsAndChecksIdentity",
+      "TestUpdateDrivePreservesExplicitFalseAndEmptyClears",
+      "TestUpdateDriveRejectsUnexpectedStatusesAndMalformedResponses",
+      "TestUpdateDriveRejectsInvalidUUIDAndHonorsCancellation",
+      "TestUpdateServerProjectsWritableCoreAndChecksIdentity",
+      "TestUpdateServerRejectsUnexpectedResponses",
+      "TestUpdateServerContextAndTransportFailures",
+      "TestUpdateServerCanExplicitlyClearMetadataAndSetZeroValues",
+      "TestWaitersRejectResponseIdentityMismatch",
       "TestWaitDriveMountedOrUnmountedProgressionAndTerminalErrors",
       "TestWaitDriveMountedOrUnmountedCancellationTimeoutAndReadFailure",
       "TestWaitServerRunningAndStoppedProgression",
       "TestWaitServerStatusRejectsUnknownAndHonorsUnavailablePolicy",
       "TestStartServerAndWaitRunningStrictActionAndReadReconciliation",
+      "TestShutdownServerAndWaitStoppedStrictActionAndReadReconciliation",
+      "TestShutdownServerAndWaitStoppedDoesNotReplayOnUncertainOutcome",
+      "TestShutdownServerAndWaitStoppedReportsGuestFailureWhenRunning",
       "TestStopServerAndWaitStoppedRejectsUnqualifiedActions",
       "TestServerPowerAndWaitContextFailures"
     ],
-    "total": 763
+    "total": 785
   },
   {
     "package": "internal/cloudsigmaapi",
