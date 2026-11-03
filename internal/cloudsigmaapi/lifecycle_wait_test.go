@@ -131,3 +131,19 @@ func TestWaitServerStatusRejectsUnknownAndHonorsUnavailablePolicy(t *testing.T) 
 		t.Fatalf("unavailable progression server=%+v err=%v calls=%d", got, err, calls)
 	}
 }
+
+func TestWaitersRejectResponseIdentityMismatch(t *testing.T) {
+	c := reviewNativeNew(func(req *http.Request) (*http.Response, error) {
+		body := `{"uuid":"other","status":"unmounted"}`
+		if strings.Contains(req.URL.Path, "/servers/") {
+			body = `{"uuid":"other","status":"running"}`
+		}
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
+	})
+	if _, err := c.WaitDriveMountedOrUnmounted(context.Background(), "drive-1", time.Second, time.Millisecond); err == nil || err.Error() != "decode_error" {
+		t.Fatalf("drive mismatch err=%v", err)
+	}
+	if _, err := c.WaitServerRunning(context.Background(), "server-1", time.Second, time.Millisecond); err == nil || err.Error() != "decode_error" {
+		t.Fatalf("server mismatch err=%v", err)
+	}
+}

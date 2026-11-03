@@ -65,6 +65,9 @@ func (c *Client) WaitDriveMountedOrUnmounted(ctx context.Context, uuid string, t
 		if err != nil {
 			return nil, err
 		}
+		if drive == nil || drive.UUID != uuid {
+			return nil, &Error{Category: "decode_error"}
+		}
 		switch drive.Status {
 		case "mounted", "unmounted":
 			return drive, nil
@@ -122,6 +125,9 @@ func (c *Client) waitServerStatus(ctx context.Context, uuid, target string, time
 		server, err := c.ServerWithCallerContext(waitCtx, uuid)
 		if err != nil {
 			return nil, err
+		}
+		if server == nil || server.UUID != uuid {
+			return nil, &Error{Category: "decode_error"}
 		}
 		if server.Status == target {
 			return server, nil
