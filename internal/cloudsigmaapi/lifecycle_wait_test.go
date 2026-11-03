@@ -87,6 +87,18 @@ func TestWaitersReportTimeoutWhenReadIsInFlight(t *testing.T) {
 	if _, err := c.WaitServerRunning(context.Background(), "server-1", 10*time.Millisecond, time.Millisecond); err == nil || err.Error() != "timeout" {
 		t.Fatalf("server in-flight timeout err=%v", err)
 	}
+
+	c = reviewNativeNew(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: http.Header{"X-Request-Id": []string{"request-1"}}, Body: io.NopCloser(strings.NewReader("")), Request: req}, nil
+	})
+	_, driveErr := c.WaitDriveMountedOrUnmounted(context.Background(), "drive-1", time.Second, time.Millisecond)
+	_, serverErr := c.WaitServerRunning(context.Background(), "server-1", time.Second, time.Millisecond)
+	for _, err := range []error{driveErr, serverErr} {
+		var apiErr *Error
+		if !errors.As(err, &apiErr) || apiErr.Category != "http_status" || apiErr.Status != http.StatusServiceUnavailable || apiErr.RequestID != "request-1" {
+			t.Fatalf("read failure metadata lost: %v", err)
+		}
+	}
 }
 
 func TestWaitServerRunningAndStoppedProgression(t *testing.T) {
